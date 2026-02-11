@@ -1,18 +1,19 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Home, Dumbbell, TrendingUp, User } from 'lucide-react';
-
-const tabs = [
-  { path: '/', icon: Home, label: 'ראשי' },
-  { path: '/workout', icon: Dumbbell, label: 'אימון' },
-  { path: '/progress', icon: TrendingUp, label: 'התקדמות' },
-  { path: '/profile', icon: User, label: 'פרופיל' },
-];
+import { useI18n } from '../i18n/I18nProvider';
 
 const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useI18n();
 
-  // Hide nav during active workout
+  const tabs = [
+    { path: '/', icon: Home, label: t('nav.home') },
+    { path: '/workout', icon: Dumbbell, label: t('nav.workout') },
+    { path: '/progress', icon: TrendingUp, label: t('nav.progress') },
+    { path: '/profile', icon: User, label: t('nav.profile') },
+  ];
+
   if (location.pathname.startsWith('/workout/')) return null;
 
   return (
