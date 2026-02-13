@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n/I18nProvider';
@@ -5,6 +6,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar
 } from 'recharts';
+import { ChevronDown } from 'lucide-react';
 
 const Progress = () => {
   const { profile, workoutHistory } = useApp();
@@ -71,6 +73,49 @@ const Progress = () => {
   };
 
   const exerciseStats = getExerciseStats();
+
+  // Per-exercise progress data
+  const getAllExerciseIds = () => {
+    const map = new Map<string, string>();
+    workoutHistory.forEach(w => {
+      w.exercises.forEach(ex => {
+        if (!ex.skipped && ex.sets.length > 0) {
+          map.set(ex.exerciseId, ex.exerciseName);
+        }
+      });
+    });
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  };
+
+  const availableExercises = getAllExerciseIds();
+  const [selectedExerciseId, setSelectedExerciseId] = useState<string>(availableExercises[0]?.id || '');
+
+  const getExerciseProgressData = (exerciseId: string) => {
+    const data: { date: string; maxWeight: number; maxReps: number; volume: number }[] = [];
+    // Sort workouts chronologically
+    const sorted = [...workoutHistory].reverse();
+    sorted.forEach(w => {
+      w.exercises.forEach(ex => {
+        if (ex.exerciseId === exerciseId && !ex.skipped) {
+          let maxW = 0, maxR = 0, vol = 0;
+          ex.sets.forEach(s => {
+            if (s.weight > maxW) maxW = s.weight;
+            if (s.reps > maxR) maxR = s.reps;
+            vol += s.reps * (s.weight || 1);
+          });
+          data.push({
+            date: new Date(w.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' }),
+            maxWeight: maxW,
+            maxReps: maxR,
+            volume: vol,
+          });
+        }
+      });
+    });
+    return data;
+  };
+
+  const exerciseProgressData = selectedExerciseId ? getExerciseProgressData(selectedExerciseId) : [];
 
   const customTooltipStyle = {
     backgroundColor: 'hsl(220, 18%, 11%)',
@@ -150,6 +195,77 @@ const Progress = () => {
               </div>
             ))}
           </div>
+        </motion.div>
+      )}
+
+      {/* Per-exercise progress graphs */}
+      {availableExercises.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-card border border-border rounded-xl p-4 mb-5">
+          <h3 className="text-sm font-semibold mb-3">{t('prog.exerciseProgress')}</h3>
+          
+          {/* Exercise selector */}
+          <div className="relative mb-4">
+            <select
+              value={selectedExerciseId}
+              onChange={(e) => setSelectedExerciseId(e.target.value)}
+              className="w-full bg-secondary rounded-lg px-3 py-2.5 text-sm appearance-none focus:outline-none focus:ring-1 focus:ring-primary pr-8"
+            >
+              {availableExercises.map(ex => (
+                <option key={ex.id} value={ex.id}>{ex.name}</option>
+              ))}
+            </select>
+            <ChevronDown className="w-4 h-4 absolute top-3 end-3 text-muted-foreground pointer-events-none" />
+          </div>
+
+          {exerciseProgressData.length > 1 ? (
+            <div className="space-y-4">
+              {/* Weight progress */}
+              {exerciseProgressData.some(d => d.maxWeight > 0) && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">{t('prog.weightUsed')}</p>
+                  <ResponsiveContainer width="100%" height={120}>
+                    <LineChart data={exerciseProgressData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 18%)" />
+                      <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'hsl(215, 15%, 55%)' }} />
+                      <YAxis tick={{ fontSize: 9, fill: 'hsl(215, 15%, 55%)' }} />
+                      <Tooltip contentStyle={customTooltipStyle} />
+                      <Line type="monotone" dataKey="maxWeight" stroke="hsl(160, 84%, 39%)" strokeWidth={2} dot={{ r: 3 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Reps progress */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">{t('prog.maxReps')}</p>
+                <ResponsiveContainer width="100%" height={120}>
+                  <LineChart data={exerciseProgressData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 18%)" />
+                    <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'hsl(215, 15%, 55%)' }} />
+                    <YAxis tick={{ fontSize: 9, fill: 'hsl(215, 15%, 55%)' }} />
+                    <Tooltip contentStyle={customTooltipStyle} />
+                    <Line type="monotone" dataKey="maxReps" stroke="hsl(195, 80%, 50%)" strokeWidth={2} dot={{ r: 3 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Volume progress */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">{t('prog.totalVolume')}</p>
+                <ResponsiveContainer width="100%" height={120}>
+                  <BarChart data={exerciseProgressData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 18%)" />
+                    <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'hsl(215, 15%, 55%)' }} />
+                    <YAxis tick={{ fontSize: 9, fill: 'hsl(215, 15%, 55%)' }} />
+                    <Tooltip contentStyle={customTooltipStyle} />
+                    <Bar dataKey="volume" fill="hsl(270, 60%, 55%)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-6">{t('prog.noData')}</p>
+          )}
         </motion.div>
       )}
 

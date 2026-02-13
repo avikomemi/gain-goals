@@ -7,8 +7,9 @@ import { useI18n } from '../i18n/I18nProvider';
 import { ExerciseLog, SetLog, WorkoutSession } from '../data/types';
 import SensitivityWarning from '../components/SensitivityWarning';
 import RestTimer from '../components/RestTimer';
-import { ChevronRight, Check, SkipForward, ExternalLink, AlertTriangle, Trophy, X, Timer } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, SkipForward, ExternalLink, AlertTriangle, Trophy, X, Timer, Save } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { toast } from 'sonner';
 
 const WorkoutLogger = () => {
   const { routineId } = useParams();
@@ -35,8 +36,23 @@ const WorkoutLogger = () => {
     const saved = localStorage.getItem('fitlog-rest-duration');
     return saved ? parseInt(saved) : 90;
   });
+  const [savedMessage, setSavedMessage] = useState(false);
 
   const currentExercise = allExercises[currentIdx];
+
+  // Restore saved progress on mount
+  useEffect(() => {
+    if (!routineId) return;
+    const saved = localStorage.getItem(`fitlog-inprogress-${routineId}`);
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        setLogs(data.logs || []);
+        setCurrentIdx(data.currentIdx || 0);
+        toast(t('wl.resuming'));
+      } catch {}
+    }
+  }, [routineId]);
 
   useEffect(() => {
     if (currentExercise) {
@@ -105,6 +121,8 @@ const WorkoutLogger = () => {
       };
       addWorkout(session);
       setCompleted(true);
+      // Clear saved progress
+      localStorage.removeItem(`fitlog-inprogress-${routineId}`);
       confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
     }
   };
@@ -154,6 +172,15 @@ const WorkoutLogger = () => {
         <span className="text-xs text-muted-foreground">
           {currentIdx + 1} / {allExercises.length}
         </span>
+        <button
+          onClick={() => {
+            localStorage.setItem(`fitlog-inprogress-${routineId}`, JSON.stringify({ logs, currentIdx }));
+            toast(t('wl.saved'));
+          }}
+          className="flex items-center gap-1 text-primary text-xs font-medium"
+        >
+          <Save className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Progress bar */}
@@ -309,6 +336,11 @@ const WorkoutLogger = () => {
       </AnimatePresence>
 
       <div className="flex gap-3 mt-6">
+        {currentIdx > 0 && (
+          <button onClick={() => setCurrentIdx(currentIdx - 1)} className="bg-secondary text-secondary-foreground rounded-xl py-3 px-3 text-sm font-medium flex items-center justify-center">
+            <ChevronLeft className={`w-4 h-4 ${lang === 'he' ? 'rotate-180' : ''}`} />
+          </button>
+        )}
         <button onClick={() => saveAndNext(true)} className="flex-1 bg-secondary text-secondary-foreground rounded-xl py-3 text-sm font-medium flex items-center justify-center gap-2">
           <SkipForward className="w-4 h-4" /> {t('wl.skip')}
         </button>
