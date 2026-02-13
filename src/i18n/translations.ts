@@ -83,6 +83,20 @@ const translations = {
   'prog.volume': { he: 'נפח', en: 'Volume' },
   'prog.doWorkouts': { he: 'בצע אימונים כדי לראות התקדמות 📊', en: 'Complete workouts to see progress 📊' },
   'prog.week': { he: 'שבוע', en: 'Week' },
+  'prog.exerciseProgress': { he: 'התקדמות לפי תרגיל', en: 'Exercise Progress' },
+  'prog.weightUsed': { he: 'משקל (ק״ג)', en: 'Weight (kg)' },
+  'prog.maxReps': { he: 'חזרות מקסימליות', en: 'Max Reps' },
+  'prog.totalVolume': { he: 'נפח כולל', en: 'Total Volume' },
+  'prog.noData': { he: 'אין מספיק נתונים עדיין', en: 'Not enough data yet' },
+  'prog.selectExercise': { he: 'בחר תרגיל', en: 'Select Exercise' },
+
+  // Navigation
+  'nav.back': { he: 'חזרה', en: 'Back' },
+
+  // Workout Logger
+  'wl.saveProgress': { he: 'שמור התקדמות', en: 'Save Progress' },
+  'wl.saved': { he: 'ההתקדמות נשמרה ✓', en: 'Progress saved ✓' },
+  'wl.resuming': { he: 'ממשיך מהנקודה האחרונה', en: 'Resuming from last save' },
 
   // Goals translations
   'goal.toning': { he: 'חיטוב', en: 'Toning' },

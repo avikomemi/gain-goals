@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { routines } from '../data/routines';
 import { useI18n } from '../i18n/I18nProvider';
 import SensitivityWarning from '../components/SensitivityWarning';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const WorkoutSelect = () => {
   const navigate = useNavigate();
@@ -11,6 +11,10 @@ const WorkoutSelect = () => {
 
   return (
     <div className="min-h-screen pb-20 px-4 pt-6">
+      <button onClick={() => navigate('/')} className="flex items-center gap-1 text-muted-foreground text-sm mb-4">
+        {lang === 'he' ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
+        {t('nav.back')}
+      </button>
       <h1 className="text-2xl font-bold mb-2">{t('ws.title')}</h1>
       <p className="text-muted-foreground text-sm mb-5">{t('ws.subtitle')}</p>
 
