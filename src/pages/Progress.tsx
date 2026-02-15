@@ -91,8 +91,7 @@ const Progress = () => {
   const [selectedExerciseId, setSelectedExerciseId] = useState<string>(availableExercises[0]?.id || '');
 
   const getExerciseProgressData = (exerciseId: string) => {
-    const data: { date: string; maxWeight: number; maxReps: number; volume: number }[] = [];
-    // Sort workouts chronologically
+    const data: { date: string; maxWeight: number; maxReps: number; volume: number; painLevel: number; rpe: number }[] = [];
     const sorted = [...workoutHistory].reverse();
     sorted.forEach(w => {
       w.exercises.forEach(ex => {
@@ -108,6 +107,8 @@ const Progress = () => {
             maxWeight: maxW,
             maxReps: maxR,
             volume: vol,
+            painLevel: ex.painLevel || 0,
+            rpe: ex.rpe || 0,
           });
         }
       });
@@ -262,6 +263,38 @@ const Progress = () => {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+
+              {/* Pain level progress */}
+              {exerciseProgressData.some(d => d.painLevel > 0) && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">{t('prog.painOverTime')}</p>
+                  <ResponsiveContainer width="100%" height={120}>
+                    <LineChart data={exerciseProgressData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 18%)" />
+                      <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'hsl(215, 15%, 55%)' }} />
+                      <YAxis domain={[0, 10]} tick={{ fontSize: 9, fill: 'hsl(215, 15%, 55%)' }} />
+                      <Tooltip contentStyle={customTooltipStyle} />
+                      <Line type="monotone" dataKey="painLevel" stroke="hsl(0, 80%, 55%)" strokeWidth={2} dot={{ r: 3 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* RPE / Effort progress */}
+              {exerciseProgressData.some(d => d.rpe > 0) && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">{t('prog.rpeOverTime')}</p>
+                  <ResponsiveContainer width="100%" height={120}>
+                    <LineChart data={exerciseProgressData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 18%)" />
+                      <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'hsl(215, 15%, 55%)' }} />
+                      <YAxis domain={[0, 10]} tick={{ fontSize: 9, fill: 'hsl(215, 15%, 55%)' }} />
+                      <Tooltip contentStyle={customTooltipStyle} />
+                      <Line type="monotone" dataKey="rpe" stroke="hsl(35, 90%, 55%)" strokeWidth={2} dot={{ r: 3 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground text-center py-6">{t('prog.noData')}</p>
