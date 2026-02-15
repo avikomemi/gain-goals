@@ -89,6 +89,10 @@ const translations = {
   'prog.totalVolume': { he: 'נפח כולל', en: 'Total Volume' },
   'prog.noData': { he: 'אין מספיק נתונים עדיין', en: 'Not enough data yet' },
   'prog.selectExercise': { he: 'בחר תרגיל', en: 'Select Exercise' },
+  'prog.painLevel': { he: 'רמת כאב', en: 'Pain Level' },
+  'prog.rpe': { he: 'RPE (מאמץ)', en: 'RPE (Effort)' },
+  'prog.painOverTime': { he: 'מעקב כאב לאורך זמן', en: 'Pain Tracking Over Time' },
+  'prog.rpeOverTime': { he: 'מעקב מאמץ לאורך זמן', en: 'Effort Tracking Over Time' },
 
   // Navigation
   'nav.back': { he: 'חזרה', en: 'Back' },

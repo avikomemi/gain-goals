@@ -40,6 +40,9 @@ const WorkoutLogger = () => {
 
   const currentExercise = allExercises[currentIdx];
 
+  const [restoredIdx, setRestoredIdx] = useState<number | null>(null);
+  const [restoredExerciseState, setRestoredExerciseState] = useState<{ sets: SetLog[]; painLevel: number; rpe: number; notes: string } | null>(null);
+
   // Restore saved progress on mount
   useEffect(() => {
     if (!routineId) return;
@@ -49,6 +52,10 @@ const WorkoutLogger = () => {
         const data = JSON.parse(saved);
         setLogs(data.logs || []);
         setCurrentIdx(data.currentIdx || 0);
+        setRestoredIdx(data.currentIdx || 0);
+        if (data.currentExercise) {
+          setRestoredExerciseState(data.currentExercise);
+        }
         toast(t('wl.resuming'));
       } catch {}
     }
@@ -56,12 +63,22 @@ const WorkoutLogger = () => {
 
   useEffect(() => {
     if (currentExercise) {
-      const numSets = parseInt(currentExercise.sets) || 1;
-      const defaultReps = parseInt(currentExercise.reps) || 0;
-      setSets(Array.from({ length: numSets }, () => ({ reps: defaultReps, weight: 0, completed: false })));
-      setPainLevel(0);
-      setRpe(5);
-      setNotes('');
+      // If we just restored and this is the restored index, use saved state
+      if (restoredIdx === currentIdx && restoredExerciseState) {
+        setSets(restoredExerciseState.sets);
+        setPainLevel(restoredExerciseState.painLevel);
+        setRpe(restoredExerciseState.rpe);
+        setNotes(restoredExerciseState.notes);
+        setRestoredIdx(null);
+        setRestoredExerciseState(null);
+      } else {
+        const numSets = parseInt(currentExercise.sets) || 1;
+        const defaultReps = parseInt(currentExercise.reps) || 0;
+        setSets(Array.from({ length: numSets }, () => ({ reps: defaultReps, weight: 0, completed: false })));
+        setPainLevel(0);
+        setRpe(5);
+        setNotes('');
+      }
     }
   }, [currentIdx]);
 
@@ -174,7 +191,11 @@ const WorkoutLogger = () => {
         </span>
         <button
           onClick={() => {
-            localStorage.setItem(`fitlog-inprogress-${routineId}`, JSON.stringify({ logs, currentIdx }));
+            localStorage.setItem(`fitlog-inprogress-${routineId}`, JSON.stringify({
+              logs,
+              currentIdx,
+              currentExercise: { sets, painLevel, rpe, notes },
+            }));
             toast(t('wl.saved'));
           }}
           className="flex items-center gap-1 text-primary text-xs font-medium"
