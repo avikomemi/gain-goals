@@ -7,7 +7,7 @@ import { useI18n } from '../i18n/I18nProvider';
 import { ExerciseLog, SetLog, WorkoutSession } from '../data/types';
 import SensitivityWarning from '../components/SensitivityWarning';
 import RestTimer from '../components/RestTimer';
-import { ChevronLeft, ChevronRight, Check, SkipForward, ExternalLink, AlertTriangle, Trophy, X, Timer, Save } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, SkipForward, ExternalLink, AlertTriangle, Trophy, X, Timer, Save, Loader2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
 
@@ -36,7 +36,7 @@ const WorkoutLogger = () => {
     const saved = localStorage.getItem('fitlog-rest-duration');
     return saved ? parseInt(saved) : 90;
   });
-  const [savedMessage, setSavedMessage] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const currentExercise = allExercises[currentIdx];
 
@@ -85,6 +85,21 @@ const WorkoutLogger = () => {
   useEffect(() => {
     localStorage.setItem('fitlog-rest-duration', restDuration.toString());
   }, [restDuration]);
+
+  // Auto-save every 10 seconds
+  useEffect(() => {
+    if (completed || !routineId) return;
+    const interval = setInterval(() => {
+      setIsSaving(true);
+      localStorage.setItem(`fitlog-inprogress-${routineId}`, JSON.stringify({
+        logs,
+        currentIdx,
+        currentExercise: { sets, painLevel, rpe, notes },
+      }));
+      setTimeout(() => setIsSaving(false), 600);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [completed, routineId, logs, currentIdx, sets, painLevel, rpe, notes]);
 
   if (!routine) {
     return (
@@ -189,19 +204,13 @@ const WorkoutLogger = () => {
         <span className="text-xs text-muted-foreground">
           {currentIdx + 1} / {allExercises.length}
         </span>
-        <button
-          onClick={() => {
-            localStorage.setItem(`fitlog-inprogress-${routineId}`, JSON.stringify({
-              logs,
-              currentIdx,
-              currentExercise: { sets, painLevel, rpe, notes },
-            }));
-            toast(t('wl.saved'));
-          }}
-          className="flex items-center gap-1 text-primary text-xs font-medium"
-        >
-          <Save className="w-4 h-4" />
-        </button>
+        <div className="w-6 h-6 flex items-center justify-center">
+          {isSaving ? (
+            <Loader2 className="w-4 h-4 text-primary animate-spin" />
+          ) : (
+            <Save className="w-4 h-4 text-primary" />
+          )}
+        </div>
       </div>
 
       {/* Progress bar */}

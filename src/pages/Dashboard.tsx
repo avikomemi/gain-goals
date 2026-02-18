@@ -104,7 +104,11 @@ const Dashboard = () => {
         ) : (
           <div className="space-y-2">
             {workoutHistory.slice(0, 5).map((w, i) => (
-              <div key={i} className="bg-card rounded-xl p-4 border border-border flex items-center justify-between">
+              <button
+                key={i}
+                onClick={() => navigate(`/workout/edit/${w.id}`)}
+                className="w-full bg-card rounded-xl p-4 border border-border flex items-center justify-between text-start"
+              >
                 <div>
                   <p className="font-medium text-sm">{w.routineName}</p>
                   <p className="text-xs text-muted-foreground">
@@ -114,7 +118,7 @@ const Dashboard = () => {
                 <div className="text-xs text-primary font-semibold">
                   {w.exercises.filter(e => !e.skipped).length} {t('dash.exercises')}
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}

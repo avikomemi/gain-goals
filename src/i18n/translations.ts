@@ -102,6 +102,13 @@ const translations = {
   'wl.saved': { he: 'ההתקדמות נשמרה ✓', en: 'Progress saved ✓' },
   'wl.resuming': { he: 'ממשיך מהנקודה האחרונה', en: 'Resuming from last save' },
 
+  // Workout Edit
+  'we.title': { he: 'עריכת אימון', en: 'Edit Workout' },
+  'we.sessionNotes': { he: 'הערות אימון', en: 'Session Notes' },
+  'we.saveChanges': { he: 'שמור שינויים', en: 'Save Changes' },
+  'we.saved': { he: 'השינויים נשמרו', en: 'Changes saved' },
+  'we.skipped': { he: 'דולג', en: 'Skipped' },
+
   // Goals translations
   'goal.toning': { he: 'חיטוב', en: 'Toning' },
   'goal.flexibility': { he: 'גמישות', en: 'Flexibility' },
