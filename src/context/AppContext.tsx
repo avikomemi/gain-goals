@@ -6,6 +6,7 @@ interface AppState {
   setProfile: (p: UserProfile) => void;
   workoutHistory: WorkoutSession[];
   addWorkout: (w: WorkoutSession) => void;
+  updateWorkout: (w: WorkoutSession) => void;
   addWeightEntry: (e: WeightEntry) => void;
 }
 
@@ -58,6 +59,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setWorkoutHistory(prev => [w, ...prev]);
   };
 
+  const updateWorkout = (w: WorkoutSession) => {
+    setWorkoutHistory(prev => prev.map(existing => existing.id === w.id ? w : existing));
+  };
+
   const addWeightEntry = (e: WeightEntry) => {
     setProfileState(prev => ({
       ...prev,
@@ -67,7 +72,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AppContext.Provider value={{ profile, setProfile, workoutHistory, addWorkout, addWeightEntry }}>
+    <AppContext.Provider value={{ profile, setProfile, workoutHistory, addWorkout, updateWorkout, addWeightEntry }}>
       {children}
     </AppContext.Provider>
   );

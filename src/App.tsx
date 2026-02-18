@@ -9,6 +9,7 @@ import BottomNav from "./components/BottomNav";
 import Dashboard from "./pages/Dashboard";
 import WorkoutSelect from "./pages/WorkoutSelect";
 import WorkoutLogger from "./pages/WorkoutLogger";
+import WorkoutEdit from "./pages/WorkoutEdit";
 import Profile from "./pages/Profile";
 import Progress from "./pages/Progress";
 import NotFound from "./pages/NotFound";
@@ -28,6 +29,7 @@ const App = () => (
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/workout" element={<WorkoutSelect />} />
                 <Route path="/workout/:routineId" element={<WorkoutLogger />} />
+                <Route path="/workout/edit/:workoutId" element={<WorkoutEdit />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/progress" element={<Progress />} />
                 <Route path="*" element={<NotFound />} />
