@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { routines } from '../data/routines';
@@ -50,8 +50,8 @@ const WorkoutLogger = () => {
   };
   const lastSessionData = currentExercise ? getLastSessionData(currentExercise.id) : null;
 
-  const [restoredIdx, setRestoredIdx] = useState<number | null>(null);
-  const [restoredExerciseState, setRestoredExerciseState] = useState<{ sets: SetLog[]; painLevel: number; rpe: number; notes: string } | null>(null);
+  const [initialRestoreDone, setInitialRestoreDone] = useState(false);
+  const prevIdxRef = useRef<number | null>(null);
 
   // Restore saved progress on mount
   useEffect(() => {
@@ -61,34 +61,35 @@ const WorkoutLogger = () => {
       try {
         const data = JSON.parse(saved);
         setLogs(data.logs || []);
-        setCurrentIdx(data.currentIdx || 0);
-        setRestoredIdx(data.currentIdx || 0);
+        const idx = data.currentIdx || 0;
+        setCurrentIdx(idx);
+        prevIdxRef.current = idx;
         if (data.currentExercise) {
-          setRestoredExerciseState(data.currentExercise);
+          setSets(data.currentExercise.sets);
+          setPainLevel(data.currentExercise.painLevel);
+          setRpe(data.currentExercise.rpe);
+          setNotes(data.currentExercise.notes);
         }
         toast(t('wl.resuming'));
       } catch {}
     }
+    setInitialRestoreDone(true);
   }, [routineId]);
 
   useEffect(() => {
+    if (!initialRestoreDone) return;
+    // Skip if currentIdx hasn't actually changed (prevents overwriting restored state)
+    if (prevIdxRef.current === currentIdx) {
+      prevIdxRef.current = null;
+      return;
+    }
     if (currentExercise) {
-      // If we just restored and this is the restored index, use saved state
-      if (restoredIdx === currentIdx && restoredExerciseState) {
-        setSets(restoredExerciseState.sets);
-        setPainLevel(restoredExerciseState.painLevel);
-        setRpe(restoredExerciseState.rpe);
-        setNotes(restoredExerciseState.notes);
-        setRestoredIdx(null);
-        setRestoredExerciseState(null);
-      } else {
-        const numSets = parseInt(currentExercise.sets) || 1;
-        const defaultReps = parseInt(currentExercise.reps) || 0;
-        setSets(Array.from({ length: numSets }, () => ({ reps: defaultReps, weight: 0, completed: false })));
-        setPainLevel(0);
-        setRpe(5);
-        setNotes('');
-      }
+      const numSets = parseInt(currentExercise.sets) || 1;
+      const defaultReps = parseInt(currentExercise.reps) || 0;
+      setSets(Array.from({ length: numSets }, () => ({ reps: defaultReps, weight: 0, completed: false })));
+      setPainLevel(0);
+      setRpe(5);
+      setNotes('');
     }
   }, [currentIdx]);
 
