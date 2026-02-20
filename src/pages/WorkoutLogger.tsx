@@ -214,13 +214,25 @@ const WorkoutLogger = () => {
         <span className="text-xs text-muted-foreground">
           {currentIdx + 1} / {allExercises.length}
         </span>
-        <div className="w-6 h-6 flex items-center justify-center">
+        <button
+          className="w-8 h-8 flex items-center justify-center rounded-lg active:bg-secondary transition-colors"
+          onClick={() => {
+            if (isSaving || !routineId) return;
+            setIsSaving(true);
+            localStorage.setItem(`fitlog-inprogress-${routineId}`, JSON.stringify({
+              logs,
+              currentIdx,
+              currentExercise: { sets, painLevel, rpe, notes },
+            }));
+            setTimeout(() => setIsSaving(false), 700);
+          }}
+        >
           {isSaving ? (
-            <Loader2 className="w-4 h-4 text-primary animate-spin" />
+            <Loader2 className="w-5 h-5 text-primary animate-spin" />
           ) : (
-            <Save className="w-4 h-4 text-primary" />
+            <Save className="w-5 h-5 text-primary" />
           )}
-        </div>
+        </button>
       </div>
 
       {/* Progress bar */}
