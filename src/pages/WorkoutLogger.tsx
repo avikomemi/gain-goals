@@ -7,14 +7,14 @@ import { useI18n } from '../i18n/I18nProvider';
 import { ExerciseLog, SetLog, WorkoutSession } from '../data/types';
 import SensitivityWarning from '../components/SensitivityWarning';
 import RestTimer from '../components/RestTimer';
-import { ChevronLeft, ChevronRight, Check, SkipForward, ExternalLink, AlertTriangle, Trophy, X, Timer, Save, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, SkipForward, ExternalLink, AlertTriangle, Trophy, X, Timer, Save, Loader2, History } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
 
 const WorkoutLogger = () => {
   const { routineId } = useParams();
   const navigate = useNavigate();
-  const { addWorkout } = useApp();
+  const { addWorkout, workoutHistory } = useApp();
   const { t, lang } = useI18n();
 
   const routine = routines.find(r => r.id === routineId);
@@ -39,6 +39,16 @@ const WorkoutLogger = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   const currentExercise = allExercises[currentIdx];
+
+  // Find last session data for current exercise
+  const getLastSessionData = (exerciseId: string) => {
+    for (const session of workoutHistory) {
+      const match = session.exercises.find(ex => ex.exerciseId === exerciseId && !ex.skipped);
+      if (match) return match;
+    }
+    return null;
+  };
+  const lastSessionData = currentExercise ? getLastSessionData(currentExercise.id) : null;
 
   const [restoredIdx, setRestoredIdx] = useState<number | null>(null);
   const [restoredExerciseState, setRestoredExerciseState] = useState<{ sets: SetLog[]; painLevel: number; rpe: number; notes: string } | null>(null);
@@ -286,6 +296,33 @@ const WorkoutLogger = () => {
                     {sec >= 60 ? `${sec / 60}m` : `${sec}s`}
                   </button>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Last session comparison */}
+          {!isWarmup && lastSessionData && (
+            <div className="mt-4 bg-secondary/50 border border-border rounded-xl p-3">
+              <div className="flex items-center gap-1.5 mb-2">
+                <History className="w-3.5 h-3.5 text-accent" />
+                <span className="text-xs font-semibold text-accent">{t('wl.lastSession')}</span>
+              </div>
+              <div className="space-y-1.5">
+                {lastSessionData.sets.map((s, i) => (
+                  <div key={i} className="flex items-center text-xs text-muted-foreground gap-2">
+                    <span className="w-8 text-center">{t('wl.set')} {i + 1}</span>
+                    <span className="flex-1 text-center">{s.reps} {t('wl.reps')}</span>
+                    <span className="flex-1 text-center">{s.weight > 0 ? `${s.weight} ${t('dash.kg')}` : '—'}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-4 mt-2 pt-2 border-t border-border">
+                <span className="text-xs text-muted-foreground">
+                  {t('wl.pain')}: <span className={`font-semibold ${lastSessionData.painLevel > 5 ? 'text-pain' : lastSessionData.painLevel > 2 ? 'text-warning' : 'text-primary'}`}>{lastSessionData.painLevel}/10</span>
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {t('wl.effort')}: <span className="font-semibold text-accent">{lastSessionData.rpe}/10</span>
+                </span>
               </div>
             </div>
           )}
