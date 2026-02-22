@@ -1,7 +1,34 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Timer, X } from 'lucide-react';
 import { useI18n } from '../i18n/I18nProvider';
+
+const playBeep = () => {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.5);
+    // Play a second beep after a short pause
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.frequency.value = 1100;
+    osc2.type = 'sine';
+    gain2.gain.setValueAtTime(0.3, ctx.currentTime + 0.6);
+    gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.1);
+    osc2.start(ctx.currentTime + 0.6);
+    osc2.stop(ctx.currentTime + 1.1);
+  } catch {}
+};
 
 interface RestTimerProps {
   duration: number; // seconds
@@ -15,6 +42,7 @@ const RestTimer = ({ duration, onComplete, onSkip }: RestTimerProps) => {
 
   useEffect(() => {
     if (remaining <= 0) {
+      playBeep();
       onComplete();
       return;
     }
