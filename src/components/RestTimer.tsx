@@ -3,33 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Timer, X } from 'lucide-react';
 import { useI18n } from '../i18n/I18nProvider';
 
-const playBeep = () => {
-  try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.value = 880;
-    osc.type = 'sine';
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.5);
-    // Play a second beep after a short pause
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-    osc2.frequency.value = 1100;
-    osc2.type = 'sine';
-    gain2.gain.setValueAtTime(0.3, ctx.currentTime + 0.6);
-    gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.1);
-    osc2.start(ctx.currentTime + 0.6);
-    osc2.stop(ctx.currentTime + 1.1);
-  } catch {}
-};
-
 interface RestTimerProps {
   duration: number; // seconds
   onComplete: () => void;
@@ -39,6 +12,69 @@ interface RestTimerProps {
 const RestTimer = ({ duration, onComplete, onSkip }: RestTimerProps) => {
   const [remaining, setRemaining] = useState(duration);
   const { t } = useI18n();
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // Create AudioContext immediately on mount (still within user gesture from completing a set)
+  useEffect(() => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      // Resume in case it's suspended
+      ctx.resume();
+      audioCtxRef.current = ctx;
+    } catch {}
+    return () => {
+      audioCtxRef.current?.close();
+    };
+  }, []);
+
+  const playBeep = useCallback(() => {
+    const ctx = audioCtxRef.current;
+    if (!ctx) return;
+    try {
+      ctx.resume().then(() => {
+        // First beep
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.5, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.4);
+
+        // Second beep
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.frequency.value = 1100;
+        osc2.type = 'sine';
+        gain2.gain.setValueAtTime(0.5, ctx.currentTime + 0.5);
+        gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.9);
+        osc2.start(ctx.currentTime + 0.5);
+        osc2.stop(ctx.currentTime + 0.9);
+
+        // Third beep (higher)
+        const osc3 = ctx.createOscillator();
+        const gain3 = ctx.createGain();
+        osc3.connect(gain3);
+        gain3.connect(ctx.destination);
+        osc3.frequency.value = 1320;
+        osc3.type = 'sine';
+        gain3.gain.setValueAtTime(0.5, ctx.currentTime + 1.0);
+        gain3.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.4);
+        osc3.start(ctx.currentTime + 1.0);
+        osc3.stop(ctx.currentTime + 1.4);
+      });
+    } catch {}
+
+    // Vibrate if supported
+    try {
+      navigator?.vibrate?.([200, 100, 200, 100, 300]);
+    } catch {}
+  }, []);
 
   useEffect(() => {
     if (remaining <= 0) {
