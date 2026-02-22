@@ -2,12 +2,23 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { routines } from '../data/routines';
 import { useI18n } from '../i18n/I18nProvider';
+import { useApp } from '../context/AppContext';
 import SensitivityWarning from '../components/SensitivityWarning';
-import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 
 const WorkoutSelect = () => {
   const navigate = useNavigate();
   const { t, lang } = useI18n();
+  const { workoutHistory } = useApp();
+
+  // Determine next workout based on rotation
+  const getNextRoutineId = () => {
+    if (workoutHistory.length === 0) return routines[0]?.id;
+    const lastRoutineId = workoutHistory[0]?.routineId;
+    const lastIdx = routines.findIndex(r => r.id === lastRoutineId);
+    return routines[(lastIdx + 1) % routines.length]?.id;
+  };
+  const nextRoutineId = getNextRoutineId();
 
   return (
     <div className="min-h-screen pb-20 px-4 pt-6">
@@ -21,26 +32,35 @@ const WorkoutSelect = () => {
       <SensitivityWarning compact />
 
       <div className="space-y-3 mt-5">
-        {routines.map((routine, i) => (
-          <motion.button
-            key={routine.id}
-            initial={{ opacity: 0, x: lang === 'he' ? 20 : -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.08 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate(`/workout/${routine.id}`)}
-            className="w-full bg-card border border-border rounded-xl p-5 flex items-center justify-between text-right hover:border-primary/50 transition-colors"
-          >
-            <div className="flex items-center gap-4">
-              <span className="text-3xl">{routine.icon}</span>
-              <div>
-                <h3 className="font-semibold">{lang === 'he' ? routine.nameHe : routine.name}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">{routine.exercises.length} {t('ws.exercisesAndWarmup')}</p>
+        {routines.map((routine, i) => {
+          const isNext = routine.id === nextRoutineId;
+          return (
+            <motion.button
+              key={routine.id}
+              initial={{ opacity: 0, x: lang === 'he' ? 20 : -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.08 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate(`/workout/${routine.id}`)}
+              className={`w-full bg-card border rounded-xl p-5 flex items-center justify-between text-right transition-colors ${isNext ? 'border-primary ring-1 ring-primary/30' : 'border-border hover:border-primary/50'}`}
+            >
+              <div className="flex items-center gap-4">
+                <span className="text-3xl">{routine.icon}</span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold">{lang === 'he' ? routine.nameHe : routine.name}</h3>
+                    {isNext && <Star className="w-4 h-4 text-primary fill-primary" />}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {routine.exercises.length} {t('ws.exercisesAndWarmup')}
+                    {isNext && <span className="text-primary font-medium mx-1">· {lang === 'he' ? 'הבא בתור' : 'Up Next'}</span>}
+                  </p>
+                </div>
               </div>
-            </div>
-            {lang === 'he' ? <ChevronLeft className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
-          </motion.button>
-        ))}
+              {lang === 'he' ? <ChevronLeft className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
+            </motion.button>
+          );
+        })}
       </div>
     </div>
   );
