@@ -118,6 +118,27 @@ const translations = {
   'goal.toning': { he: 'חיטוב', en: 'Toning' },
   'goal.flexibility': { he: 'גמישות', en: 'Flexibility' },
   'goal.strength': { he: 'כוח', en: 'Strength' },
+
+  // Monthly Report
+  'report.title': { he: 'דוח חודשי', en: 'Monthly Report' },
+  'report.noData': { he: 'אין אימונים בחודש זה', en: 'No workouts this month' },
+  'report.workouts': { he: 'אימונים', en: 'Workouts' },
+  'report.trainingDays': { he: 'ימי אימון', en: 'Training Days' },
+  'report.totalTime': { he: 'זמן כולל', en: 'Total Time' },
+  'report.totalSets': { he: 'סטים', en: 'Sets' },
+  'report.totalReps': { he: 'חזרות', en: 'Reps' },
+  'report.totalVolume': { he: 'נפח כולל', en: 'Total Volume' },
+  'report.weightChange': { he: 'שינוי משקל', en: 'Weight Change' },
+  'report.exerciseBreakdown': { he: 'פירוט לפי תרגיל', en: 'Exercise Breakdown' },
+  'report.sessions': { he: 'פעמים', en: 'sessions' },
+  'report.sets': { he: 'סטים', en: 'Sets' },
+  'report.reps': { he: 'חזרות', en: 'Reps' },
+  'report.maxKg': { he: 'מקס ק״ג', en: 'Max kg' },
+  'report.vol': { he: 'נפח', en: 'Volume' },
+  'report.avgPain': { he: 'כאב ממוצע', en: 'Avg Pain' },
+  'report.avgRpe': { he: 'מאמץ ממוצע', en: 'Avg Effort' },
+  'report.skipped': { he: 'תרגילים דולגו', en: 'exercises skipped' },
+  'report.viewReport': { he: 'דוח חודשי', en: 'Monthly Report' },
 } as const;
 
 export type TransKey = keyof typeof translations;
