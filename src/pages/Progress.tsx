@@ -6,11 +6,13 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar
 } from 'recharts';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, FileText } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Progress = () => {
   const { profile, workoutHistory } = useApp();
   const { t, lang } = useI18n();
+  const navigate = useNavigate();
   const locale = lang === 'he' ? 'he-IL' : 'en-US';
 
   const weightData = profile.weightHistory.map(e => ({
@@ -128,7 +130,13 @@ const Progress = () => {
 
   return (
     <div className="min-h-screen pb-20 px-4 pt-6">
-      <h1 className="text-2xl font-bold mb-5">{t('prog.title')}</h1>
+      <div className="flex items-center justify-between mb-5">
+        <h1 className="text-2xl font-bold">{t('prog.title')}</h1>
+        <button onClick={() => navigate('/report')} className="flex items-center gap-1.5 text-xs text-primary font-medium bg-primary/10 px-3 py-1.5 rounded-lg">
+          <FileText className="w-3.5 h-3.5" />
+          {t('report.viewReport')}
+        </button>
+      </div>
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border rounded-xl p-4 mb-5">
         <h3 className="text-sm font-semibold mb-4">{t('prog.bodyWeight')}</h3>
