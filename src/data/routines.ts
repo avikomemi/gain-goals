@@ -64,7 +64,7 @@ export const routines: Routine[] = [
       { id: 'cu-6', name: 'BW Triceps Extension', nameHe: 'הרחבת טרייספס', sets: '3', reps: '10-15' },
       { id: 'cu-7', name: 'Australian Pull-ups', nameHe: 'מתח אוסטרלי', sets: '3', reps: '10-15' },
       { id: 'cu-8', name: 'Handstand', nameHe: 'עמידת ידיים', sets: '3', reps: '20-30 שניות', notes: 'כנגד קיר או חופשי — שמור על גוף ישר' },
-      { id: 'cu-9', name: 'Muscle-up', nameHe: 'מאסל-אפ', sets: '3', reps: '3-5', notes: 'שלב מתח פיצוצי + מעבר לשקע' },
+      { id: 'cu-9', name: 'Muscle-up', nameHe: 'מאסל-אפ', sets: '3', reps: '3-5', notes: 'שלב מתח פיצוצי + מעבר לשקע', link: 'https://www.youtube.com/watch?v=2H2gJMPVaEI' },
     ],
   },
 ];
