@@ -139,6 +139,10 @@ const translations = {
   'report.avgRpe': { he: 'מאמץ ממוצע', en: 'Avg Effort' },
   'report.skipped': { he: 'תרגילים דולגו', en: 'exercises skipped' },
   'report.viewReport': { he: 'דוח חודשי', en: 'Monthly Report' },
+
+  // Workout encouragement
+  'wl.nextUp': { he: 'הבא:', en: 'Next up:' },
+  'wl.effortImproved': { he: '🔥 שיפור מאמץ!', en: '🔥 Effort Improved!' },
 } as const;
 
 export type TransKey = keyof typeof translations;

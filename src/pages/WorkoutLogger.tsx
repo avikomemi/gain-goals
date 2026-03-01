@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { routines } from '../data/routines';
@@ -7,9 +7,32 @@ import { useI18n } from '../i18n/I18nProvider';
 import { ExerciseLog, SetLog, WorkoutSession } from '../data/types';
 import SensitivityWarning from '../components/SensitivityWarning';
 import RestTimer from '../components/RestTimer';
-import { ChevronLeft, ChevronRight, Check, SkipForward, ExternalLink, AlertTriangle, Trophy, X, Timer, Save, Loader2, History } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, SkipForward, ExternalLink, AlertTriangle, Trophy, X, Timer, Save, Loader2, History, Zap } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
+
+const encouragements = {
+  he: [
+    '💪 אתה מוכן לזה!',
+    '🔥 תמשיך ככה!',
+    '⚡ אלוף! עוד אחד!',
+    '🏆 הגוף שלך מודה לך!',
+    '💥 אין עצירה!',
+    '🚀 טיל! ממשיכים!',
+    '👊 חזק! אתה שובר שיאים!',
+    '🌟 מדהים! תרגיש את ההתקדמות!',
+  ],
+  en: [
+    '💪 You got this!',
+    '🔥 Keep it up!',
+    '⚡ Champion! One more!',
+    '🏆 Your body thanks you!',
+    '💥 Unstoppable!',
+    '🚀 On fire! Keep going!',
+    '👊 Strong! Breaking records!',
+    '🌟 Amazing! Feel the progress!',
+  ],
+};
 
 const WorkoutLogger = () => {
   const { routineId } = useParams();
@@ -39,6 +62,13 @@ const WorkoutLogger = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   const currentExercise = allExercises[currentIdx];
+  const nextExercise = currentIdx < allExercises.length - 1 ? allExercises[currentIdx + 1] : null;
+
+  // Encouragement message based on exercise index
+  const encouragement = useMemo(() => {
+    const msgs = encouragements[lang] || encouragements.en;
+    return msgs[currentIdx % msgs.length];
+  }, [currentIdx, lang]);
 
   // Find last session data for current exercise
   const getLastSessionData = (exerciseId: string) => {
@@ -49,6 +79,16 @@ const WorkoutLogger = () => {
     return null;
   };
   const lastSessionData = currentExercise ? getLastSessionData(currentExercise.id) : null;
+
+  // Check for effort improvement: RPE dropped 20% or weight increased 20%
+  const effortImproved = useMemo(() => {
+    if (!lastSessionData || currentExercise?.isWarmup) return false;
+    const lastMaxWeight = Math.max(...lastSessionData.sets.map(s => s.weight), 0);
+    const currentMaxWeight = Math.max(...sets.map(s => s.weight), 0);
+    const weightImproved = lastMaxWeight > 0 && currentMaxWeight >= lastMaxWeight * 1.2;
+    const rpeImproved = lastSessionData.rpe > 0 && rpe <= lastSessionData.rpe * 0.8;
+    return weightImproved || rpeImproved;
+  }, [lastSessionData, sets, rpe, currentExercise]);
 
   const [initialRestoreDone, setInitialRestoreDone] = useState(false);
   const prevIdxRef = useRef<number | null>(null);
@@ -78,7 +118,6 @@ const WorkoutLogger = () => {
 
   useEffect(() => {
     if (!initialRestoreDone) return;
-    // Skip if currentIdx hasn't actually changed (prevents overwriting restored state)
     if (prevIdxRef.current === currentIdx) {
       prevIdxRef.current = null;
       return;
@@ -123,7 +162,6 @@ const WorkoutLogger = () => {
   const toggleSet = (idx: number) => {
     const wasCompleted = sets[idx].completed;
     setSets(prev => prev.map((s, i) => i === idx ? { ...s, completed: !s.completed } : s));
-    // Auto-start rest timer when completing a set (not un-completing)
     if (!wasCompleted) {
       setShowRestTimer(true);
     }
@@ -164,7 +202,6 @@ const WorkoutLogger = () => {
       };
       addWorkout(session);
       setCompleted(true);
-      // Clear saved progress
       localStorage.removeItem(`fitlog-inprogress-${routineId}`);
       confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
     }
@@ -207,14 +244,14 @@ const WorkoutLogger = () => {
         )}
       </AnimatePresence>
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      {/* Header with routine title */}
+      <div className="flex items-center justify-between mb-1">
         <button onClick={() => navigate('/workout')} className="text-muted-foreground">
           <X className="w-6 h-6" />
         </button>
-        <span className="text-xs text-muted-foreground">
-          {currentIdx + 1} / {allExercises.length}
-        </span>
+        <h1 className="text-sm font-bold text-foreground truncate max-w-[60%] text-center">
+          {lang === 'he' ? routine.nameHe : routine.name}
+        </h1>
         <button
           className="w-8 h-8 flex items-center justify-center rounded-lg active:bg-secondary transition-colors"
           onClick={() => {
@@ -235,11 +272,26 @@ const WorkoutLogger = () => {
           )}
         </button>
       </div>
+      <div className="text-center mb-2">
+        <span className="text-xs text-muted-foreground">
+          {currentIdx + 1} / {allExercises.length}
+        </span>
+      </div>
 
       {/* Progress bar */}
-      <div className="h-1 bg-secondary rounded-full mb-5 overflow-hidden">
+      <div className="h-1 bg-secondary rounded-full mb-3 overflow-hidden">
         <motion.div className="h-full gradient-primary rounded-full" animate={{ width: `${progress}%` }} transition={{ duration: 0.3 }} />
       </div>
+
+      {/* Encouragement */}
+      <motion.p
+        key={currentIdx}
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center text-sm font-medium text-accent mb-3"
+      >
+        {encouragement}
+      </motion.p>
 
       {isWarmup && (
         <span className="inline-block text-[10px] font-semibold bg-accent/20 text-accent px-2 py-0.5 rounded mb-2">{t('wl.warmup')}</span>
@@ -409,6 +461,18 @@ const WorkoutLogger = () => {
             </div>
           )}
 
+          {/* Effort Improvement Badge */}
+          {effortImproved && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mt-3 flex items-center gap-2 bg-primary/15 border border-primary/30 rounded-xl px-3 py-2"
+            >
+              <Zap className="w-5 h-5 text-primary" />
+              <span className="text-sm font-bold text-primary">{t('wl.effortImproved')}</span>
+            </motion.div>
+          )}
+
           <div className="mt-4">
             <textarea
               value={notes}
@@ -417,6 +481,17 @@ const WorkoutLogger = () => {
               className="w-full bg-secondary rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary resize-none h-16"
             />
           </div>
+
+          {/* Next exercise preview */}
+          {nextExercise && (
+            <div className="mt-3 flex items-center gap-2 bg-secondary/60 rounded-lg px-3 py-2">
+              <ChevronRight className={`w-4 h-4 text-muted-foreground ${lang === 'he' ? 'rotate-180' : ''}`} />
+              <span className="text-xs text-muted-foreground">{t('wl.nextUp')}</span>
+              <span className="text-xs font-medium text-foreground">
+                {lang === 'he' ? (nextExercise.nameHe || nextExercise.name) : nextExercise.name}
+              </span>
+            </div>
+          )}
         </motion.div>
       </AnimatePresence>
 
