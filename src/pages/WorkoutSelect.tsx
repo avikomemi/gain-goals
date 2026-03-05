@@ -5,7 +5,7 @@ import { routines } from '../data/routines';
 import { useI18n } from '../i18n/I18nProvider';
 import { useApp } from '../context/AppContext';
 import SensitivityWarning from '../components/SensitivityWarning';
-import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Star, ArrowUp, ArrowDown, Settings2 } from 'lucide-react';
+import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Star, ArrowUp, ArrowDown, Settings2, RotateCcw } from 'lucide-react';
 
 const WorkoutSelect = () => {
   const navigate = useNavigate();
@@ -28,6 +28,8 @@ const WorkoutSelect = () => {
     return routines.map(r => r.id);
   });
 
+  const defaultOrder = routines.map(r => r.id);
+
   useEffect(() => {
     localStorage.setItem('fitlog-routine-order', JSON.stringify(routineOrder));
   }, [routineOrder]);
@@ -43,6 +45,9 @@ const WorkoutSelect = () => {
     [newOrder[index], newOrder[targetIndex]] = [newOrder[targetIndex], newOrder[index]];
     setRoutineOrder(newOrder);
   };
+
+  const resetOrder = () => setRoutineOrder(defaultOrder);
+  const isCustomOrder = JSON.stringify(routineOrder) !== JSON.stringify(defaultOrder);
 
   // Determine next workout based on rotation
   const getNextRoutineId = () => {
@@ -60,15 +65,26 @@ const WorkoutSelect = () => {
           {lang === 'he' ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
           {t('nav.back')}
         </button>
-        <button
-          onClick={() => setEditMode(!editMode)}
-          className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full transition-all ${
-            editMode ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Settings2 className="w-3.5 h-3.5" />
-          {lang === 'he' ? 'סדר' : 'Order'}
-        </button>
+        <div className="flex items-center gap-2">
+          {editMode && isCustomOrder && (
+            <button
+              onClick={resetOrder}
+              className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              {lang === 'he' ? 'איפוס' : 'Reset'}
+            </button>
+          )}
+          <button
+            onClick={() => setEditMode(!editMode)}
+            className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full transition-all ${
+              editMode ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Settings2 className="w-3.5 h-3.5" />
+            {lang === 'he' ? 'סדר' : 'Order'}
+          </button>
+        </div>
       </div>
 
       <h1 className="text-2xl font-bold mb-2">{t('ws.title')}</h1>
