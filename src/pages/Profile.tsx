@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n/I18nProvider';
 import SensitivityWarning from '../components/SensitivityWarning';
-import { Plus, Globe } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 const Profile = () => {
   const { profile, addWeightEntry } = useApp();
@@ -34,30 +34,26 @@ const Profile = () => {
       </motion.div>
 
       {/* Language Switcher */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }} className="bg-card border border-border rounded-xl p-4 mb-4">
-        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-          <Globe className="w-4 h-4 text-primary" />
-          {t('prof.language')}
-        </h3>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setLang('he')}
-            className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${
-              lang === 'he' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
-            }`}
-          >
-            עברית
-          </button>
-          <button
-            onClick={() => setLang('en')}
-            className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${
-              lang === 'en' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
-            }`}
-          >
-            English
-          </button>
-        </div>
-      </motion.div>
+      <div className="flex justify-end mb-4 gap-2">
+        <button
+          onClick={() => setLang('he')}
+          className={`w-10 h-10 rounded-full flex items-center justify-center text-xl transition-all border-2 ${
+            lang === 'he' ? 'border-primary shadow-md scale-110' : 'border-transparent opacity-60 hover:opacity-100'
+          }`}
+          aria-label="עברית"
+        >
+          🇮🇱
+        </button>
+        <button
+          onClick={() => setLang('en')}
+          className={`w-10 h-10 rounded-full flex items-center justify-center text-xl transition-all border-2 ${
+            lang === 'en' ? 'border-primary shadow-md scale-110' : 'border-transparent opacity-60 hover:opacity-100'
+          }`}
+          aria-label="English"
+        >
+          🇺🇸
+        </button>
+      </div>
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-card border border-border rounded-xl p-4 mb-4">
         <h3 className="text-sm font-semibold mb-3">{t('prof.personal')}</h3>
