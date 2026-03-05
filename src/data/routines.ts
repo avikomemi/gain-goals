@@ -36,20 +36,6 @@ export const routines: Routine[] = [
     ],
   },
   {
-    id: 'calisthenics-lower',
-    name: 'Calisthenics Lower',
-    nameHe: 'קליסטניקס — פלג גוף תחתון',
-    icon: '🦵',
-    warmup: commonWarmup,
-    exercises: [
-      { id: 'cl-1', name: 'Single Pistol Squat', nameHe: 'סקוואט אקדח', sets: '3', reps: '4-6', notes: '45 ס"מ' },
-      { id: 'cl-2', name: 'Forward Step Up', nameHe: 'עליית מדרגה קדימה', sets: '3', reps: '4-6', notes: '45 ס"מ' },
-      { id: 'cl-3', name: 'Sideways Step Up', nameHe: 'עליית מדרגה צידית', sets: '3', reps: '4-6', notes: '45 ס"מ' },
-      { id: 'cl-4', name: 'Cossack Squat', nameHe: 'סקוואט קוזאק', sets: '3', reps: '6-8', notes: 'הוסף משקל אם קל' },
-      { id: 'cl-5', name: 'Leg Press', nameHe: 'מכבש רגליים', sets: '3', reps: '8', notes: '⚠️ אל תלך חזק ונמוך' },
-    ],
-  },
-  {
     id: 'calisthenics-upper',
     name: 'Calisthenics Upper',
     nameHe: 'קליסטניקס — פלג גוף עליון',
@@ -65,6 +51,20 @@ export const routines: Routine[] = [
       { id: 'cu-7', name: 'Australian Pull-ups', nameHe: 'מתח אוסטרלי', sets: '3', reps: '10-15' },
       { id: 'cu-8', name: 'Handstand', nameHe: 'עמידת ידיים', sets: '3', reps: '20-30 שניות', notes: 'כנגד קיר או חופשי — שמור על גוף ישר' },
       { id: 'cu-9', name: 'Muscle-up', nameHe: 'מאסל-אפ', sets: '3', reps: '3-5', notes: 'שלב מתח פיצוצי + מעבר לשקע', link: 'https://www.youtube.com/watch?v=2H2gJMPVaEI' },
+    ],
+  },
+  {
+    id: 'calisthenics-lower',
+    name: 'Calisthenics Lower',
+    nameHe: 'קליסטניקס — פלג גוף תחתון',
+    icon: '🦵',
+    warmup: commonWarmup,
+    exercises: [
+      { id: 'cl-1', name: 'Single Pistol Squat', nameHe: 'סקוואט אקדח', sets: '3', reps: '4-6', notes: '45 ס"מ' },
+      { id: 'cl-2', name: 'Forward Step Up', nameHe: 'עליית מדרגה קדימה', sets: '3', reps: '4-6', notes: '45 ס"מ' },
+      { id: 'cl-3', name: 'Sideways Step Up', nameHe: 'עליית מדרגה צידית', sets: '3', reps: '4-6', notes: '45 ס"מ' },
+      { id: 'cl-4', name: 'Cossack Squat', nameHe: 'סקוואט קוזאק', sets: '3', reps: '6-8', notes: 'הוסף משקל אם קל' },
+      { id: 'cl-5', name: 'Leg Press', nameHe: 'מכבש רגליים', sets: '3', reps: '8', notes: '⚠️ אל תלך חזק ונמוך' },
     ],
   },
 ];
