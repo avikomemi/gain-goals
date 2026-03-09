@@ -21,12 +21,12 @@ export const routines: Routine[] = [
     exercises: [
       { id: 'skb-1', name: 'Single KB Press', nameHe: 'לחיצת קטלבל בודד', sets: '3', reps: '6-8', notes: 'יד חופשית מבצעת תנועה הפוכה' },
       { id: 'skb-2', name: 'KB Swing', nameHe: 'סווינג קטלבל', sets: '3', reps: '10', notes: 'אל תקשת את הגב התחתון, נשיפה חזקה' },
-      { id: 'skb-3', name: 'Drop Lands', nameHe: 'נחיתות', sets: '3', reps: '3-4', notes: '30-45 ס"מ — ⚡ נעל את הנחיתה!' },
-      { id: 'skb-4', name: 'Box Jump', nameHe: 'קפיצה לקופסה', sets: '3', reps: '3-4', notes: '30-45 ס"מ — שלוש הרחבות: ירך-ברך-קרסול' },
-      { id: 'skb-5', name: 'Drop Jump', nameHe: 'קפיצת נפילה', sets: '3-4', reps: '2-3', notes: '15-20 ס"מ, נחיתה בפיצול — ⚡ נעל את הנחיתה!' },
-      { id: 'skb-6', name: 'FLOW', nameHe: 'פלואו — שחק עם תנועות', sets: '1', reps: 'חופשי', link: 'https://youtube.com/shorts/y_6i7nGHAio' },
+      { id: 'skb-3', name: 'Drop Lands', nameHe: 'נחיתות', sets: '3', reps: '3-4', notes: '30-45 ס"מ — ⚡ נעל את הנחיתה!', isBodyweight: true },
+      { id: 'skb-4', name: 'Box Jump', nameHe: 'קפיצה לקופסה', sets: '3', reps: '3-4', notes: '30-45 ס"מ — שלוש הרחבות: ירך-ברך-קרסול', isBodyweight: true },
+      { id: 'skb-5', name: 'Drop Jump', nameHe: 'קפיצת נפילה', sets: '3-4', reps: '2-3', notes: '15-20 ס"מ, נחיתה בפיצול — ⚡ נעל את הנחיתה!', isBodyweight: true },
+      { id: 'skb-6', name: 'FLOW', nameHe: 'פלואו — שחק עם תנועות', sets: '1', reps: 'חופשי', link: 'https://youtube.com/shorts/y_6i7nGHAio', isBodyweight: true },
       {
-        id: 'skb-7', name: 'Thoracic Mobility', nameHe: 'ניידות בית החזה', sets: '1', reps: 'ראה פירוט', isMobility: true,
+        id: 'skb-7', name: 'Thoracic Mobility', nameHe: 'ניידות בית החזה', sets: '1', reps: 'ראה פירוט', isMobility: true, isBodyweight: true,
         subExercises: [
           { name: 'Bended Half Kneeling Archers Stretch', reps: '10 לכל צד' },
           { name: 'Quadruped T-Spine Rotation', reps: '10 לכל צד' },
