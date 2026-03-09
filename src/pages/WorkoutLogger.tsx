@@ -127,16 +127,18 @@ const WorkoutLogger = () => {
       const numSets = parseInt(currentExercise.sets) || 1;
       const defaultReps = parseInt(currentExercise.reps) || 0;
       const lastData = getLastSessionData(currentExercise.id);
+      const exerciseIsBW = !!currentExercise.isBodyweight;
+      setIsBW(exerciseIsBW);
+      const defaultWeight = exerciseIsBW ? profile.weight : 0;
       
       if (lastData && lastData.sets.length > 0) {
-        // Use last session's reps/weight as defaults
         setSets(Array.from({ length: numSets }, (_, i) => ({
           reps: lastData.sets[i]?.reps ?? defaultReps,
-          weight: lastData.sets[i]?.weight ?? 0,
+          weight: lastData.sets[i]?.weight ?? defaultWeight,
           completed: false,
         })));
       } else {
-        setSets(Array.from({ length: numSets }, () => ({ reps: defaultReps, weight: 0, completed: false })));
+        setSets(Array.from({ length: numSets }, () => ({ reps: defaultReps, weight: defaultWeight, completed: false })));
       }
       setPainLevel(0);
       setRpe(5);
