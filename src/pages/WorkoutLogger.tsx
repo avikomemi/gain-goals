@@ -55,6 +55,7 @@ const WorkoutLogger = () => {
 
   // Rest timer state
   const [showRestTimer, setShowRestTimer] = useState(false);
+  const [isBW, setIsBW] = useState(false);
   const [restDuration, setRestDuration] = useState(() => {
     const saved = localStorage.getItem('fitlog-rest-duration');
     return saved ? parseInt(saved) : 90;
