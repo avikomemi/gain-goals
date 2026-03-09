@@ -102,6 +102,7 @@ const translations = {
   'wl.saved': { he: 'ההתקדמות נשמרה ✓', en: 'Progress saved ✓' },
   'wl.resuming': { he: 'ממשיך מהנקודה האחרונה', en: 'Resuming from last save' },
   'wl.lastSession': { he: 'אימון קודם', en: 'Last Session' },
+  'wl.bodyweight': { he: 'משקל גוף', en: 'Bodyweight' },
   'wl.noLastData': { he: 'אין נתונים קודמים', en: 'No previous data' },
   'wl.setsLabel': { he: 'סטים', en: 'Sets' },
   'wl.pain': { he: 'כאב', en: 'Pain' },

@@ -37,7 +37,7 @@ const encouragements = {
 const WorkoutLogger = () => {
   const { routineId } = useParams();
   const navigate = useNavigate();
-  const { addWorkout, workoutHistory } = useApp();
+  const { addWorkout, workoutHistory, profile } = useApp();
   const { t, lang } = useI18n();
 
   const routine = routines.find(r => r.id === routineId);
@@ -55,6 +55,7 @@ const WorkoutLogger = () => {
 
   // Rest timer state
   const [showRestTimer, setShowRestTimer] = useState(false);
+  const [isBW, setIsBW] = useState(false);
   const [restDuration, setRestDuration] = useState(() => {
     const saved = localStorage.getItem('fitlog-rest-duration');
     return saved ? parseInt(saved) : 90;
@@ -126,16 +127,18 @@ const WorkoutLogger = () => {
       const numSets = parseInt(currentExercise.sets) || 1;
       const defaultReps = parseInt(currentExercise.reps) || 0;
       const lastData = getLastSessionData(currentExercise.id);
+      const exerciseIsBW = !!currentExercise.isBodyweight;
+      setIsBW(exerciseIsBW);
+      const defaultWeight = exerciseIsBW ? profile.weight : 0;
       
       if (lastData && lastData.sets.length > 0) {
-        // Use last session's reps/weight as defaults
         setSets(Array.from({ length: numSets }, (_, i) => ({
           reps: lastData.sets[i]?.reps ?? defaultReps,
-          weight: lastData.sets[i]?.weight ?? 0,
+          weight: lastData.sets[i]?.weight ?? defaultWeight,
           completed: false,
         })));
       } else {
-        setSets(Array.from({ length: numSets }, () => ({ reps: defaultReps, weight: 0, completed: false })));
+        setSets(Array.from({ length: numSets }, () => ({ reps: defaultReps, weight: defaultWeight, completed: false })));
       }
       setPainLevel(0);
       setRpe(5);
@@ -411,6 +414,29 @@ const WorkoutLogger = () => {
           {/* Sets */}
           {!isWarmup && (
             <div className="mt-4 space-y-2">
+              {/* BW toggle for bodyweight exercises */}
+              {currentExercise.isBodyweight && (
+                <div className="flex items-center justify-between bg-secondary rounded-lg px-3 py-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold bg-accent/20 text-accent px-2 py-0.5 rounded">BW</span>
+                    <span className="text-xs text-muted-foreground">{t('wl.bodyweight')} ({profile.weight} {t('dash.kg')})</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const newBW = !isBW;
+                      setIsBW(newBW);
+                      if (newBW) {
+                        setSets(prev => prev.map(s => ({ ...s, weight: profile.weight })));
+                      } else {
+                        setSets(prev => prev.map(s => ({ ...s, weight: 0 })));
+                      }
+                    }}
+                    className={`w-10 h-5 rounded-full transition-all relative ${isBW ? 'bg-primary' : 'bg-muted'}`}
+                  >
+                    <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-primary-foreground transition-all ${isBW ? 'right-0.5' : 'left-0.5'}`} />
+                  </button>
+                </div>
+              )}
               <div className="flex text-[10px] text-muted-foreground px-1 mb-1">
                 <span className="w-10">{t('wl.set')}</span>
                 <span className="flex-1 text-center">{t('wl.reps')}</span>
@@ -427,13 +453,19 @@ const WorkoutLogger = () => {
                     className="flex-1 bg-secondary rounded px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                     placeholder="0"
                   />
-                  <input
-                    type="number"
-                    value={set.weight || ''}
-                    onChange={(e) => updateSetWeight(i, Number(e.target.value))}
-                    className="flex-1 bg-secondary rounded px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                    placeholder="0"
-                  />
+                  {isBW ? (
+                    <div className="flex-1 bg-secondary/50 rounded px-2 py-1.5 text-center text-sm text-muted-foreground">
+                      {set.weight} <span className="text-[10px]">{t('dash.kg')}</span>
+                    </div>
+                  ) : (
+                    <input
+                      type="number"
+                      value={set.weight || ''}
+                      onChange={(e) => updateSetWeight(i, Number(e.target.value))}
+                      className="flex-1 bg-secondary rounded px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                      placeholder="0"
+                    />
+                  )}
                   <button
                     onClick={() => toggleSet(i)}
                     className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
