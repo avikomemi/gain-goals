@@ -37,7 +37,7 @@ const encouragements = {
 const WorkoutLogger = () => {
   const { routineId } = useParams();
   const navigate = useNavigate();
-  const { addWorkout, workoutHistory } = useApp();
+  const { addWorkout, workoutHistory, profile } = useApp();
   const { t, lang } = useI18n();
 
   const routine = routines.find(r => r.id === routineId);
