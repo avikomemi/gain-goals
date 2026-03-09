@@ -122,7 +122,7 @@ const RestTimer = ({ duration, onComplete, onSkip }: RestTimerProps) => {
               className="flex items-center gap-2 bg-secondary text-secondary-foreground rounded-xl px-5 py-3 text-sm font-medium"
             >
               <Minimize2 className="w-4 h-4" />
-              {t('timer.minimize') || 'Minimize'}
+              {'↓'}
             </button>
             <button
               onClick={onSkip}
