@@ -161,7 +161,6 @@ const WorkoutSelect = () => {
                     <Pencil className="w-4 h-4" />
                   </button>
                 )}
-                </motion.button>
               </motion.div>
             );
           })}
