@@ -1,5 +1,17 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { UserProfile, WorkoutSession, WeightEntry } from '../data/types';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { UserProfile, WorkoutSession, WeightEntry, Routine, Exercise } from '../data/types';
+import { routines as defaultRoutines } from '../data/routines';
+
+export interface ExerciseOverride {
+  name?: string;
+  nameHe?: string;
+  link?: string;
+}
+
+export interface RoutineCustomization {
+  exerciseOrder?: string[]; // ordered exercise IDs
+  exerciseOverrides?: Record<string, ExerciseOverride>;
+}
 
 interface AppState {
   profile: UserProfile;
@@ -8,6 +20,9 @@ interface AppState {
   addWorkout: (w: WorkoutSession) => void;
   updateWorkout: (w: WorkoutSession) => void;
   addWeightEntry: (e: WeightEntry) => void;
+  getCustomizedRoutine: (routineId: string) => Routine | undefined;
+  updateRoutineCustomization: (routineId: string, customization: RoutineCustomization) => void;
+  routineCustomizations: Record<string, RoutineCustomization>;
 }
 
 const defaultProfile: UserProfile = {
@@ -45,6 +60,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [routineCustomizations, setRoutineCustomizations] = useState<Record<string, RoutineCustomization>>(() => {
+    const saved = localStorage.getItem('fitlog-routine-customizations');
+    return saved ? JSON.parse(saved) : {};
+  });
+
   useEffect(() => {
     localStorage.setItem('fitlog-profile', JSON.stringify(profile));
   }, [profile]);
@@ -52,6 +72,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     localStorage.setItem('fitlog-workouts', JSON.stringify(workoutHistory));
   }, [workoutHistory]);
+
+  useEffect(() => {
+    localStorage.setItem('fitlog-routine-customizations', JSON.stringify(routineCustomizations));
+  }, [routineCustomizations]);
 
   const setProfile = (p: UserProfile) => setProfileState(p);
 
@@ -71,8 +95,53 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }));
   };
 
+  const getCustomizedRoutine = useCallback((routineId: string): Routine | undefined => {
+    const base = defaultRoutines.find(r => r.id === routineId);
+    if (!base) return undefined;
+    const custom = routineCustomizations[routineId];
+    if (!custom) return base;
+
+    const applyOverrides = (exercises: Exercise[]): Exercise[] => {
+      return exercises.map(ex => {
+        const override = custom.exerciseOverrides?.[ex.id];
+        if (!override) return ex;
+        return {
+          ...ex,
+          ...(override.name !== undefined && { name: override.name }),
+          ...(override.nameHe !== undefined && { nameHe: override.nameHe }),
+          ...(override.link !== undefined && { link: override.link || undefined }),
+        };
+      });
+    };
+
+    let customExercises = applyOverrides(base.exercises);
+
+    // Reorder if custom order exists
+    if (custom.exerciseOrder) {
+      const ordered: Exercise[] = [];
+      custom.exerciseOrder.forEach(id => {
+        const ex = customExercises.find(e => e.id === id);
+        if (ex) ordered.push(ex);
+      });
+      // Add any new exercises not in the custom order
+      customExercises.forEach(ex => {
+        if (!ordered.find(o => o.id === ex.id)) ordered.push(ex);
+      });
+      customExercises = ordered;
+    }
+
+    return { ...base, exercises: customExercises, warmup: applyOverrides(base.warmup) };
+  }, [routineCustomizations]);
+
+  const updateRoutineCustomization = (routineId: string, customization: RoutineCustomization) => {
+    setRoutineCustomizations(prev => ({
+      ...prev,
+      [routineId]: { ...prev[routineId], ...customization },
+    }));
+  };
+
   return (
-    <AppContext.Provider value={{ profile, setProfile, workoutHistory, addWorkout, updateWorkout, addWeightEntry }}>
+    <AppContext.Provider value={{ profile, setProfile, workoutHistory, addWorkout, updateWorkout, addWeightEntry, getCustomizedRoutine, updateRoutineCustomization, routineCustomizations }}>
       {children}
     </AppContext.Provider>
   );
