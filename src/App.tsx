@@ -35,6 +35,7 @@ const App = () => (
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/progress" element={<Progress />} />
                 <Route path="/report" element={<MonthlyReport />} />
+                <Route path="/share" element={<ShareProgress />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <BottomNav />
