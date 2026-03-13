@@ -24,7 +24,7 @@ export const routines: Routine[] = [
       { id: 'skb-3', name: 'Drop Lands', nameHe: 'נחיתות', sets: '3', reps: '3-4', notes: '30-45 ס"מ — ⚡ נעל את הנחיתה!', isBodyweight: true },
       { id: 'skb-4', name: 'Box Jump', nameHe: 'קפיצה לקופסה', sets: '3', reps: '3-4', notes: '30-45 ס"מ — שלוש הרחבות: ירך-ברך-קרסול', isBodyweight: true },
       { id: 'skb-5', name: 'Drop Jump', nameHe: 'קפיצת נפילה', sets: '3-4', reps: '2-3', notes: '15-20 ס"מ, נחיתה בפיצול — ⚡ נעל את הנחיתה!', isBodyweight: true },
-      { id: 'skb-6', name: 'FLOW', nameHe: 'פלואו — שחק עם תנועות', sets: '1', reps: 'חופשי', link: 'https://youtube.com/shorts/y_6i7nGHAio', isBodyweight: true },
+      { id: 'skb-6', name: 'FLOW', nameHe: 'פלואו — שחק עם תנועות', sets: '3', reps: '1', link: 'https://youtube.com/shorts/y_6i7nGHAio', isBodyweight: true },
       {
         id: 'skb-7', name: 'Thoracic Mobility', nameHe: 'ניידות בית החזה', sets: '1', reps: 'ראה פירוט', isMobility: true, isBodyweight: true,
         subExercises: [
