@@ -14,6 +14,7 @@ import Profile from "./pages/Profile";
 import Progress from "./pages/Progress";
 import MonthlyReport from "./pages/MonthlyReport";
 import ShareProgress from "./pages/ShareProgress";
+import RoutineEditor from "./pages/RoutineEditor";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
