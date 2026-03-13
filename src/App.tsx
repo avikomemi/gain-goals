@@ -37,6 +37,7 @@ const App = () => (
                 <Route path="/progress" element={<Progress />} />
                 <Route path="/report" element={<MonthlyReport />} />
                 <Route path="/share" element={<ShareProgress />} />
+                <Route path="/routine/edit/:routineId" element={<RoutineEditor />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <BottomNav />
