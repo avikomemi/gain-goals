@@ -6,7 +6,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar
 } from 'recharts';
-import { ChevronDown, FileText } from 'lucide-react';
+import { ChevronDown, FileText, Share2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Progress = () => {
