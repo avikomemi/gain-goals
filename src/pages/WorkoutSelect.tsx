@@ -153,6 +153,15 @@ const WorkoutSelect = () => {
                   </div>
                   {!editMode && (lang === 'he' ? <ChevronLeft className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />)}
                 </motion.button>
+                {editMode && (
+                  <button
+                    onClick={() => navigate(`/routine/edit/${routine.id}`)}
+                    className="p-2.5 rounded-xl bg-secondary text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                )}
+                </motion.button>
               </motion.div>
             );
           })}
