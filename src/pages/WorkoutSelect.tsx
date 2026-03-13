@@ -5,7 +5,7 @@ import { routines } from '../data/routines';
 import { useI18n } from '../i18n/I18nProvider';
 import { useApp } from '../context/AppContext';
 import SensitivityWarning from '../components/SensitivityWarning';
-import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Star, ArrowUp, ArrowDown, Settings2, RotateCcw } from 'lucide-react';
+import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Star, ArrowUp, ArrowDown, Settings2, RotateCcw, Pencil } from 'lucide-react';
 
 const WorkoutSelect = () => {
   const navigate = useNavigate();
@@ -153,6 +153,14 @@ const WorkoutSelect = () => {
                   </div>
                   {!editMode && (lang === 'he' ? <ChevronLeft className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />)}
                 </motion.button>
+                {editMode && (
+                  <button
+                    onClick={() => navigate(`/routine/edit/${routine.id}`)}
+                    className="p-2.5 rounded-xl bg-secondary text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                )}
               </motion.div>
             );
           })}

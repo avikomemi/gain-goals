@@ -14,6 +14,7 @@ import Profile from "./pages/Profile";
 import Progress from "./pages/Progress";
 import MonthlyReport from "./pages/MonthlyReport";
 import ShareProgress from "./pages/ShareProgress";
+import RoutineEditor from "./pages/RoutineEditor";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
                 <Route path="/progress" element={<Progress />} />
                 <Route path="/report" element={<MonthlyReport />} />
                 <Route path="/share" element={<ShareProgress />} />
+                <Route path="/routine/edit/:routineId" element={<RoutineEditor />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <BottomNav />
