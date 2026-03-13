@@ -13,6 +13,7 @@ import WorkoutEdit from "./pages/WorkoutEdit";
 import Profile from "./pages/Profile";
 import Progress from "./pages/Progress";
 import MonthlyReport from "./pages/MonthlyReport";
+import ShareProgress from "./pages/ShareProgress";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
