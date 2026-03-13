@@ -476,6 +476,25 @@ const WorkoutLogger = () => {
                   </button>
                 </div>
               ))}
+              <div className="flex justify-center gap-3 mt-2">
+                <button
+                  onClick={() => setSets(prev => prev.length > 1 ? prev.slice(0, -1) : prev)}
+                  disabled={sets.length <= 1}
+                  className="w-8 h-8 rounded-full bg-secondary text-foreground flex items-center justify-center text-lg font-bold disabled:opacity-30 active:scale-90 transition-all"
+                >
+                  −
+                </button>
+                <span className="text-xs text-muted-foreground self-center">{sets.length} {t('wl.setsLabel')}</span>
+                <button
+                  onClick={() => {
+                    const lastSet = sets[sets.length - 1];
+                    setSets(prev => [...prev, { reps: lastSet?.reps || 0, weight: lastSet?.weight || 0, completed: false }]);
+                  }}
+                  className="w-8 h-8 rounded-full bg-secondary text-foreground flex items-center justify-center text-lg font-bold active:scale-90 transition-all"
+                >
+                  +
+                </button>
+              </div>
             </div>
           )}
 
