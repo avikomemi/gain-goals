@@ -13,6 +13,7 @@ import WorkoutEdit from "./pages/WorkoutEdit";
 import Profile from "./pages/Profile";
 import Progress from "./pages/Progress";
 import MonthlyReport from "./pages/MonthlyReport";
+import ShareProgress from "./pages/ShareProgress";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/progress" element={<Progress />} />
                 <Route path="/report" element={<MonthlyReport />} />
+                <Route path="/share" element={<ShareProgress />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <BottomNav />

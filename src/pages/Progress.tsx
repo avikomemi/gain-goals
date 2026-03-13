@@ -6,7 +6,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar
 } from 'recharts';
-import { ChevronDown, FileText } from 'lucide-react';
+import { ChevronDown, FileText, Share2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Progress = () => {
@@ -313,6 +313,18 @@ const Progress = () => {
       {workoutHistory.length === 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
           <p className="text-muted-foreground">{t('prog.doWorkouts')}</p>
+        </motion.div>
+      )}
+
+      {workoutHistory.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4">
+          <button
+            onClick={() => navigate('/share')}
+            className="w-full gradient-primary text-primary-foreground rounded-xl py-3 font-medium flex items-center justify-center gap-2 active:scale-95 transition-transform"
+          >
+            <Share2 className="w-5 h-5" />
+            {t('share.button')}
+          </button>
         </motion.div>
       )}
     </div>

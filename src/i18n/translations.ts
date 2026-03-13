@@ -144,6 +144,14 @@ const translations = {
   // Workout encouragement
   'wl.nextUp': { he: 'הבא:', en: 'Next up:' },
   'wl.effortImproved': { he: '🔥 שיפור מאמץ!', en: '🔥 Effort Improved!' },
+
+  // Share
+  'share.title': { he: 'שיתוף עם מאמן', en: 'Share with Trainer' },
+  'share.noData': { he: 'אין אימונים לשתף עדיין', en: 'No workouts to share yet' },
+  'share.copy': { he: 'העתק', en: 'Copy' },
+  'share.copied': { he: 'הועתק! ✓', en: 'Copied! ✓' },
+  'share.send': { he: 'שתף', en: 'Share' },
+  'share.button': { he: 'שתף עם מאמן', en: 'Share with Trainer' },
 } as const;
 
 export type TransKey = keyof typeof translations;
