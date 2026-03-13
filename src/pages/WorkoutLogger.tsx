@@ -348,10 +348,17 @@ const WorkoutLogger = () => {
           {currentExercise.subExercises && (
             <div className="space-y-2 mb-4">
               {currentExercise.subExercises.map((sub, i) => (
-                <div key={i} className="bg-secondary rounded-lg px-3 py-2 text-sm">
-                  <span className="font-medium">{sub.name}</span>
-                  <span className="text-muted-foreground mx-2">— {sub.reps}</span>
-                </div>
+                <label key={i} className="flex items-center gap-3 bg-secondary rounded-lg px-3 py-2.5 text-sm cursor-pointer active:scale-[0.98] transition-transform">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded accent-primary"
+                    onChange={() => {}}
+                  />
+                  <div className="flex-1">
+                    <span className="font-medium">{sub.name}</span>
+                    <span className="text-muted-foreground mx-2">— {sub.reps}</span>
+                  </div>
+                </label>
               ))}
             </div>
           )}
