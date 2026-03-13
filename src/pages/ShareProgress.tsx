@@ -151,7 +151,7 @@ const ShareProgress = () => {
               onClick={handleCopy}
               className="flex-1 bg-secondary text-foreground rounded-xl py-3 font-medium flex items-center justify-center gap-2 active:scale-95 transition-transform"
             >
-              {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
+              {copied ? <Check className="w-5 h-5 text-primary" /> : <Copy className="w-5 h-5" />}
               {copied ? t('share.copied') : t('share.copy')}
             </motion.button>
 
