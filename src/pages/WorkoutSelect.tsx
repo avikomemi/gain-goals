@@ -5,7 +5,7 @@ import { routines } from '../data/routines';
 import { useI18n } from '../i18n/I18nProvider';
 import { useApp } from '../context/AppContext';
 import SensitivityWarning from '../components/SensitivityWarning';
-import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Star, ArrowUp, ArrowDown, Settings2, RotateCcw } from 'lucide-react';
+import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Star, ArrowUp, ArrowDown, Settings2, RotateCcw, Pencil } from 'lucide-react';
 
 const WorkoutSelect = () => {
   const navigate = useNavigate();
