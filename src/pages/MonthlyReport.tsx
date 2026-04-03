@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n/I18nProvider';
-import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, Dumbbell, Calendar, Clock, Flame, Award, ArrowLeft, Zap, Target, AlertTriangle, Sparkles, Heart, Activity, BarChart3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, Dumbbell, Calendar, Clock, Flame, Award, ArrowLeft, Zap, Target, AlertTriangle, Sparkles, Heart, Activity, BarChart3, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import CircularGauge from '../components/report/CircularGauge';
