@@ -7,6 +7,7 @@ export interface Exercise {
   notes?: string;
   isWarmup?: boolean;
   isBodyweight?: boolean;
+  isTimeBased?: boolean;
   link?: string;
   isMobility?: boolean;
   subExercises?: { name: string; reps: string }[];

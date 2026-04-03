@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n/I18nProvider';
-import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, Dumbbell, Calendar, Clock, Flame, Award, ArrowLeft, Zap, Target, AlertTriangle, Sparkles, Heart, Activity, BarChart3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, Dumbbell, Calendar, Clock, Flame, Award, ArrowLeft, Zap, Target, AlertTriangle, Sparkles, Heart, Activity, BarChart3, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import CircularGauge from '../components/report/CircularGauge';
@@ -131,7 +131,7 @@ const MonthlyReport = () => {
 
   const [monthOffset, setMonthOffset] = useState(0);
   const [expandedExercise, setExpandedExercise] = useState<number | null>(null);
-
+  const [showScoreInfo, setShowScoreInfo] = useState(false);
   const targetMonth = useMemo(() => {
     const d = new Date(); d.setMonth(d.getMonth() - monthOffset); return d;
   }, [monthOffset]);
@@ -346,6 +346,52 @@ const MonthlyReport = () => {
               { label: isHe ? 'גמישות' : 'Flexibility', sublabel: isHe ? 'עקביות + כאב' : 'Consist + Pain', score: flexibilityScore, color: 'hsl(280, 70%, 60%)' },
             ]}
           />
+
+          {/* Score Info Toggle */}
+          <button
+            onClick={() => setShowScoreInfo(!showScoreInfo)}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mx-auto"
+          >
+            <Info className="w-3.5 h-3.5" />
+            {isHe ? 'כיצד מחושבים הציונים?' : 'How are scores calculated?'}
+          </button>
+          <AnimatePresence>
+            {showScoreInfo && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="bg-card border border-border rounded-xl p-4 space-y-3 text-xs">
+                  <div>
+                    <p className="font-semibold text-green-400 mb-1">💪 {isHe ? 'כוח' : 'Strength'}</p>
+                    <p className="text-muted-foreground leading-relaxed">
+                      {isHe
+                        ? 'מבוסס על שינוי בנפח כולל (40%), משקל מקסימלי שהורם (30%), ועקביות באימונים (30%). עליית נפח וחזרה לאימונים באופן קבוע משפרים את הציון.'
+                        : 'Based on total volume change (40%), max weight lifted (30%), and training consistency (30%). Increasing volume and training regularly improves the score.'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-blue-400 mb-1">🎯 {isHe ? 'חיטוב' : 'Toning'}</p>
+                    <p className="text-muted-foreground leading-relaxed">
+                      {isHe
+                        ? 'מבוסס על סה"כ חזרות (35%), סה"כ סטים (30%), ותדירות אימונים (35%). נפח גבוה עם תדירות גבוהה מעידים על חיטוב יעיל.'
+                        : 'Based on total reps (35%), total sets (30%), and training frequency (35%). High volume with high frequency indicates effective toning.'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-purple-400 mb-1">🧘 {isHe ? 'גמישות' : 'Flexibility'}</p>
+                    <p className="text-muted-foreground leading-relaxed">
+                      {isHe
+                        ? 'מבוסס על עקביות אימונים (50%), רמת כאב נמוכה (30%), וזמן אימון כולל (20%). אימון עקבי עם כאב מינימלי מעיד על גמישות טובה ומפרקים בריאים.'
+                        : 'Based on training consistency (50%), low pain levels (30%), and total training time (20%). Consistent training with minimal pain indicates good flexibility and joint health.'}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* === SMART INSIGHTS === */}
           {insights.length > 0 && (

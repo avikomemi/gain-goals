@@ -7,7 +7,7 @@ import { useI18n } from '../i18n/I18nProvider';
 import { ExerciseLog, SetLog, WorkoutSession } from '../data/types';
 import SensitivityWarning from '../components/SensitivityWarning';
 import RestTimer from '../components/RestTimer';
-import { ChevronLeft, ChevronRight, Check, SkipForward, ExternalLink, AlertTriangle, Trophy, X, Timer, Save, Loader2, History, Zap } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, SkipForward, ExternalLink, AlertTriangle, Trophy, X, Timer, Save, Loader2, History, Zap, Minus, Plus } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
 
@@ -52,6 +52,10 @@ const WorkoutLogger = () => {
   const [painLevel, setPainLevel] = useState(0);
   const [rpe, setRpe] = useState(5);
   const [notes, setNotes] = useState('');
+  const [exerciseCompleted, setExerciseCompleted] = useState(false);
+
+  // Warmup reps tracking
+  const [warmupReps, setWarmupReps] = useState(0);
 
   // Rest timer state
   const [showRestTimer, setShowRestTimer] = useState(false);
@@ -64,6 +68,7 @@ const WorkoutLogger = () => {
 
   const currentExercise = allExercises[currentIdx];
   const nextExercise = currentIdx < allExercises.length - 1 ? allExercises[currentIdx + 1] : null;
+  const isHe = lang === 'he';
 
   // Encouragement message based on exercise index
   const encouragement = useMemo(() => {
@@ -81,7 +86,7 @@ const WorkoutLogger = () => {
   };
   const lastSessionData = currentExercise ? getLastSessionData(currentExercise.id) : null;
 
-  // Check for effort improvement: RPE dropped 20% or weight increased 20%
+  // Check for effort improvement
   const effortImproved = useMemo(() => {
     if (!lastSessionData || currentExercise?.isWarmup) return false;
     const lastMaxWeight = Math.max(...lastSessionData.sets.map(s => s.weight), 0);
@@ -110,6 +115,12 @@ const WorkoutLogger = () => {
           setPainLevel(data.currentExercise.painLevel);
           setRpe(data.currentExercise.rpe);
           setNotes(data.currentExercise.notes);
+          if (data.currentExercise.exerciseCompleted !== undefined) {
+            setExerciseCompleted(data.currentExercise.exerciseCompleted);
+          }
+          if (data.currentExercise.warmupReps !== undefined) {
+            setWarmupReps(data.currentExercise.warmupReps);
+          }
         }
         toast(t('wl.resuming'));
       } catch {}
@@ -129,16 +140,22 @@ const WorkoutLogger = () => {
       const lastData = getLastSessionData(currentExercise.id);
       const exerciseIsBW = !!currentExercise.isBodyweight;
       setIsBW(exerciseIsBW);
-      const defaultWeight = exerciseIsBW ? profile.weight : 0;
-      
-      if (lastData && lastData.sets.length > 0) {
+      setExerciseCompleted(false);
+      const defaultWeight = currentExercise.isTimeBased ? 0 : (exerciseIsBW ? profile.weight : 0);
+
+      if (currentExercise.isWarmup) {
+        setWarmupReps(defaultReps);
+        setSets([]);
+      } else if (lastData && lastData.sets.length > 0) {
         setSets(Array.from({ length: numSets }, (_, i) => ({
           reps: lastData.sets[i]?.reps ?? defaultReps,
           weight: lastData.sets[i]?.weight ?? defaultWeight,
           completed: false,
         })));
+        setWarmupReps(0);
       } else {
         setSets(Array.from({ length: numSets }, () => ({ reps: defaultReps, weight: defaultWeight, completed: false })));
+        setWarmupReps(0);
       }
       setPainLevel(0);
       setRpe(5);
@@ -158,12 +175,12 @@ const WorkoutLogger = () => {
       localStorage.setItem(`fitlog-inprogress-${routineId}`, JSON.stringify({
         logs,
         currentIdx,
-        currentExercise: { sets, painLevel, rpe, notes },
+        currentExercise: { sets, painLevel, rpe, notes, exerciseCompleted, warmupReps },
       }));
       setTimeout(() => setIsSaving(false), 600);
     }, 10000);
     return () => clearInterval(interval);
-  }, [completed, routineId, logs, currentIdx, sets, painLevel, rpe, notes]);
+  }, [completed, routineId, logs, currentIdx, sets, painLevel, rpe, notes, exerciseCompleted, warmupReps]);
 
   if (!routine) {
     return (
@@ -193,7 +210,7 @@ const WorkoutLogger = () => {
     const log: ExerciseLog = {
       exerciseId: currentExercise.id,
       exerciseName: currentExercise.name,
-      sets: skipped ? [] : sets,
+      sets: skipped ? [] : (currentExercise.isWarmup ? [{ reps: warmupReps, weight: 0, completed: exerciseCompleted }] : sets),
       skipped,
       notes,
       painLevel,
@@ -244,6 +261,7 @@ const WorkoutLogger = () => {
 
   const progress = ((currentIdx + 1) / allExercises.length) * 100;
   const isWarmup = currentExercise?.isWarmup;
+  const isTimeBased = currentExercise?.isTimeBased;
 
   return (
     <div className="min-h-screen pb-6 px-4 pt-4">
@@ -274,7 +292,7 @@ const WorkoutLogger = () => {
             localStorage.setItem(`fitlog-inprogress-${routineId}`, JSON.stringify({
               logs,
               currentIdx,
-              currentExercise: { sets, painLevel, rpe, notes },
+              currentExercise: { sets, painLevel, rpe, notes, exerciseCompleted, warmupReps },
             }));
             setTimeout(() => setIsSaving(false), 700);
           }}
@@ -365,6 +383,42 @@ const WorkoutLogger = () => {
 
           <SensitivityWarning compact />
 
+          {/* Exercise Completed Toggle */}
+          <div className="mt-4 flex items-center justify-between bg-secondary rounded-lg px-3 py-2.5">
+            <span className="text-xs font-medium">{isHe ? 'בוצע?' : 'Completed?'}</span>
+            <button
+              onClick={() => setExerciseCompleted(!exerciseCompleted)}
+              className={`w-10 h-6 rounded-full transition-all relative ${exerciseCompleted ? 'bg-green-500' : 'bg-muted'}`}
+            >
+              <span className={`absolute top-1 w-4 h-4 rounded-full bg-primary-foreground transition-all ${exerciseCompleted ? 'right-1' : 'left-1'}`} />
+            </button>
+          </div>
+
+          {/* Warmup reps counter */}
+          {isWarmup && (
+            <div className="mt-4 bg-card border border-border rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">{t('wl.reps')}</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setWarmupReps(prev => Math.max(0, prev - 1))}
+                    className="w-8 h-8 rounded-full bg-secondary text-foreground flex items-center justify-center active:scale-90 transition-all"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="text-xl font-bold w-10 text-center">{warmupReps}</span>
+                  <button
+                    onClick={() => setWarmupReps(prev => prev + 1)}
+                    className="w-8 h-8 rounded-full bg-secondary text-foreground flex items-center justify-center active:scale-90 transition-all"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">{isHe ? 'מומלץ' : 'Suggested'}: {currentExercise.reps}</p>
+            </div>
+          )}
+
           {/* Rest duration config */}
           {!isWarmup && (
             <div className="mt-4 flex items-center gap-3 bg-secondary rounded-lg px-3 py-2">
@@ -395,10 +449,13 @@ const WorkoutLogger = () => {
               </div>
               <div className="space-y-1.5">
                 {lastSessionData.sets.map((s, i) => (
-                  <div key={i} className="flex items-center text-xs text-muted-foreground gap-2">
-                    <span className="w-8 text-center">{t('wl.set')} {i + 1}</span>
+                  <div key={i} className="flex items-center text-xs text-muted-foreground">
+                    <span className="w-10 text-center">{t('wl.set')} {i + 1}</span>
                     <span className="flex-1 text-center">{s.reps} {t('wl.reps')}</span>
-                    <span className="flex-1 text-center">{s.weight > 0 ? `${s.weight} ${t('dash.kg')}` : '—'}</span>
+                    <span className="flex-1 text-center">
+                      {isTimeBased ? `${s.weight > 0 ? s.weight : '—'}s` : (s.weight > 0 ? `${s.weight} ${t('dash.kg')}` : '—')}
+                    </span>
+                    <span className="w-10" />
                   </div>
                 ))}
               </div>
@@ -422,7 +479,7 @@ const WorkoutLogger = () => {
           {!isWarmup && (
             <div className="mt-4 space-y-2">
               {/* BW toggle for bodyweight exercises */}
-              {currentExercise.isBodyweight && (
+              {currentExercise.isBodyweight && !isTimeBased && (
                 <div className="flex items-center justify-between bg-secondary rounded-lg px-3 py-2 mb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold bg-accent/20 text-accent px-2 py-0.5 rounded">BW</span>
@@ -444,38 +501,67 @@ const WorkoutLogger = () => {
                   </button>
                 </div>
               )}
-              <div className="flex text-[10px] text-muted-foreground px-1 mb-1">
-                <span className="w-10">{t('wl.set')}</span>
-                <span className="flex-1 text-center">{t('wl.reps')}</span>
-                <span className="flex-1 text-center">{t('wl.weight')}</span>
-                <span className="w-10 text-center">✓</span>
+              {/* Column headers */}
+              <div className="flex items-center px-2 mb-1">
+                <span className="w-10 text-[10px] text-muted-foreground text-center">{t('wl.set')}</span>
+                <span className="flex-1 text-[10px] text-muted-foreground text-center">{t('wl.reps')}</span>
+                <span className="flex-1 text-[10px] text-muted-foreground text-center">
+                  {isTimeBased ? (isHe ? 'שניות' : 'Seconds') : t('wl.weight')}
+                </span>
+                <span className="w-10 text-[10px] text-muted-foreground text-center">✓</span>
               </div>
               {sets.map((set, i) => (
                 <div key={i} className="flex items-center gap-2 bg-card border border-border rounded-lg px-2 py-2">
-                  <span className="w-8 text-xs text-muted-foreground text-center">{i + 1}</span>
-                  <input
-                    type="number"
-                    value={set.reps || ''}
-                    onChange={(e) => updateSetReps(i, Number(e.target.value))}
-                    className="flex-1 bg-secondary rounded px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                    placeholder="0"
-                  />
-                  {isBW ? (
-                    <div className="flex-1 bg-secondary/50 rounded px-2 py-1.5 text-center text-sm text-muted-foreground">
-                      {set.weight} <span className="text-[10px]">{t('dash.kg')}</span>
-                    </div>
-                  ) : (
+                  <span className="w-10 text-xs text-muted-foreground text-center">{i + 1}</span>
+                  {/* Reps with +/- buttons */}
+                  <div className="flex-1 flex items-center gap-1 justify-center">
+                    <button
+                      onClick={() => updateSetReps(i, Math.max(0, set.reps - 1))}
+                      className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center active:scale-90 transition-all shrink-0"
+                    >
+                      <Minus className="w-3 h-3" />
+                    </button>
                     <input
                       type="number"
-                      value={set.weight || ''}
-                      onChange={(e) => updateSetWeight(i, Number(e.target.value))}
-                      className="flex-1 bg-secondary rounded px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                      value={set.reps || ''}
+                      onChange={(e) => updateSetReps(i, Number(e.target.value))}
+                      className="w-12 bg-secondary rounded px-1 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                       placeholder="0"
                     />
-                  )}
+                    <button
+                      onClick={() => updateSetReps(i, set.reps + 1)}
+                      className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center active:scale-90 transition-all shrink-0"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </div>
+                  {/* Weight / Time / BW */}
+                  <div className="flex-1 flex justify-center">
+                    {isTimeBased ? (
+                      <input
+                        type="number"
+                        value={set.weight || ''}
+                        onChange={(e) => updateSetWeight(i, Number(e.target.value))}
+                        className="w-16 bg-secondary rounded px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                        placeholder="sec"
+                      />
+                    ) : isBW ? (
+                      <div className="bg-secondary/50 rounded px-2 py-1.5 text-center text-sm text-muted-foreground w-16">
+                        {set.weight} <span className="text-[10px]">{t('dash.kg')}</span>
+                      </div>
+                    ) : (
+                      <input
+                        type="number"
+                        value={set.weight || ''}
+                        onChange={(e) => updateSetWeight(i, Number(e.target.value))}
+                        className="w-16 bg-secondary rounded px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                        placeholder="0"
+                      />
+                    )}
+                  </div>
                   <button
                     onClick={() => toggleSet(i)}
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                    className={`w-10 h-8 rounded-lg flex items-center justify-center transition-all ${
                       set.completed ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
                     }`}
                   >
