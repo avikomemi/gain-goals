@@ -1,16 +1,17 @@
 import { useMemo, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n/I18nProvider';
 import {
   ArrowRight, ArrowLeft, Download, Share2, Copy, Check,
   Dumbbell, Calendar, Clock, Flame, Trophy, TrendingUp, TrendingDown, Minus,
-  Activity, Target, Zap, Heart
+  Activity, Target, Zap, Heart, ChevronDown, ChevronUp, Sparkles, AlertTriangle,
+  BarChart3, Award
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
-  PieChart, Pie, Cell, LineChart, Line, RadialBarChart, RadialBar
+  PieChart, Pie, Cell, LineChart, Line
 } from 'recharts';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -23,7 +24,9 @@ const ShareProgress = () => {
   const locale = isHe ? 'he-IL' : 'en-US';
   const [copied, setCopied] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [showExercises, setShowExercises] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
+  const pdfRef = useRef<HTMLDivElement>(null);
 
   const BackIcon = isHe ? ArrowRight : ArrowLeft;
 
@@ -46,7 +49,6 @@ const ShareProgress = () => {
       data: { date: string; weight: number; volume: number }[];
     }> = {};
 
-    // Routine distribution
     const routineCount: Record<string, number> = {};
 
     sorted.forEach(w => {
@@ -115,7 +117,7 @@ const ShareProgress = () => {
     });
     const monthlyComparison = Object.entries(monthMap).map(([month, d]) => ({ month, ...d }));
 
-    // Routine distribution for pie chart
+    // Routine distribution
     const routineDistribution = Object.entries(routineCount).map(([name, count]) => ({ name, value: count }));
 
     // Exercises ranked by improvement
@@ -126,18 +128,17 @@ const ShareProgress = () => {
       })
       .sort((a, b) => b.weightChange - a.weightChange);
 
-    // PRs
     const prs = exerciseList.filter(e => e.maxWeight > 0 && e.lastWeight >= e.maxWeight).length;
 
     // Streaks
     const uniqueDays = [...new Set(sorted.map(w => w.date.split('T')[0]))].sort();
-    let currentStreak = 0, maxStreak = 0, tempStreak = 1;
+    let maxStreak = 0, tempStreak = 1;
     for (let i = 1; i < uniqueDays.length; i++) {
       const diff = (new Date(uniqueDays[i]).getTime() - new Date(uniqueDays[i - 1]).getTime()) / 86400000;
       if (diff <= 3) { tempStreak++; } else { tempStreak = 1; }
       if (tempStreak > maxStreak) maxStreak = tempStreak;
     }
-    // Current streak from end
+    let currentStreak = 0;
     if (uniqueDays.length > 0) {
       currentStreak = 1;
       for (let i = uniqueDays.length - 1; i > 0; i--) {
@@ -146,11 +147,11 @@ const ShareProgress = () => {
       }
     }
 
-    // Consistency (last 30 days)
+    // Consistency
     const last30Days = new Set(last30.map(w => w.date.split('T')[0])).size;
     const consistency = Math.min(100, Math.round((last30Days / 20) * 100));
 
-    // Last 30 vs prev 30 volume
+    // Volume trend
     const last30Vol = last30.reduce((sum, w) => {
       let v = 0; w.exercises.forEach(ex => { if (!ex.skipped) ex.sets.forEach(s => { if (s.completed) v += s.reps * (s.weight || 0); }); });
       return sum + v;
@@ -161,16 +162,64 @@ const ShareProgress = () => {
     }, 0);
     const volumeTrend = prev30Vol > 0 ? Math.round(((last30Vol - prev30Vol) / prev30Vol) * 100) : 0;
 
+    // Avg workouts per week
+    const firstDate = new Date(sorted[0].date);
+    const weeks = Math.max(1, Math.ceil((now.getTime() - firstDate.getTime()) / (7 * 86400000)));
+    const avgPerWeek = Math.round((workoutHistory.length / weeks) * 10) / 10;
+
+    // Biggest improvement
+    const biggestImprovement = exerciseList.find(e => e.weightChange > 0);
+
+    // Insights
+    const insights: { icon: any; text: string; type: 'positive' | 'warning' | 'neutral' }[] = [];
+    if (biggestImprovement && biggestImprovement.weightChange > 0) {
+      insights.push({
+        icon: TrendingUp, type: 'positive',
+        text: isHe
+          ? `שיפור של ${biggestImprovement.weightChange}% ב-${biggestImprovement.name}`
+          : `${biggestImprovement.weightChange}% improvement in ${biggestImprovement.name}`,
+      });
+    }
+    if (volumeTrend > 5) {
+      insights.push({
+        icon: Flame, type: 'positive',
+        text: isHe ? `נפח אימון עלה ב-${volumeTrend}% ב-30 ימים אחרונים` : `Training volume up ${volumeTrend}% in last 30 days`,
+      });
+    } else if (volumeTrend < -5) {
+      insights.push({
+        icon: AlertTriangle, type: 'warning',
+        text: isHe ? `נפח אימון ירד ב-${Math.abs(volumeTrend)}% — שקול להגביר עומסים` : `Volume dropped ${Math.abs(volumeTrend)}% — consider increasing loads`,
+      });
+    }
+    if (consistency >= 70) {
+      insights.push({
+        icon: Sparkles, type: 'positive',
+        text: isHe ? `עקביות מעולה — ${consistency}% ב-30 ימים אחרונים` : `Excellent consistency — ${consistency}% in last 30 days`,
+      });
+    } else if (consistency < 40 && workoutHistory.length > 3) {
+      insights.push({
+        icon: Target, type: 'warning',
+        text: isHe ? `עקביות נמוכה (${consistency}%) — נסה 3-4 אימונים בשבוע` : `Low consistency (${consistency}%) — try 3-4 workouts/week`,
+      });
+    }
+    if (prs >= 2) {
+      insights.push({
+        icon: Trophy, type: 'positive',
+        text: isHe ? `${prs} שיאים אישיים חדשים! 🏆` : `${prs} new personal records! 🏆`,
+      });
+    }
+
     return {
       totalWorkouts: workoutHistory.length, totalSets, totalReps, totalVolume, totalDuration,
-      maxWeight, prs, currentStreak, maxStreak, consistency, volumeTrend,
+      maxWeight, prs, currentStreak, maxStreak, consistency, volumeTrend, avgPerWeek,
       exerciseList, volumeOverTime, monthlyComparison, routineDistribution,
-      last30Count: last30.length, uniqueDays: uniqueDays.length,
+      last30Count: last30.length, uniqueDays: uniqueDays.length, insights,
+      biggestImprovement,
       weightChange: profile.weightHistory.length >= 2
         ? Math.round((profile.weightHistory[profile.weightHistory.length - 1].weight - profile.weightHistory[0].weight) * 10) / 10
         : null,
     };
-  }, [workoutHistory, profile, locale]);
+  }, [workoutHistory, profile, locale, isHe]);
 
   const COLORS = ['hsl(0,85%,46%)', 'hsl(25,95%,53%)', 'hsl(145,63%,42%)', 'hsl(195,80%,50%)', 'hsl(280,70%,60%)'];
 
@@ -190,33 +239,41 @@ const ShareProgress = () => {
   };
 
   const handleExportPDF = async () => {
-    if (!reportRef.current) return;
+    if (!pdfRef.current) return;
     setExporting(true);
+
+    // Show the hidden PDF-optimized div
+    const pdfEl = pdfRef.current;
+    pdfEl.style.display = 'block';
+
     try {
-      const canvas = await html2canvas(reportRef.current, {
-        backgroundColor: '#0f0f0f',
+      // Wait for charts to render
+      await new Promise(r => setTimeout(r, 500));
+
+      const canvas = await html2canvas(pdfEl, {
+        backgroundColor: '#ffffff',
         scale: 2,
         useCORS: true,
         logging: false,
+        width: pdfEl.scrollWidth,
+        height: pdfEl.scrollHeight,
       });
+
+      pdfEl.style.display = 'none';
+
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfW = pdf.internal.pageSize.getWidth();
       const pdfH = pdf.internal.pageSize.getHeight();
       const imgW = canvas.width;
       const imgH = canvas.height;
-      const ratio = Math.min(pdfW / imgW, pdfH / imgH);
-      const w = imgW * ratio;
-      const h = imgH * ratio;
 
-      // If content is taller than one page, split
-      const pageHeight = pdfH;
       const scaledFullH = (imgH / imgW) * pdfW;
-      if (scaledFullH <= pageHeight) {
+      if (scaledFullH <= pdfH) {
         pdf.addImage(imgData, 'PNG', 0, 0, pdfW, scaledFullH);
       } else {
         let y = 0;
-        const sliceH = (pageHeight / pdfW) * imgW;
+        const sliceH = (pdfH / pdfW) * imgW;
         let page = 0;
         while (y < imgH) {
           if (page > 0) pdf.addPage();
@@ -241,6 +298,7 @@ const ShareProgress = () => {
     } catch (err) {
       console.error('PDF export error:', err);
     } finally {
+      pdfEl.style.display = 'none';
       setExporting(false);
     }
   };
@@ -279,6 +337,204 @@ const ShareProgress = () => {
     );
   }
 
+  // ===== PDF-OPTIMIZED CONTENT (hidden, white bg, no animations) =====
+  const PdfReport = () => (
+    <div
+      ref={pdfRef}
+      style={{
+        display: 'none',
+        position: 'absolute',
+        left: '-9999px',
+        top: 0,
+        width: '800px',
+        backgroundColor: '#ffffff',
+        color: '#1a1a1a',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        padding: '40px',
+        direction: isHe ? 'rtl' : 'ltr',
+      }}
+    >
+      {/* PDF Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '3px solid #dc2626', paddingBottom: '20px' }}>
+        <div>
+          <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#dc2626', margin: 0 }}>GainGoals</h1>
+          <p style={{ fontSize: '14px', color: '#666', margin: '4px 0 0' }}>
+            {isHe ? 'דוח התקדמות' : 'Progress Report'} • {profile.name} • {new Date().toLocaleDateString(locale, { month: 'long', year: 'numeric' })}
+          </p>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', fontWeight: 800, color: '#dc2626' }}>{stats.totalWorkouts}</div>
+          <div style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            {isHe ? 'אימונים' : 'WORKOUTS'}
+          </div>
+        </div>
+      </div>
+
+      {/* PDF KPIs Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '30px' }}>
+        {[
+          { label: isHe ? 'נפח כולל' : 'Total Volume', value: `${(stats.totalVolume / 1000).toFixed(1)}t`, sub: stats.volumeTrend !== 0 ? `${stats.volumeTrend > 0 ? '+' : ''}${stats.volumeTrend}%` : '' },
+          { label: isHe ? 'משקל מקסימלי' : 'Max Weight', value: `${stats.maxWeight}kg` },
+          { label: isHe ? 'עקביות' : 'Consistency', value: `${stats.consistency}%` },
+          { label: isHe ? 'שיאים אישיים' : 'Personal Records', value: `${stats.prs}` },
+          { label: isHe ? 'זמן כולל' : 'Total Time', value: `${Math.round(stats.totalDuration / 60)}h ${stats.totalDuration % 60}m` },
+          { label: isHe ? 'רצף' : 'Streak', value: `${stats.currentStreak}`, sub: `${isHe ? 'מקסימום' : 'Best'}: ${stats.maxStreak}` },
+        ].map((kpi, i) => (
+          <div key={i} style={{ border: '1px solid #e5e5e5', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+            <div style={{ fontSize: '11px', color: '#888', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{kpi.label}</div>
+            <div style={{ fontSize: '24px', fontWeight: 700, color: '#1a1a1a' }}>{kpi.value}</div>
+            {kpi.sub && <div style={{ fontSize: '11px', color: kpi.sub.startsWith('+') ? '#16a34a' : kpi.sub.startsWith('-') ? '#dc2626' : '#888', marginTop: '4px', fontWeight: 600 }}>{kpi.sub}</div>}
+          </div>
+        ))}
+      </div>
+
+      {/* PDF Stats Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '30px' }}>
+        {[
+          { label: isHe ? 'סטים' : 'Sets', value: stats.totalSets.toLocaleString() },
+          { label: isHe ? 'חזרות' : 'Reps', value: stats.totalReps.toLocaleString() },
+          { label: isHe ? 'ממוצע/שבוע' : 'Avg/Week', value: `${stats.avgPerWeek}` },
+          { label: isHe ? 'שינוי משקל' : 'Body Weight Δ', value: stats.weightChange !== null ? `${stats.weightChange > 0 ? '+' : ''}${stats.weightChange}kg` : '—' },
+        ].map((s, i) => (
+          <div key={i} style={{ background: '#f9f9f9', borderRadius: '10px', padding: '14px', textAlign: 'center' }}>
+            <div style={{ fontSize: '20px', fontWeight: 700 }}>{s.value}</div>
+            <div style={{ fontSize: '10px', color: '#888', marginTop: '4px' }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* PDF Insights */}
+      {stats.insights.length > 0 && (
+        <div style={{ marginBottom: '30px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px', color: '#333' }}>
+            {isHe ? '💡 תובנות' : '💡 Insights'}
+          </h3>
+          {stats.insights.map((ins, i) => (
+            <div key={i} style={{
+              padding: '10px 14px', marginBottom: '8px', borderRadius: '8px',
+              border: `1px solid ${ins.type === 'positive' ? '#bbf7d0' : ins.type === 'warning' ? '#fef08a' : '#e5e5e5'}`,
+              background: ins.type === 'positive' ? '#f0fdf4' : ins.type === 'warning' ? '#fefce8' : '#fafafa',
+              fontSize: '12px', color: '#333',
+            }}>
+              {ins.type === 'positive' ? '✅' : ins.type === 'warning' ? '⚠️' : 'ℹ️'} {ins.text}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* PDF Volume Chart */}
+      {stats.volumeOverTime.length >= 2 && (
+        <div style={{ marginBottom: '30px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px', color: '#333' }}>
+            {isHe ? '📈 נפח אימון לאורך זמן' : '📈 Training Volume Over Time'}
+          </h3>
+          <div style={{ height: '200px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={stats.volumeOverTime}>
+                <defs>
+                  <linearGradient id="pdfVolGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#dc2626" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#dc2626" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#888' }} />
+                <YAxis tick={{ fontSize: 10, fill: '#888' }} width={45} />
+                <Area type="monotone" dataKey="volume" stroke="#dc2626" strokeWidth={2} fill="url(#pdfVolGrad)" dot={{ r: 3, fill: '#dc2626' }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* PDF Monthly Comparison */}
+      {stats.monthlyComparison.length >= 2 && (
+        <div style={{ marginBottom: '30px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px', color: '#333' }}>
+            {isHe ? '📊 השוואה חודשית' : '📊 Monthly Comparison'}
+          </h3>
+          <div style={{ height: '180px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats.monthlyComparison}>
+                <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#888' }} />
+                <YAxis tick={{ fontSize: 10, fill: '#888' }} width={40} />
+                <Bar dataKey="sessions" fill="#dc2626" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* PDF Workout Distribution */}
+      {stats.routineDistribution.length >= 2 && (
+        <div style={{ marginBottom: '30px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px', color: '#333' }}>
+            {isHe ? '🎯 התפלגות אימונים' : '🎯 Workout Distribution'}
+          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <div style={{ width: '200px', height: '200px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={stats.routineDistribution} dataKey="value" cx="50%" cy="50%" innerRadius={40} outerRadius={80} paddingAngle={3}>
+                    {stats.routineDistribution.map((_, i) => (
+                      <Cell key={i} fill={['#dc2626', '#f97316', '#16a34a', '#0ea5e9', '#8b5cf6'][i % 5]} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div>
+              {stats.routineDistribution.map((r, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', fontSize: '12px' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: ['#dc2626', '#f97316', '#16a34a', '#0ea5e9', '#8b5cf6'][i % 5] }} />
+                  <span style={{ color: '#555' }}>{r.name}</span>
+                  <span style={{ fontWeight: 700, marginLeft: '8px' }}>{r.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PDF Exercise Table */}
+      <div style={{ marginBottom: '30px' }}>
+        <h3 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px', color: '#333' }}>
+          {isHe ? '💪 התקדמות בתרגילים' : '💪 Exercise Progress'}
+        </h3>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid #e5e5e5' }}>
+              <th style={{ textAlign: isHe ? 'right' : 'left', padding: '8px 4px', color: '#888', fontWeight: 600 }}>{isHe ? 'תרגיל' : 'Exercise'}</th>
+              <th style={{ textAlign: 'center', padding: '8px 4px', color: '#888', fontWeight: 600 }}>{isHe ? 'פעמים' : 'Sessions'}</th>
+              <th style={{ textAlign: 'center', padding: '8px 4px', color: '#888', fontWeight: 600 }}>{isHe ? 'מקס' : 'Max'}</th>
+              <th style={{ textAlign: 'center', padding: '8px 4px', color: '#888', fontWeight: 600 }}>{isHe ? 'נפח' : 'Volume'}</th>
+              <th style={{ textAlign: 'center', padding: '8px 4px', color: '#888', fontWeight: 600 }}>{isHe ? 'שינוי' : 'Change'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {stats.exerciseList.map((ex, i) => (
+              <tr key={i} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                <td style={{ padding: '8px 4px', fontWeight: 500 }}>
+                  {ex.name} {ex.lastWeight >= ex.maxWeight && ex.maxWeight > 0 ? '🏆' : ''}
+                </td>
+                <td style={{ textAlign: 'center', padding: '8px 4px' }}>{ex.sessions}</td>
+                <td style={{ textAlign: 'center', padding: '8px 4px' }}>{ex.maxWeight > 0 ? `${ex.maxWeight}kg` : '—'}</td>
+                <td style={{ textAlign: 'center', padding: '8px 4px' }}>{ex.totalVolume.toLocaleString()}</td>
+                <td style={{ textAlign: 'center', padding: '8px 4px', fontWeight: 700, color: ex.weightChange > 0 ? '#16a34a' : ex.weightChange < 0 ? '#dc2626' : '#888' }}>
+                  {ex.weightChange !== 0 ? `${ex.weightChange > 0 ? '+' : ''}${ex.weightChange}%` : '—'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* PDF Footer */}
+      <div style={{ borderTop: '2px solid #e5e5e5', paddingTop: '16px', textAlign: 'center', color: '#aaa', fontSize: '11px' }}>
+        💪 GainGoals Progress Report • {new Date().toLocaleDateString(locale)} • {isHe ? 'נוצר אוטומטית' : 'Auto-generated'}
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen pb-20 px-4 pt-6" dir={isHe ? 'rtl' : 'ltr'}>
       {/* Header */}
@@ -291,121 +547,91 @@ const ShareProgress = () => {
         </div>
       </div>
 
-      {/* Exportable Report Content */}
+      {/* On-Screen Report */}
       <div ref={reportRef} className="space-y-4">
-        {/* Report Header Card */}
+        {/* Hero Header */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className="gradient-primary rounded-2xl p-5 text-primary-foreground">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <h2 className="text-lg font-bold">{isHe ? 'דוח התקדמות' : 'Progress Report'}</h2>
-              <p className="text-xs opacity-80">{profile.name} • {new Date().toLocaleDateString(locale, { month: 'long', year: 'numeric' })}</p>
+          className="gradient-primary rounded-2xl p-5 text-primary-foreground relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, white 0%, transparent 50%)' }} />
+          <div className="relative z-10">
+            <p className="text-[10px] uppercase tracking-widest opacity-70 mb-1">{isHe ? 'דוח התקדמות' : 'PROGRESS REPORT'}</p>
+            <h2 className="text-2xl font-black mb-0.5">{profile.name}</h2>
+            <p className="text-xs opacity-80">{new Date().toLocaleDateString(locale, { month: 'long', year: 'numeric' })}</p>
+            <div className="flex items-end gap-3 mt-3">
+              <div>
+                <div className="text-4xl font-black">{stats.totalWorkouts}</div>
+                <div className="text-[10px] opacity-70">{isHe ? 'אימונים' : 'workouts'}</div>
+              </div>
+              <div className="h-8 w-px bg-primary-foreground/20" />
+              <div>
+                <div className="text-2xl font-bold">{stats.avgPerWeek}</div>
+                <div className="text-[10px] opacity-70">{isHe ? 'ממוצע/שבוע' : 'avg/week'}</div>
+              </div>
+              <div className="h-8 w-px bg-primary-foreground/20" />
+              <div>
+                <div className="text-2xl font-bold">{Math.round(stats.totalDuration / 60)}h</div>
+                <div className="text-[10px] opacity-70">{isHe ? 'סה"כ זמן' : 'total time'}</div>
+              </div>
             </div>
-            <div className="text-3xl font-black">{stats.totalWorkouts}</div>
           </div>
-          <p className="text-[11px] opacity-70">{isHe ? 'סה"כ אימונים מתועדים' : 'Total recorded workouts'}</p>
         </motion.div>
+
+        {/* Smart Insights */}
+        {stats.insights.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+            className="space-y-2">
+            {stats.insights.map((ins, i) => (
+              <div key={i} className={`flex items-start gap-2.5 rounded-xl p-3 border ${
+                ins.type === 'positive' ? 'border-green-500/30 bg-green-500/5' :
+                ins.type === 'warning' ? 'border-yellow-500/30 bg-yellow-500/5' :
+                'border-border bg-card'
+              }`}>
+                <ins.icon className={`w-4 h-4 mt-0.5 shrink-0 ${
+                  ins.type === 'positive' ? 'text-green-400' : ins.type === 'warning' ? 'text-yellow-400' : 'text-muted-foreground'
+                }`} />
+                <p className="text-xs leading-relaxed">{ins.text}</p>
+              </div>
+            ))}
+          </motion.div>
+        )}
 
         {/* KPI Grid */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-          className="grid grid-cols-2 gap-3">
-          {/* Volume */}
-          <div className="bg-card border border-border rounded-xl p-3.5">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Flame className="w-4 h-4 text-primary" />
-              <span className="text-[10px] text-muted-foreground">{isHe ? 'נפח כולל' : 'Total Volume'}</span>
-            </div>
-            <p className="text-xl font-bold">{(stats.totalVolume / 1000).toFixed(1)}<span className="text-xs text-muted-foreground ml-0.5">t</span></p>
-            {stats.volumeTrend !== 0 && (
-              <div className="flex items-center gap-1 mt-1">
-                <TrendArrow value={stats.volumeTrend} />
-                <span className={`text-[10px] font-semibold ${stats.volumeTrend > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {stats.volumeTrend > 0 ? '+' : ''}{stats.volumeTrend}% {isHe ? 'מ-30 יום' : 'vs 30d'}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Max Weight */}
-          <div className="bg-card border border-border rounded-xl p-3.5">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Dumbbell className="w-4 h-4 text-primary" />
-              <span className="text-[10px] text-muted-foreground">{isHe ? 'משקל מקסימלי' : 'Max Weight'}</span>
-            </div>
-            <p className="text-xl font-bold">{stats.maxWeight}<span className="text-xs text-muted-foreground ml-0.5">{isHe ? 'ק"ג' : 'kg'}</span></p>
-          </div>
-
-          {/* Consistency */}
-          <div className="bg-card border border-border rounded-xl p-3.5">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Target className="w-4 h-4 text-primary" />
-              <span className="text-[10px] text-muted-foreground">{isHe ? 'עקביות' : 'Consistency'}</span>
-            </div>
-            <p className="text-xl font-bold">{stats.consistency}<span className="text-xs text-muted-foreground ml-0.5">%</span></p>
-            <div className="h-1.5 bg-secondary rounded-full mt-1.5 overflow-hidden">
-              <div className="h-full rounded-full gradient-primary" style={{ width: `${stats.consistency}%` }} />
-            </div>
-          </div>
-
-          {/* PRs */}
-          <div className="bg-card border border-border rounded-xl p-3.5">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Trophy className="w-4 h-4 text-yellow-400" />
-              <span className="text-[10px] text-muted-foreground">{isHe ? 'שיאים אישיים' : 'Personal Records'}</span>
-            </div>
-            <p className="text-xl font-bold">{stats.prs}</p>
-          </div>
-
-          {/* Total Time */}
-          <div className="bg-card border border-border rounded-xl p-3.5">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Clock className="w-4 h-4 text-primary" />
-              <span className="text-[10px] text-muted-foreground">{isHe ? 'זמן כולל' : 'Total Time'}</span>
-            </div>
-            <p className="text-xl font-bold">{Math.round(stats.totalDuration / 60)}<span className="text-xs text-muted-foreground ml-0.5">{isHe ? 'שעות' : 'hrs'}</span></p>
-            <p className="text-[10px] text-muted-foreground">{stats.totalDuration} {isHe ? 'דקות' : 'min'}</p>
-          </div>
-
-          {/* Streak */}
-          <div className="bg-card border border-border rounded-xl p-3.5">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Zap className="w-4 h-4 text-primary" />
-              <span className="text-[10px] text-muted-foreground">{isHe ? 'רצף אימונים' : 'Streak'}</span>
-            </div>
-            <p className="text-xl font-bold">{stats.currentStreak}</p>
-            <p className="text-[10px] text-muted-foreground">{isHe ? 'מקסימום' : 'Best'}: {stats.maxStreak}</p>
-          </div>
-        </motion.div>
-
-        {/* Sets / Reps / Body Weight row */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="grid grid-cols-3 gap-2">
-          <div className="bg-card border border-border rounded-xl p-3 text-center">
-            <p className="text-lg font-bold">{stats.totalSets.toLocaleString()}</p>
-            <p className="text-[10px] text-muted-foreground">{isHe ? 'סטים' : 'Sets'}</p>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-3 text-center">
-            <p className="text-lg font-bold">{stats.totalReps.toLocaleString()}</p>
-            <p className="text-[10px] text-muted-foreground">{isHe ? 'חזרות' : 'Reps'}</p>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-3 text-center">
-            {stats.weightChange !== null ? (
-              <>
-                <p className={`text-lg font-bold ${stats.weightChange < 0 ? 'text-green-400' : stats.weightChange > 0 ? 'text-red-400' : ''}`}>
-                  {stats.weightChange > 0 ? '+' : ''}{stats.weightChange}
-                </p>
-                <p className="text-[10px] text-muted-foreground">{isHe ? 'שינוי ק"ג' : 'kg change'}</p>
-              </>
-            ) : (
-              <>
-                <p className="text-lg font-bold">{profile.weight}</p>
-                <p className="text-[10px] text-muted-foreground">{isHe ? 'ק"ג' : 'kg'}</p>
-              </>
-            )}
-          </div>
+          className="grid grid-cols-3 gap-2.5">
+          {[
+            { icon: Flame, label: isHe ? 'נפח כולל' : 'Total Volume', value: `${(stats.totalVolume / 1000).toFixed(1)}`, unit: 't', trend: stats.volumeTrend },
+            { icon: Dumbbell, label: isHe ? 'משקל מקסימלי' : 'Max Weight', value: `${stats.maxWeight}`, unit: isHe ? 'ק"ג' : 'kg' },
+            { icon: Target, label: isHe ? 'עקביות' : 'Consistency', value: `${stats.consistency}`, unit: '%', bar: stats.consistency },
+            { icon: Trophy, label: isHe ? 'שיאים' : 'PRs', value: `${stats.prs}`, highlight: true },
+            { icon: Zap, label: isHe ? 'רצף' : 'Streak', value: `${stats.currentStreak}`, sub: `${isHe ? 'שיא' : 'Best'}: ${stats.maxStreak}` },
+            { icon: Heart, label: isHe ? 'שינוי משקל' : 'Weight Δ', value: stats.weightChange !== null ? `${stats.weightChange > 0 ? '+' : ''}${stats.weightChange}` : '—', unit: stats.weightChange !== null ? 'kg' : '', bodyWeight: true },
+          ].map((kpi, i) => (
+            <div key={i} className="bg-card border border-border rounded-xl p-3 text-center">
+              <kpi.icon className={`w-4 h-4 mx-auto mb-1.5 ${kpi.highlight ? 'text-yellow-400' : 'text-primary'}`} />
+              <div className="flex items-baseline justify-center gap-0.5">
+                <span className="text-lg font-bold">{kpi.value}</span>
+                {kpi.unit && <span className="text-[10px] text-muted-foreground">{kpi.unit}</span>}
+              </div>
+              <p className="text-[9px] text-muted-foreground mt-0.5 leading-tight">{kpi.label}</p>
+              {kpi.trend !== undefined && kpi.trend !== 0 && (
+                <div className="flex items-center justify-center gap-0.5 mt-1">
+                  <TrendArrow value={kpi.trend} />
+                  <span className={`text-[9px] font-semibold ${kpi.trend > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {kpi.trend > 0 ? '+' : ''}{kpi.trend}%
+                  </span>
+                </div>
+              )}
+              {kpi.bar !== undefined && (
+                <div className="h-1 bg-secondary rounded-full mt-1.5 overflow-hidden">
+                  <div className="h-full rounded-full gradient-primary" style={{ width: `${kpi.bar}%` }} />
+                </div>
+              )}
+              {kpi.sub && <p className="text-[8px] text-muted-foreground mt-0.5">{kpi.sub}</p>}
+            </div>
+          ))}
         </motion.div>
 
-        {/* Volume Over Time Chart */}
+        {/* Volume Over Time */}
         {stats.volumeOverTime.length >= 2 && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
             className="bg-card border border-border rounded-xl p-4">
@@ -435,8 +661,8 @@ const ShareProgress = () => {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
             className="bg-card border border-border rounded-xl p-4">
             <h3 className="text-xs font-semibold text-muted-foreground mb-3 flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-primary" />
-              {isHe ? 'השוואה חודשית (אימונים)' : 'Monthly Comparison (Sessions)'}
+              <BarChart3 className="w-3.5 h-3.5 text-primary" />
+              {isHe ? 'השוואה חודשית (אימונים)' : 'Monthly Sessions'}
             </h3>
             <ResponsiveContainer width="100%" height={120}>
               <BarChart data={stats.monthlyComparison}>
@@ -449,7 +675,7 @@ const ShareProgress = () => {
           </motion.div>
         )}
 
-        {/* Routine Distribution Pie */}
+        {/* Workout Distribution */}
         {stats.routineDistribution.length >= 2 && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
             className="bg-card border border-border rounded-xl p-4">
@@ -481,42 +707,54 @@ const ShareProgress = () => {
           </motion.div>
         )}
 
-        {/* Top Exercises – Biggest Improvements */}
+        {/* Exercise Progress - Collapsible */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-          className="bg-card border border-border rounded-xl p-4">
-          <h3 className="text-xs font-semibold text-muted-foreground mb-3 flex items-center gap-1.5">
-            <TrendingUp className="w-3.5 h-3.5 text-primary" />
-            {isHe ? 'התקדמות בתרגילים' : 'Exercise Progress'}
-          </h3>
-          <div className="space-y-2.5">
-            {stats.exerciseList.slice(0, 8).map((ex, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-medium truncate">{ex.name}</span>
-                    {ex.lastWeight >= ex.maxWeight && ex.maxWeight > 0 && (
-                      <span className="text-[10px]">🏆</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
-                    <span>{ex.sessions}x</span>
-                    <span>{isHe ? 'מקס' : 'Max'}: {ex.maxWeight}{isHe ? 'ק"ג' : 'kg'}</span>
-                    <span>{isHe ? 'נפח' : 'Vol'}: {ex.totalVolume.toLocaleString()}</span>
-                  </div>
+          className="bg-card border border-border rounded-xl overflow-hidden">
+          <button
+            onClick={() => setShowExercises(!showExercises)}
+            className="w-full flex items-center justify-between p-4 text-start"
+          >
+            <div className="flex items-center gap-1.5">
+              <TrendingUp className="w-3.5 h-3.5 text-primary" />
+              <h3 className="text-xs font-semibold text-muted-foreground">
+                {isHe ? 'התקדמות בתרגילים' : 'Exercise Progress'}
+              </h3>
+              <span className="text-[10px] text-muted-foreground bg-secondary rounded-full px-1.5 py-0.5">{stats.exerciseList.length}</span>
+            </div>
+            {showExercises ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+          </button>
+          <AnimatePresence>
+            {showExercises && (
+              <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
+                <div className="px-4 pb-4 space-y-2.5">
+                  {stats.exerciseList.map((ex, i) => (
+                    <div key={i} className="flex items-center gap-3 py-1.5">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-medium truncate">{ex.name}</span>
+                          {ex.lastWeight >= ex.maxWeight && ex.maxWeight > 0 && <span className="text-[10px]">🏆</span>}
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
+                          <span>{ex.sessions}x</span>
+                          {ex.maxWeight > 0 && <span>{isHe ? 'מקס' : 'Max'}: {ex.maxWeight}{isHe ? 'ק"ג' : 'kg'}</span>}
+                          <span>{isHe ? 'נפח' : 'Vol'}: {ex.totalVolume.toLocaleString()}</span>
+                        </div>
+                      </div>
+                      <div className="text-end shrink-0">
+                        {ex.weightChange !== 0 ? (
+                          <span className={`text-xs font-bold ${ex.weightChange > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {ex.weightChange > 0 ? '+' : ''}{ex.weightChange}%
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="text-end">
-                  {ex.weightChange !== 0 ? (
-                    <span className={`text-xs font-bold ${ex.weightChange > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {ex.weightChange > 0 ? '+' : ''}{ex.weightChange}%
-                    </span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                  )}
-                  <p className="text-[9px] text-muted-foreground">{isHe ? 'שינוי משקל' : 'weight Δ'}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* Footer */}
@@ -553,6 +791,9 @@ const ShareProgress = () => {
           <Share2 className="w-5 h-5" />
         </motion.button>
       </div>
+
+      {/* Hidden PDF-optimized report */}
+      <PdfReport />
     </div>
   );
 };
