@@ -131,7 +131,7 @@ const MonthlyReport = () => {
 
   const [monthOffset, setMonthOffset] = useState(0);
   const [expandedExercise, setExpandedExercise] = useState<number | null>(null);
-
+  const [showScoreInfo, setShowScoreInfo] = useState(false);
   const targetMonth = useMemo(() => {
     const d = new Date(); d.setMonth(d.getMonth() - monthOffset); return d;
   }, [monthOffset]);
