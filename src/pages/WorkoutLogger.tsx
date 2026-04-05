@@ -60,9 +60,9 @@ const WorkoutLogger = () => {
   // Rest timer state
   const [showRestTimer, setShowRestTimer] = useState(false);
   const [isBW, setIsBW] = useState(false);
-  const [restDuration, setRestDuration] = useState(() => {
-    const saved = localStorage.getItem('fitlog-rest-duration');
-    return saved ? parseInt(saved) : 90;
+  const [restDurations, setRestDurations] = useState<Record<string, number>>(() => {
+    const saved = localStorage.getItem('fitlog-rest-durations');
+    return saved ? JSON.parse(saved) : {};
   });
   const [isSaving, setIsSaving] = useState(false);
 
