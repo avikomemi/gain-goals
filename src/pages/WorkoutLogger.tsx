@@ -64,7 +64,7 @@ const WorkoutLogger = () => {
     const saved = localStorage.getItem('fitlog-rest-durations');
     return saved ? JSON.parse(saved) : {};
   });
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving] = useState(false);
 
   const currentExercise = allExercises[currentIdx];
   const nextExercise = currentIdx < allExercises.length - 1 ? allExercises[currentIdx + 1] : null;
@@ -167,19 +167,21 @@ const WorkoutLogger = () => {
     localStorage.setItem('fitlog-rest-durations', JSON.stringify(restDurations));
   }, [restDurations]);
 
-  // Auto-save every 10 seconds
+  // Debounced auto-save: 5 seconds after last change
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (completed || !routineId) return;
-    const interval = setInterval(() => {
-      setIsSaving(true);
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
       localStorage.setItem(`fitlog-inprogress-${routineId}`, JSON.stringify({
         logs,
         currentIdx,
         currentExercise: { sets, painLevel, rpe, notes, exerciseCompleted, warmupReps },
       }));
-      setTimeout(() => setIsSaving(false), 600);
-    }, 10000);
-    return () => clearInterval(interval);
+    }, 5000);
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
   }, [completed, routineId, logs, currentIdx, sets, painLevel, rpe, notes, exerciseCompleted, warmupReps]);
 
   if (!routine) {
