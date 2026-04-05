@@ -299,7 +299,6 @@ const WorkoutLogger = () => {
           }}
         >
           <Save className="w-5 h-5 text-primary" />
-          )}
         </button>
       </div>
       <div className="text-center mb-2">
