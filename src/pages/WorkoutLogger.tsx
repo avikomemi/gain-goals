@@ -164,8 +164,8 @@ const WorkoutLogger = () => {
   }, [currentIdx]);
 
   useEffect(() => {
-    localStorage.setItem('fitlog-rest-duration', restDuration.toString());
-  }, [restDuration]);
+    localStorage.setItem('fitlog-rest-durations', JSON.stringify(restDurations));
+  }, [restDurations]);
 
   // Auto-save every 10 seconds
   useEffect(() => {
@@ -269,7 +269,7 @@ const WorkoutLogger = () => {
       <AnimatePresence>
         {showRestTimer && (
           <RestTimer
-            duration={restDuration}
+            duration={restDurations[currentExercise?.id] || 90}
             onComplete={() => setShowRestTimer(false)}
             onSkip={() => setShowRestTimer(false)}
           />
@@ -419,23 +419,26 @@ const WorkoutLogger = () => {
             </div>
           )}
 
-          {/* Rest duration config */}
+          {/* Rest duration config - per exercise */}
           {!isWarmup && (
             <div className="mt-4 flex items-center gap-3 bg-secondary rounded-lg px-3 py-2">
               <Timer className="w-4 h-4 text-primary shrink-0" />
               <span className="text-xs text-muted-foreground shrink-0">{t('timer.restTime')}</span>
               <div className="flex items-center gap-1 mr-auto">
-                {[60, 90, 120, 180].map(sec => (
-                  <button
-                    key={sec}
-                    onClick={() => setRestDuration(sec)}
-                    className={`px-2 py-0.5 rounded text-xs font-medium transition-all ${
-                      restDuration === sec ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground'
-                    }`}
-                  >
-                    {sec >= 60 ? `${sec / 60}m` : `${sec}s`}
-                  </button>
-                ))}
+                {[60, 90, 120, 180].map(sec => {
+                  const currentRest = restDurations[currentExercise.id] || 90;
+                  return (
+                    <button
+                      key={sec}
+                      onClick={() => setRestDurations(prev => ({ ...prev, [currentExercise.id]: sec }))}
+                      className={`px-2 py-0.5 rounded text-xs font-medium transition-all ${
+                        currentRest === sec ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground'
+                      }`}
+                    >
+                      {sec >= 60 ? `${sec / 60}m` : `${sec}s`}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
