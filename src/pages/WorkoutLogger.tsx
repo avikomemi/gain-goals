@@ -361,6 +361,7 @@ const WorkoutLogger = () => {
               logs,
               currentIdx,
               currentExercise: { sets, painLevel, rpe, notes, exerciseCompleted, warmupReps },
+              allSessionStates: sessionStateRef.current,
             }));
             toast(lang === 'he' ? 'נשמר ✓' : 'Saved ✓', { duration: 1000 });
           }}
