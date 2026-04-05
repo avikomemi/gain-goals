@@ -7,7 +7,7 @@ import { useI18n } from '../i18n/I18nProvider';
 import { ExerciseLog, SetLog, WorkoutSession } from '../data/types';
 import SensitivityWarning from '../components/SensitivityWarning';
 import RestTimer from '../components/RestTimer';
-import { ChevronLeft, ChevronRight, Check, SkipForward, ExternalLink, AlertTriangle, Trophy, X, Timer, Save, Loader2, History, Zap, Minus, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, SkipForward, ExternalLink, AlertTriangle, Trophy, X, Timer, Save, History, Zap, Minus, Plus } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
 
@@ -64,7 +64,7 @@ const WorkoutLogger = () => {
     const saved = localStorage.getItem('fitlog-rest-durations');
     return saved ? JSON.parse(saved) : {};
   });
-  const [isSaving] = useState(false);
+  
 
   const currentExercise = allExercises[currentIdx];
   const nextExercise = currentIdx < allExercises.length - 1 ? allExercises[currentIdx + 1] : null;
