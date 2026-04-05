@@ -99,6 +99,29 @@ const WorkoutLogger = () => {
   const [initialRestoreDone, setInitialRestoreDone] = useState(false);
   const prevIdxRef = useRef<number | null>(null);
 
+  // In-session state for each exercise (persists when navigating back/forth)
+  const sessionStateRef = useRef<Record<string, {
+    sets: SetLog[];
+    painLevel: number;
+    rpe: number;
+    notes: string;
+    exerciseCompleted: boolean;
+    warmupReps: number;
+  }>>({});
+
+  // Save current exercise state to session ref
+  const saveCurrentToSession = useCallback(() => {
+    if (!currentExercise) return;
+    sessionStateRef.current[currentExercise.id] = {
+      sets: [...sets],
+      painLevel,
+      rpe,
+      notes,
+      exerciseCompleted,
+      warmupReps,
+    };
+  }, [currentExercise, sets, painLevel, rpe, notes, exerciseCompleted, warmupReps]);
+
   // Restore saved progress on mount
   useEffect(() => {
     if (!routineId) return;
@@ -121,6 +144,22 @@ const WorkoutLogger = () => {
           if (data.currentExercise.warmupReps !== undefined) {
             setWarmupReps(data.currentExercise.warmupReps);
           }
+          // Also store in session ref so navigating away and back preserves it
+          const ex = allExercises[idx];
+          if (ex) {
+            sessionStateRef.current[ex.id] = {
+              sets: data.currentExercise.sets,
+              painLevel: data.currentExercise.painLevel,
+              rpe: data.currentExercise.rpe,
+              notes: data.currentExercise.notes,
+              exerciseCompleted: data.currentExercise.exerciseCompleted ?? false,
+              warmupReps: data.currentExercise.warmupReps ?? 0,
+            };
+          }
+        }
+        // Restore all session states if saved
+        if (data.allSessionStates) {
+          sessionStateRef.current = { ...sessionStateRef.current, ...data.allSessionStates };
         }
         toast(t('wl.resuming'));
       } catch {}
@@ -135,6 +174,20 @@ const WorkoutLogger = () => {
       return;
     }
     if (currentExercise) {
+      // Check if we already have session state for this exercise
+      const sessionState = sessionStateRef.current[currentExercise.id];
+      if (sessionState) {
+        setSets(sessionState.sets);
+        setPainLevel(sessionState.painLevel);
+        setRpe(sessionState.rpe);
+        setNotes(sessionState.notes);
+        setExerciseCompleted(sessionState.exerciseCompleted);
+        setWarmupReps(sessionState.warmupReps);
+        setIsBW(!!currentExercise.isBodyweight);
+        return;
+      }
+
+      // No session state — initialize from defaults
       const numSets = parseInt(currentExercise.sets) || 1;
       const defaultReps = parseInt(currentExercise.reps) || 0;
       const lastData = getLastSessionData(currentExercise.id);
@@ -167,6 +220,19 @@ const WorkoutLogger = () => {
     localStorage.setItem('fitlog-rest-durations', JSON.stringify(restDurations));
   }, [restDurations]);
 
+  // Keep session ref in sync with current state
+  useEffect(() => {
+    if (!currentExercise) return;
+    sessionStateRef.current[currentExercise.id] = {
+      sets: [...sets],
+      painLevel,
+      rpe,
+      notes,
+      exerciseCompleted,
+      warmupReps,
+    };
+  }, [sets, painLevel, rpe, notes, exerciseCompleted, warmupReps, currentExercise]);
+
   // Debounced auto-save: 5 seconds after last change
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -177,6 +243,7 @@ const WorkoutLogger = () => {
         logs,
         currentIdx,
         currentExercise: { sets, painLevel, rpe, notes, exerciseCompleted, warmupReps },
+        allSessionStates: sessionStateRef.current,
       }));
     }, 5000);
     return () => {
@@ -294,6 +361,7 @@ const WorkoutLogger = () => {
               logs,
               currentIdx,
               currentExercise: { sets, painLevel, rpe, notes, exerciseCompleted, warmupReps },
+              allSessionStates: sessionStateRef.current,
             }));
             toast(lang === 'he' ? 'נשמר ✓' : 'Saved ✓', { duration: 1000 });
           }}
