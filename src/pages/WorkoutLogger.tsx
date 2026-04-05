@@ -220,6 +220,19 @@ const WorkoutLogger = () => {
     localStorage.setItem('fitlog-rest-durations', JSON.stringify(restDurations));
   }, [restDurations]);
 
+  // Keep session ref in sync with current state
+  useEffect(() => {
+    if (!currentExercise) return;
+    sessionStateRef.current[currentExercise.id] = {
+      sets: [...sets],
+      painLevel,
+      rpe,
+      notes,
+      exerciseCompleted,
+      warmupReps,
+    };
+  }, [sets, painLevel, rpe, notes, exerciseCompleted, warmupReps, currentExercise]);
+
   // Debounced auto-save: 5 seconds after last change
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -230,6 +243,7 @@ const WorkoutLogger = () => {
         logs,
         currentIdx,
         currentExercise: { sets, painLevel, rpe, notes, exerciseCompleted, warmupReps },
+        allSessionStates: sessionStateRef.current,
       }));
     }, 5000);
     return () => {
