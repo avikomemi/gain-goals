@@ -7,7 +7,7 @@ import { useI18n } from '../i18n/I18nProvider';
 import { ExerciseLog, SetLog, WorkoutSession } from '../data/types';
 import SensitivityWarning from '../components/SensitivityWarning';
 import RestTimer from '../components/RestTimer';
-import { ChevronLeft, ChevronRight, Check, SkipForward, ExternalLink, AlertTriangle, Trophy, X, Timer, Save, Loader2, History, Zap, Minus, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, SkipForward, ExternalLink, AlertTriangle, Trophy, X, Timer, Save, History, Zap, Minus, Plus } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
 
@@ -64,7 +64,7 @@ const WorkoutLogger = () => {
     const saved = localStorage.getItem('fitlog-rest-durations');
     return saved ? JSON.parse(saved) : {};
   });
-  const [isSaving, setIsSaving] = useState(false);
+  
 
   const currentExercise = allExercises[currentIdx];
   const nextExercise = currentIdx < allExercises.length - 1 ? allExercises[currentIdx + 1] : null;
@@ -167,19 +167,21 @@ const WorkoutLogger = () => {
     localStorage.setItem('fitlog-rest-durations', JSON.stringify(restDurations));
   }, [restDurations]);
 
-  // Auto-save every 10 seconds
+  // Debounced auto-save: 5 seconds after last change
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (completed || !routineId) return;
-    const interval = setInterval(() => {
-      setIsSaving(true);
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
       localStorage.setItem(`fitlog-inprogress-${routineId}`, JSON.stringify({
         logs,
         currentIdx,
         currentExercise: { sets, painLevel, rpe, notes, exerciseCompleted, warmupReps },
       }));
-      setTimeout(() => setIsSaving(false), 600);
-    }, 10000);
-    return () => clearInterval(interval);
+    }, 5000);
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
   }, [completed, routineId, logs, currentIdx, sets, painLevel, rpe, notes, exerciseCompleted, warmupReps]);
 
   if (!routine) {
@@ -287,21 +289,16 @@ const WorkoutLogger = () => {
         <button
           className="w-8 h-8 flex items-center justify-center rounded-lg active:bg-secondary transition-colors"
           onClick={() => {
-            if (isSaving || !routineId) return;
-            setIsSaving(true);
+            if (!routineId) return;
             localStorage.setItem(`fitlog-inprogress-${routineId}`, JSON.stringify({
               logs,
               currentIdx,
               currentExercise: { sets, painLevel, rpe, notes, exerciseCompleted, warmupReps },
             }));
-            setTimeout(() => setIsSaving(false), 700);
+            toast(lang === 'he' ? 'נשמר ✓' : 'Saved ✓', { duration: 1000 });
           }}
         >
-          {isSaving ? (
-            <Loader2 className="w-5 h-5 text-primary animate-spin" />
-          ) : (
-            <Save className="w-5 h-5 text-primary" />
-          )}
+          <Save className="w-5 h-5 text-primary" />
         </button>
       </div>
       <div className="text-center mb-2">
