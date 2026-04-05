@@ -289,20 +289,16 @@ const WorkoutLogger = () => {
         <button
           className="w-8 h-8 flex items-center justify-center rounded-lg active:bg-secondary transition-colors"
           onClick={() => {
-            if (isSaving || !routineId) return;
-            setIsSaving(true);
+            if (!routineId) return;
             localStorage.setItem(`fitlog-inprogress-${routineId}`, JSON.stringify({
               logs,
               currentIdx,
               currentExercise: { sets, painLevel, rpe, notes, exerciseCompleted, warmupReps },
             }));
-            setTimeout(() => setIsSaving(false), 700);
+            toast(lang === 'he' ? 'נשמר ✓' : 'Saved ✓', { duration: 1000 });
           }}
         >
-          {isSaving ? (
-            <Loader2 className="w-5 h-5 text-primary animate-spin" />
-          ) : (
-            <Save className="w-5 h-5 text-primary" />
+          <Save className="w-5 h-5 text-primary" />
           )}
         </button>
       </div>
