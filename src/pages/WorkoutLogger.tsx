@@ -579,10 +579,10 @@ const WorkoutLogger = () => {
                 <span className="w-10 text-[10px] text-muted-foreground text-center">✓</span>
               </div>
               {sets.map((set, i) => (
-                <div key={i} className="flex items-center gap-2 bg-card border border-border rounded-lg px-2 py-2">
-                  <span className="w-10 text-xs text-muted-foreground text-center">{i + 1}</span>
+                <div key={i} className="flex items-center gap-1.5 bg-card border border-border rounded-lg px-1.5 py-2 overflow-hidden">
+                  <span className="w-7 text-xs text-muted-foreground text-center shrink-0">{i + 1}</span>
                   {/* Reps with +/- buttons */}
-                  <div className="flex-1 flex items-center gap-1 justify-center">
+                  <div className="flex-1 min-w-0 flex items-center gap-0.5 justify-center">
                     <button
                       onClick={() => updateSetReps(i, Math.max(0, set.reps - 1))}
                       className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center active:scale-90 transition-all shrink-0"
@@ -593,7 +593,7 @@ const WorkoutLogger = () => {
                       type="number"
                       value={set.reps || ''}
                       onChange={(e) => updateSetReps(i, Number(e.target.value))}
-                      className="w-12 bg-secondary rounded px-1 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="w-10 min-w-0 bg-secondary rounded px-0.5 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                       placeholder="0"
                     />
                     <button
@@ -604,17 +604,17 @@ const WorkoutLogger = () => {
                     </button>
                   </div>
                   {/* Weight / Time / BW */}
-                  <div className="flex-1 flex justify-center">
+                  <div className="flex-1 min-w-0 flex justify-center">
                     {isTimeBased ? (
                       <input
                         type="number"
                         value={set.weight || ''}
                         onChange={(e) => updateSetWeight(i, Number(e.target.value))}
-                        className="w-16 bg-secondary rounded px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                        className="w-14 min-w-0 bg-secondary rounded px-1 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                         placeholder="sec"
                       />
                     ) : isBW ? (
-                      <div className="bg-secondary/50 rounded px-2 py-1.5 text-center text-sm text-muted-foreground w-16">
+                      <div className="bg-secondary/50 rounded px-1 py-1.5 text-center text-sm text-muted-foreground w-14 min-w-0 truncate">
                         {set.weight} <span className="text-[10px]">{t('dash.kg')}</span>
                       </div>
                     ) : (
@@ -622,14 +622,14 @@ const WorkoutLogger = () => {
                         type="number"
                         value={set.weight || ''}
                         onChange={(e) => updateSetWeight(i, Number(e.target.value))}
-                        className="w-16 bg-secondary rounded px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                        className="w-14 min-w-0 bg-secondary rounded px-1 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                         placeholder="0"
                       />
                     )}
                   </div>
                   <button
                     onClick={() => toggleSet(i)}
-                    className={`w-10 h-8 rounded-lg flex items-center justify-center transition-all ${
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all shrink-0 ${
                       set.completed ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
                     }`}
                   >
