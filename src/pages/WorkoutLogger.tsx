@@ -570,13 +570,13 @@ const WorkoutLogger = () => {
                 </div>
               )}
               {/* Column headers */}
-              <div className="flex items-center px-2 mb-1">
-                <span className="w-10 text-[10px] text-muted-foreground text-center">{t('wl.set')}</span>
-                <span className="flex-1 text-[10px] text-muted-foreground text-center">{t('wl.reps')}</span>
-                <span className="flex-1 text-[10px] text-muted-foreground text-center">
+              <div className="flex items-center px-1.5 mb-1">
+                <span className="w-7 text-[10px] text-muted-foreground text-center shrink-0">{t('wl.set')}</span>
+                <span className="flex-1 min-w-0 text-[10px] text-muted-foreground text-center">{t('wl.reps')}</span>
+                <span className="flex-1 min-w-0 text-[10px] text-muted-foreground text-center">
                   {isTimeBased ? (isHe ? 'שניות' : 'Seconds') : t('wl.weight')}
                 </span>
-                <span className="w-10 text-[10px] text-muted-foreground text-center">✓</span>
+                <span className="w-8 text-[10px] text-muted-foreground text-center shrink-0">✓</span>
               </div>
               {sets.map((set, i) => (
                 <div key={i} className="flex items-center gap-1.5 bg-card border border-border rounded-lg px-1.5 py-2 overflow-hidden">
