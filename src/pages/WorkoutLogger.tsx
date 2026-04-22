@@ -522,9 +522,14 @@ const WorkoutLogger = () => {
           {/* Last session comparison */}
           {!isWarmup && lastSessionData && (
             <div className="mt-4 bg-secondary/50 border border-border rounded-xl p-3">
-              <div className="flex items-center gap-1.5 mb-2">
-                <History className="w-3.5 h-3.5 text-accent" />
-                <span className="text-xs font-semibold text-accent">{t('wl.lastSession')}</span>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <History className="w-3.5 h-3.5 text-accent shrink-0" />
+                  <span className="text-xs font-semibold text-accent truncate">{t('wl.lastSession')}</span>
+                </div>
+                <span className="text-[10px] text-muted-foreground shrink-0">
+                  {formatLastDate(lastSessionData.sessionDate)}
+                </span>
               </div>
               <div className="space-y-1.5">
                 {lastSessionData.sets.map((s, i) => (
