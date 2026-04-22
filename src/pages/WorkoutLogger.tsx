@@ -713,6 +713,17 @@ const WorkoutLogger = () => {
           )}
 
           <div className="mt-4">
+            {lastSessionData?.notes && (
+              <div className="mb-2 bg-accent/10 border border-accent/20 rounded-lg px-3 py-2">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <History className="w-3 h-3 text-accent" />
+                  <span className="text-[10px] font-semibold text-accent uppercase tracking-wide">
+                    {t('wl.lastSession')}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground italic">"{lastSessionData.notes}"</p>
+              </div>
+            )}
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
