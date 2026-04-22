@@ -551,11 +551,6 @@ const WorkoutLogger = () => {
                   {t('wl.effort')}: <span className="font-semibold text-accent">{lastSessionData.rpe}/10</span>
                 </span>
               </div>
-              {lastSessionData.notes && (
-                <div className="mt-2 pt-2 border-t border-border">
-                  <p className="text-xs text-muted-foreground italic">"{lastSessionData.notes}"</p>
-                </div>
-              )}
             </div>
           )}
 
