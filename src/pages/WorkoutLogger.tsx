@@ -107,6 +107,27 @@ const WorkoutLogger = () => {
     return weightImproved || rpeImproved;
   }, [lastSessionData, sets, rpe, currentExercise]);
 
+  // Volume progression: compare current vs previous total volume (sets × reps × weight)
+  const volumeStats = useMemo(() => {
+    if (!lastSessionData || currentExercise?.isWarmup) return null;
+    const calcVolume = (setList: { reps: number; weight: number }[], timeBased: boolean) => {
+      if (timeBased) {
+        // For time-based exercises: sum of seconds across sets (weight field stores seconds)
+        return setList.reduce((sum, s) => sum + (s.weight || 0), 0);
+      }
+      return setList.reduce((sum, s) => sum + (s.reps || 0) * (s.weight || 0), 0);
+    };
+    const timeBased = !!currentExercise?.isTimeBased;
+    const prev = calcVolume(lastSessionData.sets, timeBased);
+    const curr = calcVolume(sets, timeBased);
+    if (prev <= 0 && curr <= 0) return null;
+    // Ratio: 1.0 = match, >1 = improvement, capped at 1.5 for the bar visual
+    const ratio = prev > 0 ? curr / prev : (curr > 0 ? 1 : 0);
+    const pct = Math.min(150, Math.round(ratio * 100));
+    const deltaPct = prev > 0 ? Math.round((curr - prev) / prev * 100) : null;
+    return { prev, curr, pct, deltaPct, timeBased, isPR: prev > 0 && curr > prev };
+  }, [lastSessionData, sets, currentExercise]);
+
   const [initialRestoreDone, setInitialRestoreDone] = useState(false);
   const prevIdxRef = useRef<number | null>(null);
 
