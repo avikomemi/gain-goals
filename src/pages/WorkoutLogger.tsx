@@ -572,6 +572,49 @@ const WorkoutLogger = () => {
                   {t('wl.effort')}: <span className="font-semibold text-accent">{lastSessionData.rpe}/10</span>
                 </span>
               </div>
+
+              {/* Volume progression bar */}
+              {volumeStats && (
+                <div className="mt-3 pt-2 border-t border-border">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                      {t('wl.volume')} · {t('wl.vsLast')}
+                    </span>
+                    {volumeStats.deltaPct !== null && (
+                      <span className={`text-[10px] font-bold ${
+                        volumeStats.deltaPct > 0 ? 'text-primary' : volumeStats.deltaPct < 0 ? 'text-warning' : 'text-muted-foreground'
+                      }`}>
+                        {volumeStats.deltaPct > 0 ? '+' : ''}{volumeStats.deltaPct}%
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+                    {/* Baseline marker at 100% (1/1.5 = 66.6%) */}
+                    <div className="absolute top-0 bottom-0 w-px bg-border" style={{ left: '66.6%' }} />
+                    <motion.div
+                      className={`h-full rounded-full ${
+                        volumeStats.isPR ? 'gradient-primary' : volumeStats.curr >= volumeStats.prev ? 'bg-primary' : 'bg-accent/60'
+                      }`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(volumeStats.pct / 150) * 100}%` }}
+                      transition={{ duration: 0.5, ease: 'easeOut' }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between mt-1 text-[10px] text-muted-foreground">
+                    <span>
+                      {volumeStats.curr.toLocaleString()}{volumeStats.timeBased ? 's' : ''}
+                    </span>
+                    <span>
+                      {isHe ? 'קודם' : 'prev'}: {volumeStats.prev.toLocaleString()}{volumeStats.timeBased ? 's' : ''}
+                    </span>
+                  </div>
+                  {volumeStats.isPR && (
+                    <div className="mt-1.5 text-[10px] font-bold text-primary text-center">
+                      {t('wl.newPR')}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
