@@ -161,6 +161,9 @@ const translations = {
   // Workout encouragement
   'wl.nextUp': { he: 'הבא:', en: 'Next up:' },
   'wl.effortImproved': { he: '🔥 שיפור מאמץ!', en: '🔥 Effort Improved!' },
+  'wl.volume': { he: 'נפח', en: 'Volume' },
+  'wl.vsLast': { he: 'מול אימון קודם', en: 'vs last session' },
+  'wl.newPR': { he: 'שיא חדש! 🏆', en: 'New PR! 🏆' },
 
   // Share
   'share.title': { he: 'שיתוף עם מאמן', en: 'Share with Trainer' },
