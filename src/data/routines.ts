@@ -49,8 +49,6 @@ export const routines: Routine[] = [
       { id: 'cu-5', name: 'Single Arm Alt. Wide Deficit Push-ups', nameHe: 'שכיבות סמיכה רחבות לסירוגין', sets: '3', reps: '12-16', notes: 'צד לצד', isBodyweight: true },
       { id: 'cu-6', name: 'BW Triceps Extension', nameHe: 'הרחבת טרייספס', sets: '3', reps: '10-15', isBodyweight: true },
       { id: 'cu-7', name: 'Australian Pull-ups', nameHe: 'מתח אוסטרלי', sets: '3', reps: '10-15', isBodyweight: true },
-      { id: 'cu-8', name: 'Handstand', nameHe: 'עמידת ידיים', sets: '3', reps: '20-30 שניות', notes: 'כנגד קיר או חופשי — שמור על גוף ישר', isBodyweight: true, isTimeBased: true },
-      { id: 'cu-9', name: 'Muscle-up', nameHe: 'מאסל-אפ', sets: '3', reps: '3-5', notes: 'שלב מתח פיצוצי + מעבר לשקע', link: 'https://www.youtube.com/watch?v=2H2gJMPVaEI', isBodyweight: true },
     ],
   },
   {
