@@ -21,6 +21,7 @@ export const routines: Routine[] = [
     exercises: [
       { id: 'skb-1', name: 'Single KB Press', nameHe: 'לחיצת קטלבל בודד', sets: '3', reps: '6-8', notes: 'יד חופשית מבצעת תנועה הפוכה' },
       { id: 'skb-2', name: 'KB Swing', nameHe: 'סווינג קטלבל', sets: '3', reps: '10', notes: 'אל תקשת את הגב התחתון, נשיפה חזקה' },
+      { id: 'skb-8', name: 'Single Leg Landing Practice', nameHe: 'תרגול נחיתה על רגל אחת', sets: '5', reps: '5', isBodyweight: true },
       { id: 'skb-3', name: 'Drop Lands', nameHe: 'נחיתות', sets: '3', reps: '3-4', notes: '30-45 ס"מ — ⚡ נעל את הנחיתה!', isBodyweight: true },
       { id: 'skb-4', name: 'Box Jump', nameHe: 'קפיצה לקופסה', sets: '3', reps: '3-4', notes: '30-45 ס"מ — שלוש הרחבות: ירך-ברך-קרסול', isBodyweight: true },
       { id: 'skb-5', name: 'Drop Jump', nameHe: 'קפיצת נפילה', sets: '3-4', reps: '2-3', notes: '15-20 ס"מ, נחיתה בפיצול — ⚡ נעל את הנחיתה!', isBodyweight: true },
