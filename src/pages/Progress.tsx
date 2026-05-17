@@ -126,6 +126,11 @@ const Progress = () => {
         />
       )}
 
+      {/* At a Glance Table */}
+      {exerciseAnalyses.length > 0 && (
+        <AtAGlanceTable rows={exerciseAnalyses} isHe={lang === 'he'} />
+      )}
+
       {/* Body Weight */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-card border border-border rounded-xl p-4 mb-4">
         <h3 className="text-sm font-semibold mb-3">{t('prog.bodyWeight')}</h3>
