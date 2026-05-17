@@ -10,6 +10,7 @@ import { ChevronDown, ChevronUp, FileText, Share2, TrendingUp, TrendingDown, Min
 import { useNavigate } from 'react-router-dom';
 import OverallSummary from '../components/progress/OverallSummary';
 import ExerciseCard from '../components/progress/ExerciseCard';
+import AtAGlanceTable from '../components/progress/AtAGlanceTable';
 
 const Progress = () => {
   const { profile, workoutHistory } = useApp();
