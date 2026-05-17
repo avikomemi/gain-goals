@@ -45,6 +45,7 @@ export const routines: Routine[] = [
     exercises: [
       { id: 'cu-1', name: 'Pull-ups', nameHe: 'מתח', sets: '3', reps: '1 סט מקס + 2x5-10', notes: 'עם משקל אם אפשר', isBodyweight: true },
       { id: 'cu-2', name: 'Dips', nameHe: 'שקעים (מקבילים)', sets: '3', reps: '1 סט מקס + 2x5-10', notes: 'עם משקל אם אפשר', isBodyweight: true },
+      { id: 'cu-10', name: 'Negative Bar Muscle Practice', nameHe: 'תרגול שלילי למוסל אפ', sets: '3', reps: '5', isBodyweight: true },
       { id: 'cu-3', name: 'Lever', nameHe: 'מנוף', sets: '1', reps: '3-5 דקות משחק', notes: 'שחק עם התנועה', isBodyweight: true },
       { id: 'cu-4', name: 'Toes to Bar', nameHe: 'אצבעות למתח', sets: '3-4', reps: '3-8', isBodyweight: true },
       { id: 'cu-5', name: 'Single Arm Alt. Wide Deficit Push-ups', nameHe: 'שכיבות סמיכה רחבות לסירוגין', sets: '3', reps: '12-16', notes: 'צד לצד', isBodyweight: true },
