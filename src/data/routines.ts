@@ -64,7 +64,8 @@ export const routines: Routine[] = [
       { id: 'cl-2', name: 'Forward Step Up', nameHe: 'עליית מדרגה קדימה', sets: '3', reps: '4-6', notes: '45 ס"מ', isBodyweight: true },
       { id: 'cl-3', name: 'Sideways Step Up', nameHe: 'עליית מדרגה צידית', sets: '3', reps: '4-6', notes: '45 ס"מ', isBodyweight: true },
       { id: 'cl-4', name: 'Cossack Squat', nameHe: 'סקוואט קוזאק', sets: '3', reps: '6-8', notes: 'הוסף משקל אם קל', isBodyweight: true },
-      { id: 'cl-5', name: 'Leg Press', nameHe: 'מכבש רגליים', sets: '3', reps: '8', notes: '⚠️ אל תלך חזק ונמוך' },
+      { id: 'cl-5', name: 'Box Squat', nameHe: 'בוקס סקוואט', sets: '3', reps: '8', notes: '⚠️ אל תלך חזק ונמוך' },
+      { id: 'cl-6', name: 'Nordic Curls', nameHe: 'נורדיק קרל', sets: '3', reps: '6-8', notes: 'Slow and controlled reps', isBodyweight: true },
     ],
   },
 ];
