@@ -622,7 +622,7 @@ const WorkoutLogger = () => {
           {!isWarmup && (
             <div className="mt-4 space-y-2">
               {/* BW toggle for bodyweight exercises */}
-              {currentExercise.isBodyweight && !isTimeBased && (
+              {!isTimeBased && (
                 <div className="flex items-center justify-between bg-secondary rounded-lg px-3 py-2 mb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold bg-accent/20 text-accent px-2 py-0.5 rounded">BW</span>
