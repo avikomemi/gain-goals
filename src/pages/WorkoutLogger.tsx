@@ -679,17 +679,17 @@ const WorkoutLogger = () => {
                     </button>
                   </div>
                   {/* Weight / Time / BW */}
-                  <div className="flex-1 min-w-0 flex justify-center">
+                  <div className="flex-1 min-w-0 flex justify-center px-1">
                     {isTimeBased ? (
                       <input
                         type="number"
                         value={set.weight || ''}
                         onChange={(e) => updateSetWeight(i, Number(e.target.value))}
-                        className="w-14 min-w-0 bg-secondary rounded px-1 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                        className="w-full min-w-0 bg-secondary rounded px-1 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                         placeholder="sec"
                       />
                     ) : isBW ? (
-                      <div className="bg-secondary/50 rounded px-1 py-1.5 text-center text-sm text-muted-foreground w-14 min-w-0 truncate">
+                      <div className="bg-secondary/50 rounded px-1 py-1.5 text-center text-sm text-muted-foreground w-full min-w-0 truncate">
                         {set.weight} <span className="text-[10px]">{t('dash.kg')}</span>
                       </div>
                     ) : (
@@ -697,7 +697,7 @@ const WorkoutLogger = () => {
                         type="number"
                         value={set.weight || ''}
                         onChange={(e) => updateSetWeight(i, Number(e.target.value))}
-                        className="w-14 min-w-0 bg-secondary rounded px-1 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                        className="w-full min-w-0 bg-secondary rounded px-1 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                         placeholder="0"
                       />
                     )}
