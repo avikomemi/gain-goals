@@ -688,17 +688,13 @@ const WorkoutLogger = () => {
                         className="w-full min-w-0 bg-secondary rounded px-1 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                         placeholder="sec"
                       />
-                    ) : isBW ? (
-                      <div className="bg-secondary/50 rounded px-1 py-1.5 text-center text-sm text-muted-foreground w-full min-w-0 truncate">
-                        {set.weight} <span className="text-[10px]">{t('dash.kg')}</span>
-                      </div>
                     ) : (
                       <input
                         type="number"
                         value={set.weight || ''}
                         onChange={(e) => updateSetWeight(i, Number(e.target.value))}
                         className="w-full min-w-0 bg-secondary rounded px-1 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                        placeholder="0"
+                        placeholder={isBW ? String(profile.weight) : '0'}
                       />
                     )}
                   </div>
