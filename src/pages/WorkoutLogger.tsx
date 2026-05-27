@@ -913,6 +913,7 @@ const WorkoutLogger = () => {
               </span>
             </div>
           )}
+          </>)}
         </motion.div>
       </AnimatePresence>
 
