@@ -287,12 +287,13 @@ const WorkoutLogger = () => {
         currentIdx,
         currentExercise: { sets, painLevel, rpe, notes, exerciseCompleted, warmupReps },
         allSessionStates: sessionStateRef.current,
+        warmupData,
       }));
     }, 5000);
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     };
-  }, [completed, routineId, logs, currentIdx, sets, painLevel, rpe, notes, exerciseCompleted, warmupReps]);
+  }, [completed, routineId, logs, currentIdx, sets, painLevel, rpe, notes, exerciseCompleted, warmupReps, warmupData]);
 
   if (!routine) {
     return (
