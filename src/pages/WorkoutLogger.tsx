@@ -204,6 +204,9 @@ const WorkoutLogger = () => {
         if (data.allSessionStates) {
           sessionStateRef.current = { ...sessionStateRef.current, ...data.allSessionStates };
         }
+        if (data.warmupData) {
+          setWarmupData(prev => ({ ...prev, ...data.warmupData }));
+        }
         toast(t('wl.resuming'));
       } catch {}
     }
