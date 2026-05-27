@@ -503,12 +503,12 @@ const WorkoutLogger = () => {
                           <Check className="w-4 h-4" />
                         </button>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 flex items-center gap-1">
-                          <span className="text-[10px] text-muted-foreground w-10 shrink-0">{t('wl.reps')}</span>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-muted-foreground w-12 shrink-0">{t('wl.reps')}</span>
                           <button
                             onClick={() => update({ reps: Math.max(0, d.reps - 1) })}
-                            className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center active:scale-90 transition-all shrink-0"
+                            className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center active:scale-90 transition-all shrink-0"
                           >
                             <Minus className="w-3 h-3" />
                           </button>
@@ -516,23 +516,23 @@ const WorkoutLogger = () => {
                             type="number"
                             value={d.reps || ''}
                             onChange={(e) => update({ reps: Number(e.target.value) })}
-                            className="flex-1 min-w-0 bg-secondary rounded px-1 py-1 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                            className="flex-1 min-w-0 bg-secondary rounded px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                             placeholder="0"
                           />
                           <button
                             onClick={() => update({ reps: d.reps + 1 })}
-                            className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center active:scale-90 transition-all shrink-0"
+                            className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center active:scale-90 transition-all shrink-0"
                           >
                             <Plus className="w-3 h-3" />
                           </button>
                         </div>
-                        <div className="flex-1 flex items-center gap-1">
-                          <span className="text-[10px] text-muted-foreground w-10 shrink-0">{t('wl.weight')}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-muted-foreground w-12 shrink-0">{t('wl.weight')}</span>
                           <input
                             type="number"
                             value={d.weight || ''}
                             onChange={(e) => update({ weight: Number(e.target.value) })}
-                            className="flex-1 min-w-0 bg-secondary rounded px-1 py-1 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                            className="flex-1 min-w-0 bg-secondary rounded px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                             placeholder="0"
                           />
                         </div>
