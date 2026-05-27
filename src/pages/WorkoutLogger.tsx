@@ -59,6 +59,8 @@ const WorkoutLogger = () => {
 
   // Warmup reps tracking
   const [warmupReps, setWarmupReps] = useState(0);
+  // Combined warmup data: per warmup exercise reps/weight/completed
+  const [warmupData, setWarmupData] = useState<Record<string, { reps: number; weight: number; completed: boolean }>>({});
 
   // Rest timer state
   const [showRestTimer, setShowRestTimer] = useState(false);
