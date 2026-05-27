@@ -60,7 +60,13 @@ const WorkoutLogger = () => {
   // Warmup reps tracking
   const [warmupReps, setWarmupReps] = useState(0);
   // Combined warmup data: per warmup exercise reps/weight/completed
-  const [warmupData, setWarmupData] = useState<Record<string, { reps: number; weight: number; completed: boolean }>>({});
+  const [warmupData, setWarmupData] = useState<Record<string, { reps: number; weight: number; completed: boolean }>>(() => {
+    const init: Record<string, { reps: number; weight: number; completed: boolean }> = {};
+    (routine?.warmup || []).forEach(w => {
+      init[w.id] = { reps: parseInt(w.reps) || 0, weight: 0, completed: false };
+    });
+    return init;
+  });
 
   // Rest timer state
   const [showRestTimer, setShowRestTimer] = useState(false);
