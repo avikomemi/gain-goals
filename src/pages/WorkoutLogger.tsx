@@ -463,6 +463,93 @@ const WorkoutLogger = () => {
           exit={{ opacity: 0, x: lang === 'he' ? 30 : -30 }}
           transition={{ duration: 0.2 }}
         >
+          {currentExercise?.id === 'warmup-combined' ? (
+            <div>
+              <h2 className="text-xl font-bold mb-3">{isHe ? 'חימום' : 'Warmup'}</h2>
+              <p className="text-xs text-muted-foreground mb-4">
+                {isHe ? 'בצע את כל תרגילי החימום. סמן בוצע לכל תרגיל.' : 'Complete all warmup exercises. Mark each as done.'}
+              </p>
+              <div className="space-y-3">
+                {warmupList.map((w) => {
+                  const d = warmupData[w.id] || { reps: parseInt(w.reps) || 0, weight: 0, completed: false };
+                  const update = (patch: Partial<typeof d>) => setWarmupData(prev => ({ ...prev, [w.id]: { ...d, ...patch } }));
+                  return (
+                    <div key={w.id} className={`bg-card border rounded-xl p-3 transition-colors ${d.completed ? 'border-primary/60 bg-primary/5' : 'border-border'}`}>
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-semibold">
+                            {isHe ? (w.nameHe || w.name) : w.name}
+                          </h3>
+                          {w.notes && (
+                            <p className="text-[11px] text-muted-foreground mt-0.5">{w.notes}</p>
+                          )}
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {isHe ? 'מומלץ' : 'Suggested'}: {w.reps}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => update({ completed: !d.completed })}
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all shrink-0 ${
+                            d.completed ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
+                          }`}
+                          aria-label="completed"
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 flex items-center gap-1">
+                          <span className="text-[10px] text-muted-foreground w-10 shrink-0">{t('wl.reps')}</span>
+                          <button
+                            onClick={() => update({ reps: Math.max(0, d.reps - 1) })}
+                            className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center active:scale-90 transition-all shrink-0"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <input
+                            type="number"
+                            value={d.reps || ''}
+                            onChange={(e) => update({ reps: Number(e.target.value) })}
+                            className="flex-1 min-w-0 bg-secondary rounded px-1 py-1 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                            placeholder="0"
+                          />
+                          <button
+                            onClick={() => update({ reps: d.reps + 1 })}
+                            className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center active:scale-90 transition-all shrink-0"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                        <div className="flex-1 flex items-center gap-1">
+                          <span className="text-[10px] text-muted-foreground w-10 shrink-0">{t('wl.weight')}</span>
+                          <input
+                            type="number"
+                            value={d.weight || ''}
+                            onChange={(e) => update({ weight: Number(e.target.value) })}
+                            className="flex-1 min-w-0 bg-secondary rounded px-1 py-1 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <SensitivityWarning compact />
+              {nextExercise && (
+                <div className="mt-3 flex items-center gap-2 bg-secondary/60 rounded-lg px-3 py-2">
+                  <ChevronRight className={`w-4 h-4 text-muted-foreground ${lang === 'he' ? 'rotate-180' : ''}`} />
+                  <span className="text-xs text-muted-foreground">{t('wl.nextUp')}</span>
+                  <span className="text-xs font-medium text-foreground">
+                    {lang === 'he' ? (nextExercise.nameHe || nextExercise.name) : nextExercise.name}
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : (<></>)}
+          {currentExercise?.id !== 'warmup-combined' && (<></>)}
+          {currentExercise?.id !== 'warmup-combined' && (<>
+
           <h2 className="text-xl font-bold mb-1">
             {lang === 'he' ? (currentExercise.nameHe || currentExercise.name) : currentExercise.name}
           </h2>
