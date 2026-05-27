@@ -467,6 +467,7 @@ const WorkoutLogger = () => {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: lang === 'he' ? 30 : -30 }}
           transition={{ duration: 0.2 }}
+          className="overflow-hidden"
         >
           {currentExercise?.id === 'warmup-combined' ? (
             <div>
