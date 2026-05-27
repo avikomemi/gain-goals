@@ -41,7 +41,10 @@ const WorkoutLogger = () => {
   const { t, lang } = useI18n();
 
   const routine = getCustomizedRoutine(routineId || '');
-  const allExercises = routine ? [...routine.warmup, ...routine.exercises] : [];
+  const warmupList = routine?.warmup || [];
+  const hasWarmup = warmupList.length > 0;
+  const warmupPage: any = { id: 'warmup-combined', isWarmup: true, name: 'Warmup', nameHe: 'חימום', sets: '1', reps: '' };
+  const allExercises = routine ? (hasWarmup ? [warmupPage, ...routine.exercises] : routine.exercises) : [];
 
   const [currentIdx, setCurrentIdx] = useState(0);
   const [startTime] = useState(Date.now());
