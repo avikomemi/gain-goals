@@ -319,16 +319,34 @@ const WorkoutLogger = () => {
   };
 
   const saveAndNext = (skipped: boolean) => {
-    const log: ExerciseLog = {
-      exerciseId: currentExercise.id,
-      exerciseName: currentExercise.name,
-      sets: skipped ? [] : (currentExercise.isWarmup ? [{ reps: warmupReps, weight: 0, completed: exerciseCompleted }] : sets),
-      skipped,
-      notes,
-      painLevel,
-      rpe,
-    };
-    const newLogs = [...logs, log];
+    const isWarmupCombined = currentExercise?.id === 'warmup-combined';
+    let newLogs: ExerciseLog[];
+    if (isWarmupCombined) {
+      const warmupLogs: ExerciseLog[] = warmupList.map(w => {
+        const d = warmupData[w.id] || { reps: 0, weight: 0, completed: false };
+        return {
+          exerciseId: w.id,
+          exerciseName: w.name,
+          sets: skipped ? [] : [{ reps: d.reps, weight: d.weight, completed: d.completed }],
+          skipped: skipped || !d.completed,
+          notes: '',
+          painLevel: 0,
+          rpe: 0,
+        };
+      });
+      newLogs = [...logs, ...warmupLogs];
+    } else {
+      const log: ExerciseLog = {
+        exerciseId: currentExercise.id,
+        exerciseName: currentExercise.name,
+        sets: skipped ? [] : (currentExercise.isWarmup ? [{ reps: warmupReps, weight: 0, completed: exerciseCompleted }] : sets),
+        skipped,
+        notes,
+        painLevel,
+        rpe,
+      };
+      newLogs = [...logs, log];
+    }
     setLogs(newLogs);
 
     if (currentIdx < allExercises.length - 1) {
