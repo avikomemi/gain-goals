@@ -173,7 +173,8 @@ const WorkoutLogger = () => {
       try {
         const data = JSON.parse(saved);
         setLogs(data.logs || []);
-        const idx = data.currentIdx || 0;
+        const rawIdx = data.currentIdx || 0;
+        const idx = Math.min(Math.max(0, rawIdx), Math.max(0, allExercises.length - 1));
         setCurrentIdx(idx);
         prevIdxRef.current = idx;
         if (data.currentExercise) {
