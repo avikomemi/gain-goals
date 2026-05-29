@@ -173,7 +173,8 @@ const WorkoutLogger = () => {
       try {
         const data = JSON.parse(saved);
         setLogs(data.logs || []);
-        const idx = data.currentIdx || 0;
+        const rawIdx = data.currentIdx || 0;
+        const idx = Math.min(Math.max(0, rawIdx), Math.max(0, allExercises.length - 1));
         setCurrentIdx(idx);
         prevIdxRef.current = idx;
         if (data.currentExercise) {
@@ -553,8 +554,11 @@ const WorkoutLogger = () => {
               )}
             </div>
           ) : (<></>)}
-          {currentExercise?.id !== 'warmup-combined' && (<></>)}
-          {currentExercise?.id !== 'warmup-combined' && (<>
+          {currentExercise && currentExercise.id !== 'warmup-combined' && (<></>)}
+          {currentExercise && currentExercise.id !== 'warmup-combined' && (<></>)}
+          {currentExercise && currentExercise.id !== 'warmup-combined' && (<></>)}
+          {currentExercise && currentExercise.id !== 'warmup-combined' && (<>
+
 
           <h2 className="text-xl font-bold mb-1">
             {lang === 'he' ? (currentExercise.nameHe || currentExercise.name) : currentExercise.name}
