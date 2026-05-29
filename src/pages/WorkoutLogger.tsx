@@ -554,8 +554,11 @@ const WorkoutLogger = () => {
               )}
             </div>
           ) : (<></>)}
-          {currentExercise?.id !== 'warmup-combined' && (<></>)}
-          {currentExercise?.id !== 'warmup-combined' && (<>
+          {currentExercise && currentExercise.id !== 'warmup-combined' && (<></>)}
+          {currentExercise && currentExercise.id !== 'warmup-combined' && (<></>)}
+          {currentExercise && currentExercise.id !== 'warmup-combined' && (<></>)}
+          {currentExercise && currentExercise.id !== 'warmup-combined' && (<>
+
 
           <h2 className="text-xl font-bold mb-1">
             {lang === 'he' ? (currentExercise.nameHe || currentExercise.name) : currentExercise.name}
