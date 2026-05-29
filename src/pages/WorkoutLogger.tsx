@@ -172,47 +172,51 @@ const WorkoutLogger = () => {
     if (saved) {
       try {
         const data = JSON.parse(saved);
-        setLogs(data.logs || []);
-        const rawIdx = data.currentIdx || 0;
-        const idx = Math.min(Math.max(0, rawIdx), Math.max(0, allExercises.length - 1));
-        setCurrentIdx(idx);
-        prevIdxRef.current = idx;
-        if (data.currentExercise) {
-          setSets(data.currentExercise.sets);
-          setPainLevel(data.currentExercise.painLevel);
-          setRpe(data.currentExercise.rpe);
-          setNotes(data.currentExercise.notes);
-          if (data.currentExercise.exerciseCompleted !== undefined) {
-            setExerciseCompleted(data.currentExercise.exerciseCompleted);
+        // Ignore old-format saves (before combined warmup page). v2+ only.
+        if (data.version !== 2) {
+          localStorage.removeItem(`fitlog-inprogress-${routineId}`);
+        } else {
+          setLogs(data.logs || []);
+          const rawIdx = data.currentIdx || 0;
+          const idx = Math.min(Math.max(0, rawIdx), Math.max(0, allExercises.length - 1));
+          setCurrentIdx(idx);
+          prevIdxRef.current = idx;
+          if (data.currentExercise) {
+            setSets(data.currentExercise.sets);
+            setPainLevel(data.currentExercise.painLevel);
+            setRpe(data.currentExercise.rpe);
+            setNotes(data.currentExercise.notes);
+            if (data.currentExercise.exerciseCompleted !== undefined) {
+              setExerciseCompleted(data.currentExercise.exerciseCompleted);
+            }
+            if (data.currentExercise.warmupReps !== undefined) {
+              setWarmupReps(data.currentExercise.warmupReps);
+            }
+            const ex = allExercises[idx];
+            if (ex) {
+              sessionStateRef.current[ex.id] = {
+                sets: data.currentExercise.sets,
+                painLevel: data.currentExercise.painLevel,
+                rpe: data.currentExercise.rpe,
+                notes: data.currentExercise.notes,
+                exerciseCompleted: data.currentExercise.exerciseCompleted ?? false,
+                warmupReps: data.currentExercise.warmupReps ?? 0,
+              };
+            }
           }
-          if (data.currentExercise.warmupReps !== undefined) {
-            setWarmupReps(data.currentExercise.warmupReps);
+          if (data.allSessionStates) {
+            sessionStateRef.current = { ...sessionStateRef.current, ...data.allSessionStates };
           }
-          // Also store in session ref so navigating away and back preserves it
-          const ex = allExercises[idx];
-          if (ex) {
-            sessionStateRef.current[ex.id] = {
-              sets: data.currentExercise.sets,
-              painLevel: data.currentExercise.painLevel,
-              rpe: data.currentExercise.rpe,
-              notes: data.currentExercise.notes,
-              exerciseCompleted: data.currentExercise.exerciseCompleted ?? false,
-              warmupReps: data.currentExercise.warmupReps ?? 0,
-            };
+          if (data.warmupData) {
+            setWarmupData(prev => ({ ...prev, ...data.warmupData }));
           }
+          toast(t('wl.resuming'));
         }
-        // Restore all session states if saved
-        if (data.allSessionStates) {
-          sessionStateRef.current = { ...sessionStateRef.current, ...data.allSessionStates };
-        }
-        if (data.warmupData) {
-          setWarmupData(prev => ({ ...prev, ...data.warmupData }));
-        }
-        toast(t('wl.resuming'));
       } catch {}
     }
     setInitialRestoreDone(true);
   }, [routineId]);
+
 
   useEffect(() => {
     if (!initialRestoreDone) return;
