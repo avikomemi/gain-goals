@@ -429,6 +429,7 @@ const WorkoutLogger = () => {
           onClick={() => {
             if (!routineId) return;
             localStorage.setItem(`fitlog-inprogress-${routineId}`, JSON.stringify({
+              version: 2,
               logs,
               currentIdx,
               currentExercise: { sets, painLevel, rpe, notes, exerciseCompleted, warmupReps },
