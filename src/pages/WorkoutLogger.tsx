@@ -291,6 +291,7 @@ const WorkoutLogger = () => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
       localStorage.setItem(`fitlog-inprogress-${routineId}`, JSON.stringify({
+        version: 2,
         logs,
         currentIdx,
         currentExercise: { sets, painLevel, rpe, notes, exerciseCompleted, warmupReps },
