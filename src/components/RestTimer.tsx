@@ -10,10 +10,12 @@ interface RestTimerProps {
 }
 
 const RestTimer = ({ duration, onComplete, onSkip }: RestTimerProps) => {
+  const endTimeRef = useRef<number>(Date.now() + duration * 1000);
   const [remaining, setRemaining] = useState(duration);
   const [expanded, setExpanded] = useState(false);
   const { t } = useI18n();
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const completedRef = useRef(false);
 
   useEffect(() => {
     try {
@@ -71,17 +73,35 @@ const RestTimer = ({ duration, onComplete, onSkip }: RestTimerProps) => {
     } catch {}
   }, []);
 
+  // Reset end-time if duration prop changes (new timer instance)
   useEffect(() => {
-    if (remaining <= 0) {
-      playBeep();
-      onComplete();
-      return;
-    }
-    const interval = setInterval(() => {
-      setRemaining(prev => prev - 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [remaining, onComplete]);
+    endTimeRef.current = Date.now() + duration * 1000;
+    completedRef.current = false;
+    setRemaining(duration);
+  }, [duration]);
+
+  useEffect(() => {
+    const tick = () => {
+      const secs = Math.max(0, Math.ceil((endTimeRef.current - Date.now()) / 1000));
+      setRemaining(secs);
+      if (secs <= 0 && !completedRef.current) {
+        completedRef.current = true;
+        playBeep();
+        onComplete();
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 250);
+    const onVisible = () => tick();
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, [onComplete, playBeep]);
+
 
   const minutes = Math.floor(remaining / 60);
   const seconds = remaining % 60;
