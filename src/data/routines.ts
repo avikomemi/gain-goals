@@ -22,9 +22,9 @@ export const routines: Routine[] = [
       { id: 'skb-1', name: 'Single KB Press', nameHe: 'לחיצת קטלבל בודד', sets: '3', reps: '6-8', notes: 'יד חופשית מבצעת תנועה הפוכה' },
       { id: 'skb-2', name: 'KB Swing', nameHe: 'סווינג קטלבל', sets: '3', reps: '10', notes: 'אל תקשת את הגב התחתון, נשיפה חזקה' },
       { id: 'skb-8', name: 'Single Leg Landing Practice', nameHe: 'תרגול נחיתה על רגל אחת', sets: '5', reps: '5', isBodyweight: true },
-      { id: 'skb-3', name: 'Drop Lands', nameHe: 'נחיתות', sets: '3', reps: '3-4', notes: '30-45 ס"מ — ⚡ נעל את הנחיתה!', isBodyweight: true },
-      { id: 'skb-4', name: 'Box Jump', nameHe: 'קפיצה לקופסה', sets: '3', reps: '3-4', notes: '30-45 ס"מ — שלוש הרחבות: ירך-ברך-קרסול', isBodyweight: true },
-      { id: 'skb-5', name: 'Drop Jump to Broad Jump', nameHe: 'קפיצת נפילה לקפיצה רחבה', sets: '3-4', reps: '2-3', notes: '15-20 ס"מ, נחיתה בפיצול — ⚡ נעל את הנחיתה!', isBodyweight: true },
+      { id: 'skb-3', name: 'Plyometric Step-Up', nameHe: 'עליית מדרגה פליאומטרית', sets: '3', reps: '3-4', notes: '30-45 ס"מ — ⚡ נעל את הנחיתה!', isBodyweight: true },
+      { id: 'skb-4', name: 'Burpees', nameHe: 'ברפי', sets: '3', reps: '3-4', notes: 'שלוש הרחבות: ירך-ברך-קרסול', isBodyweight: true },
+      { id: 'skb-5', name: 'Tempo Goblet Squats', nameHe: 'סקוואט גובלט טמפו', sets: '3-4', reps: '2-3', notes: 'טמפו איטי ומבוקר' },
       { id: 'skb-6', name: 'FLOW', nameHe: 'פלואו — שחק עם תנועות', sets: '3', reps: '1', link: 'https://youtube.com/shorts/y_6i7nGHAio', isBodyweight: true },
       {
         id: 'skb-7', name: 'Thoracic Mobility', nameHe: 'ניידות בית החזה', sets: '1', reps: 'ראה פירוט', isMobility: true, isBodyweight: true,
