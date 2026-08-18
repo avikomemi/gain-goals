@@ -5,6 +5,20 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: './',
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (id.includes('node_modules')) {
+            if (id.includes('recharts') || id.includes('d3-')) return 'charts';
+            if (id.includes('jspdf') || id.includes('html2canvas') || id.includes('purify')) return 'pdf';
+            return 'vendor';
+          }
+        },
+      },
+    },
+  },
   server: {
     host: "::",
     port: 8080,
