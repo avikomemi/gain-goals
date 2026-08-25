@@ -61,4 +61,5 @@ export interface UserProfile {
   goals: string[];
   sensitivities: string[];
   weightHistory: WeightEntry[];
+  version?: number;
 }
