@@ -25,11 +25,13 @@ export interface DB {
   weights: WeightEntry[]; waists: WaistEntry[]; workouts: WorkoutLog[];
   injuries: Injury[]; krav: KravLog[]; food: FoodLog[]; reviews: Review[];
   water: WaterDay[]; calib: Calib;
+  orders: { A?: string[]; B?: string[]; C?: string[] };
 }
 
 const EMPTY: DB = {
   weights: [], waists: [], workouts: [], injuries: [], krav: [], food: [], reviews: [], water: [],
   calib: { waist: false, bp: false, firstWeight: false, flexTests: false, runs: { A: 0, B: 0, C: 0 }, done: false },
+  orders: {},
 };
 
 const KEY = 'fitlog-v3';

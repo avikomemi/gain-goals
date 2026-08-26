@@ -5,7 +5,15 @@ import { useStore, today, WorkoutLog, ExLog } from '../store/store';
 import { nextRoutine, direction } from '../store/adi';
 import { heDate } from '../components/bits';
 
-type Phase = 'pick' | 'warmup' | 'live' | 'injury' | 'flex' | 'done' | 'krav' | 'backday';
+type Phase = 'pick' | 'warmup' | 'live' | 'injury' | 'flex' | 'done' | 'krav' | 'backday' | 'order';
+
+function orderedExercises(r: RoutineDef, saved?: string[]) {
+  if (!saved?.length) return r.exercises;
+  const byId = new Map(r.exercises.map(e => [e.id, e]));
+  const out = saved.map(id => byId.get(id)).filter(Boolean) as typeof r.exercises;
+  r.exercises.forEach(e => { if (!out.includes(e)) out.push(e); });
+  return out;
+}
 
 export default function Workout() {
   const { db, update } = useStore();
@@ -25,7 +33,7 @@ export default function Workout() {
 
   const startLive = (r: RoutineDef, l: Loc) => {
     setRoutine(r); setLoc(l);
-    setLog(r.exercises.map(ex => {
+    setLog(orderedExercises(r, db.orders[r.key]).map(ex => {
       const prev = db.workouts.flatMap(w => w.exercises).filter(e => e.id === ex.id && !e.skipped).pop();
       const sets = prev?.sets?.length
         ? prev.sets.map(s => ({ ...s, done: false }))
@@ -73,6 +81,7 @@ export default function Workout() {
                 <b onClick={() => startLive(r, 'home')}>🏠 בית · בלי ציוד</b>
               )}
               <b onClick={() => startLive(r, 'gym')}>🏋️ חדר כושר</b>
+              <b style={{ flex: '0 0 auto', padding: '10px 14px' }} title="שנה סדר תרגילים" onClick={() => { setRoutine(r); setPhase('order'); }}>⇅</b>
             </div>
           </div>
         ))}
@@ -81,6 +90,39 @@ export default function Workout() {
           <b onClick={() => setPhase('krav')}>🥊 רישום קרב מגע</b>
           <b onClick={() => setPhase('backday')}>🌡️ יום גב רגיש</b>
         </div>
+      </div>
+    );
+  }
+
+  /* ============ ORDER EDITOR ============ */
+  if (phase === 'order') {
+    const cur = orderedExercises(routine, db.orders[routine.key]);
+    const move = (i: number, dirn: -1 | 1) => {
+      const ids = cur.map(e => e.id);
+      const j = i + dirn;
+      if (j < 0 || j >= ids.length) return;
+      [ids[i], ids[j]] = [ids[j], ids[i]];
+      update(d => { d.orders[routine.key] = ids; return d; });
+    };
+    return (
+      <div className="scr fade-in">
+        <div className="micro">אימון {routine.key} · {routine.name}</div>
+        <div className="h-huge mt8">סדר <em>התרגילים.</em></div>
+        <div style={{ fontSize: 12.5, color: 'var(--dim)', marginTop: 6 }}>אתה הבוס. חיצים לשינוי — נשמר אוטומטית וחל על כל האימונים הבאים. המלצת עמית: נפיצות מוקדם, כשהגוף חם וטרי.</div>
+        <div className="card mt12">
+          {cur.map((ex, i) => (
+            <div className="set" key={ex.id} style={{ alignItems: 'center' }}>
+              <span className="sn num">{i + 1}</span>
+              <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700 }}>{ex.name}</span>
+              <button className="ok" onClick={() => move(i, -1)} style={{ opacity: i === 0 ? .3 : 1 }}>↑</button>
+              <button className="ok" onClick={() => move(i, 1)} style={{ opacity: i === cur.length - 1 ? .3 : 1 }}>↓</button>
+            </div>
+          ))}
+        </div>
+        {db.orders[routine.key]?.length ? (
+          <button className="ghost mt12" onClick={() => update(d => { delete d.orders[routine.key]; return d; })}>איפוס לסדר של עמית</button>
+        ) : null}
+        <button className="cta mt12" onClick={() => setPhase('pick')}>שמור וחזור</button>
       </div>
     );
   }
@@ -106,7 +148,8 @@ export default function Workout() {
 
   /* ============ LIVE ============ */
   if (phase === 'live') {
-    const exDef = routine.exercises[exIdx];
+    const exList = orderedExercises(routine, db.orders[routine.key]);
+    const exDef = exList[exIdx];
     const exLog = log[exIdx];
     const { dir, why } = direction(db, exDef.id, exDef.area);
     const dirLabel = dir === 'add' ? '▲ הוסף' : dir === 'ease' ? '▼ הקל' : '◼ שמור';
@@ -119,7 +162,7 @@ export default function Workout() {
         <div className="spread">
           <div className="micro">אימון {routine.key} · {loc === 'home' ? '🏠 בית' : '🏋️ חדר'}</div>
           <div className="dots">
-            {routine.exercises.map((_, i) => (
+            {exList.map((_, i) => (
               <i key={i} className={i < exIdx ? 'done' : i === exIdx ? 'now' : ''} />
             ))}
           </div>
@@ -180,15 +223,15 @@ export default function Workout() {
         <div className="mt16" style={{ display: 'flex', gap: 10 }}>
           <button className="cta" style={{ flex: 1 }} onClick={() => {
             setRestLeft(0);
-            if (exIdx < routine.exercises.length - 1) setExIdx(exIdx + 1);
+            if (exIdx < exList.length - 1) setExIdx(exIdx + 1);
             else setPhase('flex');
           }}>
-            {exIdx < routine.exercises.length - 1 ? 'התרגיל הבא ←' : 'לבלוק הגמישות ←'}
+            {exIdx < exList.length - 1 ? 'התרגיל הבא ←' : 'לבלוק הגמישות ←'}
           </button>
           <button className="ghost" style={{ width: 56, fontSize: 18 }} title="צלם וידאו לפידבק טכניקה — שלח לצוות בצ'אט" onClick={() => alert('צלם וידאו של הביצוע ושלח לעמית בצ\'אט — נעה או רז יחזרו עם תיקונים. (העלאה מתוך האפליקציה תגיע עם הסנכרון)')}>📷</button>
         </div>
         <button className="ghost warn mt8" onClick={() => setPhase('injury')}>⚠ עצור — משהו כואב</button>
-        <button className="ghost mt8" onClick={() => setLogAt(e => { e.skipped = true; }) || (exIdx < routine.exercises.length - 1 ? setExIdx(exIdx + 1) : setPhase('flex'))}>דלג על התרגיל</button>
+        <button className="ghost mt8" onClick={() => setLogAt(e => { e.skipped = true; }) || (exIdx < exList.length - 1 ? setExIdx(exIdx + 1) : setPhase('flex'))}>דלג על התרגיל</button>
       </div>
     );
   }
