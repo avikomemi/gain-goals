@@ -213,7 +213,8 @@ export default function Journal() {
         )}
 
         {(foodToday?.text || foodToday?.photos?.length) ? (() => {
-          const rev = hilaReview(foodToday?.text || '', foodToday?.photos?.length || 0);
+          const rev = hilaReview(foodToday?.text || '', foodToday?.photos?.length || 0,
+            db.water.find(w => w.date === today())?.ml ?? 0, db.waterGoal ?? 1500);
           return (
             <div className="decision">
               <span className="who">הילה · תגובה להיום</span>
