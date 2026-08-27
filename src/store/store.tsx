@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { Loc } from '../data/program';
+import { supabase } from './cloud';
+import type { Session } from '@supabase/supabase-js';
 
 export interface SetLog { reps: number; weight?: number; done: boolean }
 export interface ExLog { id: string; name: string; sets: SetLog[]; rpe?: number; skipped?: boolean }
@@ -28,6 +30,7 @@ export interface DB {
   orders: { A?: string[]; B?: string[]; C?: string[] };
   waterGoal?: number; // מ"ל ליום — יעד אישי, ניתן לשינוי בדשבורד
   startDate?: string; // היום שבו אבי התחיל — כל הסטטיסטיקות נמדדות מכאן, לא לפני
+  updatedAt?: string; // חותמת שינוי אחרון — לסנכרון ענן (המעודכן מנצח)
 }
 
 const EMPTY: DB = {
@@ -41,6 +44,9 @@ const KEY = 'fitlog-v3';
 interface Ctx {
   db: DB;
   update: (fn: (d: DB) => DB) => void;
+  session: Session | null;
+  lastSync: string | null;
+  syncNow: () => Promise<string | null>;
 }
 const StoreCtx = createContext<Ctx | null>(null);
 export const useStore = () => {
@@ -67,12 +73,61 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch { /* fresh */ }
     return { ...EMPTY, startDate: today() };
   });
+  const [session, setSession] = useState<Session | null>(null);
+  const [lastSync, setLastSync] = useState<string | null>(null);
+  const pushTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  // מעקב התחברות
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const push = async (d: DB, uid: string): Promise<string | null> => {
+    const { error } = await supabase.from('snapshots').upsert({
+      user_id: uid, data: d, updated_at: d.updatedAt || new Date().toISOString(),
+    });
+    if (!error) setLastSync(new Date().toISOString());
+    return error ? error.message : null;
+  };
+
+  // בהתחברות: מושכים מהענן — המעודכן מבין השניים מנצח
+  useEffect(() => {
+    if (!session) return;
+    (async () => {
+      const { data: row } = await supabase.from('snapshots').select('data').eq('user_id', session.user.id).maybeSingle();
+      const remote = row?.data as DB | undefined;
+      if (remote && remote.updatedAt && (!db.updatedAt || remote.updatedAt > db.updatedAt)) {
+        setDb({ ...EMPTY, ...remote });
+        setLastSync(new Date().toISOString());
+      } else {
+        await push(db, session.user.id);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id]);
+
+  // שמירה מקומית תמיד + דחיפה לענן (מושהית) כשמחוברים
   useEffect(() => {
     try { localStorage.setItem(KEY, JSON.stringify(db)); }
     catch { alert('האחסון המקומי מלא — מחק תמונות ישנות מיומן האוכל כדי להמשיך לשמור.'); }
-  }, [db]);
-  const update = (fn: (d: DB) => DB) => setDb(prev => fn(structuredClone(prev)));
-  return <StoreCtx.Provider value={{ db, update }}>{children}</StoreCtx.Provider>;
+    if (session) {
+      clearTimeout(pushTimer.current);
+      pushTimer.current = setTimeout(() => push(db, session.user.id), 2500);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [db, session]);
+
+  const update = (fn: (d: DB) => DB) => setDb(prev => {
+    const next = fn(structuredClone(prev));
+    next.updatedAt = new Date().toISOString();
+    return next;
+  });
+
+  const syncNow = () => session ? push(db, session.user.id) : Promise.resolve('לא מחובר');
+
+  return <StoreCtx.Provider value={{ db, update, session, lastSync, syncNow }}>{children}</StoreCtx.Provider>;
 }
 
 export const today = () => new Date().toISOString().slice(0, 10);

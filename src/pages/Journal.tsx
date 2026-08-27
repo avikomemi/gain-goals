@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useStore, today } from '../store/store';
 import { hilaReview } from '../store/hila';
+import { supabase } from '../store/cloud';
 
 // דוחס תמונת מנה לתמונה קטנה שנשמרת ביומן (מקומי, עד הסנכרון)
 function compressImage(file: File): Promise<string> {
@@ -22,7 +23,18 @@ function compressImage(file: File): Promise<string> {
 }
 
 export default function Journal() {
-  const { db, update } = useStore();
+  const { db, update, session } = useStore();
+  const [analysis, setAnalysis] = useState<{ i: number; text: string } | null>(null);
+  const [analyzing, setAnalyzing] = useState<number | null>(null);
+
+  const analyzePhoto = async (photo: string, i: number, contextText: string) => {
+    if (!session) { alert('ניתוח תמונה דורש חיבור לענן — טאב "הצוות" → סנכרון ענן → התחברות.'); return; }
+    setAnalyzing(i); setAnalysis(null);
+    const { data, error } = await supabase.functions.invoke('hila-vision', { body: { image: photo, text: contextText } });
+    setAnalyzing(null);
+    if (error || data?.error) { alert(`הניתוח נכשל: ${error?.message || data?.detail || data?.error}`); return; }
+    setAnalysis({ i, text: data.answer });
+  };
   const [kg, setKg] = useState('');
   const [cm, setCm] = useState('');
   const [food, setFood] = useState('');
@@ -125,13 +137,16 @@ export default function Journal() {
           {foodToday?.photos?.length ? (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
               {foodToday.photos.map((p, i) => (
-                <div key={i} style={{ position: 'relative' }}>
+                <div key={i} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                   <img src={p} alt={`מנה ${i + 1}`} style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--line)' }} />
                   <span onClick={() => update(d => {
                     const en = d.food.find(x => x.date === today());
                     if (en?.photos) en.photos = en.photos.filter((_, j) => j !== i);
                     return d;
                   })} style={{ position: 'absolute', top: -6, insetInlineEnd: -6, width: 20, height: 20, borderRadius: 10, background: 'var(--acc)', color: '#fff', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>×</span>
+                  <button className="pill" style={{ fontSize: 11, cursor: 'pointer' }} onClick={() => analyzePhoto(p, i, foodToday?.text || '')}>
+                    {analyzing === i ? '⏳ מנתחת...' : '🔍 ניתוח הילה'}
+                  </button>
                 </div>
               ))}
             </div>
@@ -156,15 +171,28 @@ export default function Journal() {
           <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8 }}>מנה מורכבת? צלם במקום לפרט. ניתוח קלוריות מלא יגיע עם הסנכרון — בינתיים שלח תמונה בצ'אט והילה תעריך.</div>
         </div>
 
-        {foodToday?.text ? (
+        {analysis && (
           <div className="decision">
-            <span className="who">הילה · תגובה להיום</span>
-            {hilaReview(foodToday.text).map((c, i) => (
-              <div key={i} style={{ fontSize: 13, marginTop: 6, lineHeight: 1.55 }}>{c}</div>
-            ))}
-            <div style={{ fontSize: 10.5, color: 'var(--dim)', marginTop: 8 }}>תגובה מיידית לפי כללי התזונה שלך · הניתוח המעמיק — בסקירה השבועית ובצ'אט</div>
+            <span className="who">הילה · ניתוח תמונה {analysis.i + 1} 🔍</span>
+            <div style={{ fontSize: 13, marginTop: 6, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{analysis.text}</div>
           </div>
-        ) : null}
+        )}
+
+        {(foodToday?.text || foodToday?.photos?.length) ? (() => {
+          const rev = hilaReview(foodToday?.text || '', foodToday?.photos?.length || 0);
+          return (
+            <div className="decision">
+              <span className="who">הילה · תגובה להיום</span>
+              {rev.found.length > 0 && (
+                <div style={{ fontSize: 11.5, color: 'var(--dim)', marginTop: 6 }}>זיהיתי: {rev.found.join(' · ')}</div>
+              )}
+              {rev.notes.map((c, i) => (
+                <div key={i} style={{ fontSize: 13, marginTop: 6, lineHeight: 1.55 }}>{c}</div>
+              ))}
+              <div style={{ fontSize: 10.5, color: 'var(--dim)', marginTop: 8 }}>תגובה מיידית לפי כללי התזונה שלך · ניתוח מעמיק ותמונות — בצ'אט, עד שיגיע הסנכרון</div>
+            </div>
+          );
+        })() : null}
 
         <div className="h-sec">✅ משימות כיול</div>
         <div className="card">

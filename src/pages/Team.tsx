@@ -1,6 +1,60 @@
 import React, { useState } from 'react';
 import { useStore, today, weekStartOf } from '../store/store';
 import { reviewDigest, amitDecision, weeklyAvgWeights } from '../store/adi';
+import { supabase } from '../store/cloud';
+
+function CloudCard() {
+  const { session, lastSync, syncNow } = useStore();
+  const [email, setEmail] = useState('');
+  const [pass, setPass] = useState('');
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const inputStyle = { flex: 1, background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '11px 12px', fontSize: 14 } as const;
+
+  if (session) {
+    return (
+      <div className="card">
+        <div style={{ fontSize: 13 }}>☁️ מחובר: <b>{session.user.email}</b></div>
+        <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 4 }}>
+          {lastSync ? `סונכרן לאחרונה: ${new Date(lastSync).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}` : 'מסנכרן...'}
+          {' · '}הנתונים נשמרים בענן אוטומטית ומסתנכרנים בין המכשירים.
+        </div>
+        <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+          <button className="ghost" style={{ flex: 1 }} onClick={async () => { setMsg(''); const e = await syncNow(); setMsg(e ? `שגיאה: ${e}` : '✓ סונכרן'); }}>🔄 סנכרן עכשיו</button>
+          <button className="ghost" style={{ flex: '0 0 auto' }} onClick={() => supabase.auth.signOut()}>התנתק</button>
+        </div>
+        {msg && <div style={{ fontSize: 12, marginTop: 8, color: msg.startsWith('✓') ? 'var(--good)' : 'var(--danger)' }}>{msg}</div>}
+      </div>
+    );
+  }
+
+  const go = async (mode: 'up' | 'in') => {
+    if (!email.includes('@') || pass.length < 6) { setMsg('מייל תקין + סיסמה של 6 תווים לפחות.'); return; }
+    setBusy(true); setMsg('');
+    const { error } = mode === 'up'
+      ? await supabase.auth.signUp({ email, password: pass })
+      : await supabase.auth.signInWithPassword({ email, password: pass });
+    setBusy(false);
+    if (error) setMsg(error.message.includes('already registered') ? 'המייל כבר רשום — נסה "התחברות".' : `שגיאה: ${error.message}`);
+    else if (mode === 'up') setMsg('✓ נשלח מייל אישור — פתח אותו, לחץ על הקישור, וחזור להתחבר כאן.');
+  };
+
+  return (
+    <div className="card">
+      <div style={{ fontSize: 12.5, color: 'var(--dim)', marginBottom: 10 }}>התחברות אחת — והנתונים נשמרים בענן, מסתנכרנים בין הטלפון והמחשב, והילה מקבלת עיניים (ניתוח תמונות).</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <input style={inputStyle} type="email" inputMode="email" placeholder="המייל שלך" value={email} onChange={e => setEmail(e.target.value)} />
+        <input style={inputStyle} type="password" placeholder="סיסמה (6+ תווים)" value={pass} onChange={e => setPass(e.target.value)} />
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="cta" style={{ flex: 1, opacity: busy ? .6 : 1 }} disabled={busy} onClick={() => go('in')}>התחברות</button>
+          <button className="ghost" style={{ flex: 1, opacity: busy ? .6 : 1 }} disabled={busy} onClick={() => go('up')}>הרשמה ראשונה</button>
+        </div>
+      </div>
+      {msg && <div style={{ fontSize: 12, marginTop: 8, color: msg.startsWith('✓') ? 'var(--good)' : 'var(--danger)' }}>{msg}</div>}
+    </div>
+  );
+}
 
 const TEAM = [
   { av: '🧠', name: 'עמית', role: 'המאמן הראשי — האינטגרטור, הסקירה השבועית, ההחלטות' },
@@ -80,15 +134,9 @@ export default function Team() {
         <div className="step-i"><b>·</b><span><b style={{ fontWeight: 700 }}>קדוש:</b> מים סביב אימון ובכל עקצוץ גאוט. במבה עד 50 ג' 🙂</span></div>
       </div>
 
-      <div className="h-sec">🔧 נתונים</div>
-      <button className="ghost" onClick={() => {
-        const blob = new Blob([localStorage.getItem('fitlog-v3') || '{}'], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `fitlog-backup-${today()}.json`;
-        a.click();
-      }}>⬇️ גיבוי נתונים (JSON)</button>
-      <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8, textAlign: 'center' }}>סנכרון ענן בין מכשירים — בשלב הבא. בינתיים: גיבוי ידני.</div>
+      <div className="h-sec">☁️ סנכרון ענן</div>
+      <CloudCard />
+      <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8, textAlign: 'center' }}>גיבוי ידני לקובץ — ביומן, בכרטיס "גיבוי ושחזור".</div>
     </div>
   );
 }
