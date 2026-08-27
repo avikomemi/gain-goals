@@ -56,13 +56,13 @@ export function hilaReview(text: string, photoCount = 0, waterMl = 0, waterGoal 
   // חלבון — התמונה הגדולה קודם
   const proteinN = hits.filter(c => c.protein).length;
   if (proteinN >= 3) notes.push('חלבון ממספר מקורות — בדיוק מה שצריך בחיטוב. 💪');
-  else if (proteinN > 0) notes.push(`זיהיתי ${proteinN === 1 ? 'מקור חלבון אחד' : proteinN + ' מקורות חלבון'}. היעד ~130-140 גר' ביום — כנראה צריך עוד: יוגורט פרו, גבינה לבנה או ביצה.`);
+  else if (proteinN > 0) notes.push(`זיהיתי ${proteinN === 1 ? 'מקור חלבון אחד' : proteinN + ' מקורות חלבון'}. היעד ~135 גר' ביום — כנראה צריך עוד: יוגורט פרו, גבינה לבנה או ביצה.`);
   else if (t.trim().length >= 15) notes.push('לא זיהיתי מקור חלבון. בגירעון קלורי בלי חלבון הגוף שורף שריר — תוסיף לארוחה הבאה.');
 
   // מים — נלקח אוטומטית מהמונה בדשבורד, לא צריך לכתוב (שני בסדר העדיפויות, אחרי חלבון)
   if (waterMl >= waterGoal) notes.push(`מים: ${waterMl} מ"ל — עמדת ביעד היום. 💧 בדיוק מה שהגאוט צריך.`);
   else if (waterMl > 0) notes.push(`מים: ${waterMl} מ"ל מתוך ${waterGoal} (מהמונה בדשבורד). עוד ${Math.ceil((waterGoal - waterMl) / 250)} כוסות ואתה שם.`);
-  else notes.push('לא נרשמו מים היום במונה שבדשבורד. עם גאוט זה החוק הכי חשוב — כוס אחת עכשיו, וסמן.');
+  else notes.push('לא נרשמו מים היום במונה שבדשבורד. עם גאוט זה החוק הכי חשוב — כוס אחת עכשיו, ולחץ "+ כוס".');
 
   // הערות פר קטגוריה
   hits.filter(c => c.note).forEach(c => notes.push(c.note!));

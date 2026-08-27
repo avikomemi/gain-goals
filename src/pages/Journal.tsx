@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { useStore, today } from '../store/store';
+import { useStore, today, hydrate } from '../store/store';
 import { hilaReview } from '../store/hila';
 import { supabase } from '../store/cloud';
 
@@ -47,6 +47,7 @@ export default function Journal() {
   const fileRef = useRef<HTMLInputElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
 
+  const [backupMsg, setBackupMsg] = useState('');
   const exportBackup = () => {
     const blob = new Blob([JSON.stringify(db, null, 1)], { type: 'application/json' });
     const a = document.createElement('a');
@@ -54,6 +55,8 @@ export default function Journal() {
     a.download = `fitlog-backup-${today()}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
+    setBackupMsg(`✓ ירד קובץ: fitlog-backup-${today()}.json — שמור אותו במקום בטוח`);
+    setTimeout(() => setBackupMsg(''), 6000);
   };
 
   const importBackup = (file: File) => {
@@ -62,7 +65,11 @@ export default function Journal() {
       try {
         const p = JSON.parse(String(r.result));
         if (!p || !Array.isArray(p.weights) || !Array.isArray(p.workouts)) throw new Error('bad');
-        if (confirm('השחזור יחליף את כל הנתונים הנוכחיים בגיבוי. להמשיך?')) update(() => p);
+        const safe = hydrate(p); // משלים שדות חסרים מגיבוי ישן — לא מוחק כלום בטעות
+        if (confirm('השחזור יחליף את כל הנתונים הנוכחיים בגיבוי. להמשיך?')) {
+          update(() => safe);
+          alert(`✓ שוחזר: ${safe.weights.length} שקילות · ${safe.workouts.length} אימונים · ${safe.food.length} ימי יומן אוכל`);
+        }
       } catch { alert('הקובץ לא נראה כמו גיבוי של FitLog.'); }
     };
     r.readAsText(file);
@@ -98,7 +105,8 @@ export default function Journal() {
               style={{ flex: 1, background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '11px 12px', fontSize: 15 }} />
             <button className="cta" style={{ width: 110 }} onClick={() => {
               const v = parseFloat(kg);
-              if (v > 40 && v < 200) update(d => {
+              if (!(v > 40 && v < 200)) { alert('בדוק את המשקל — למשל 89.6'); return; }
+              update(d => {
                 d.weights = d.weights.filter(w => w.date !== today());
                 d.weights.push({ date: today(), kg: v });
                 d.weights.sort((a, b) => a.date.localeCompare(b.date));
@@ -108,6 +116,10 @@ export default function Journal() {
               setKg('');
             }}>שמור</button>
           </div>
+          {db.weights.length > 0 && (() => {
+            const lw = db.weights[db.weights.length - 1];
+            return <div style={{ fontSize: 12, marginTop: 8, color: 'var(--good)' }}>✓ נרשם — אחרון: <b className="num">{lw.kg}</b> ק"ג ({lw.date === today() ? 'היום' : lw.date}) · סה"כ {db.weights.length} שקילות</div>;
+          })()}
           <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8 }}>אחרי שירותים, לפני קפה. רק הממוצע השבועי נחשב — יום בודד הוא רעש.</div>
         </div>
 
@@ -118,14 +130,27 @@ export default function Journal() {
               style={{ flex: 1, background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '11px 12px', fontSize: 15 }} />
             <button className="cta" style={{ width: 110 }} onClick={() => {
               const v = parseFloat(cm);
-              if (v > 50 && v < 200) update(d => {
+              if (!(v > 50 && v < 200)) { alert('בדוק את המדידה — למשל 97'); return; }
+              update(d => {
+                d.waists = d.waists.filter(w => w.date !== today()); // מדידה אחת ליום
                 d.waists.push({ date: today(), cm: v });
+                d.waists.sort((a, b) => a.date.localeCompare(b.date));
                 if (!d.calib.waist) d.calib.waist = true;
                 return d;
               });
               setCm('');
             }}>שמור</button>
           </div>
+          {db.waists.length > 0 && (() => {
+            const lw = db.waists[db.waists.length - 1];
+            const first = db.waists[0];
+            const delta = +(lw.cm - first.cm).toFixed(1);
+            return <div style={{ fontSize: 12, marginTop: 8, color: 'var(--good)' }}>
+              ✓ נרשם — אחרון: <b className="num">{lw.cm}</b> ס"מ ({lw.date === today() ? 'היום' : lw.date})
+              {db.waists.length > 1 && <> · {delta <= 0 ? `▾${Math.abs(delta)}` : `▴${delta}`} מאז ההתחלה</>}
+            </div>;
+          })()}
+          <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8 }}>בגובה הטבור, פעם בשבוע, בבוקר — המדד המרכזי לחיטוב.</div>
         </div>
 
         <div className="h-sec">🩺 לחץ דם</div>
@@ -173,11 +198,14 @@ export default function Journal() {
               {foodToday.photos.map((p, i) => (
                 <div key={i} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                   <img src={p} alt={`מנה ${i + 1}`} style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--line)' }} />
-                  <span onClick={() => update(d => {
-                    const en = d.food.find(x => x.date === today());
-                    if (en?.photos) en.photos = en.photos.filter((_, j) => j !== i);
-                    return d;
-                  })} style={{ position: 'absolute', top: -6, insetInlineEnd: -6, width: 20, height: 20, borderRadius: 10, background: 'var(--acc)', color: '#fff', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>×</span>
+                  <span onClick={() => {
+                    if (!confirm('למחוק את התמונה הזאת מהיומן?')) return;
+                    update(d => {
+                      const en = d.food.find(x => x.date === today());
+                      if (en?.photos) en.photos = en.photos.filter(ph => ph !== p);
+                      return d;
+                    });
+                  }} style={{ position: 'absolute', top: -6, insetInlineEnd: -6, width: 20, height: 20, borderRadius: 10, background: 'var(--acc)', color: '#fff', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>×</span>
                   <button className="pill" style={{ fontSize: 11, cursor: 'pointer' }} onClick={() => analyzePhoto(p, i, foodToday?.text || '')}>
                     {analyzing === i ? '⏳ מנתחת...' : '🔍 ניתוח הילה'}
                   </button>
@@ -202,7 +230,7 @@ export default function Journal() {
             }}>{foodSaved ? '✓ נשמר ביומן של היום' : 'שמור · הילה תגיב מיד'}</button>
             <button className="ghost mt8" style={{ flex: '0 0 auto' }} onClick={() => fileRef.current?.click()}>📷 צלם מנה</button>
           </div>
-          <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8 }}>מנה מורכבת? צלם במקום לפרט. ניתוח קלוריות מלא יגיע עם הסנכרון — בינתיים שלח תמונה בצ'אט והילה תעריך.</div>
+          <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8 }}>מנה מורכבת? צלם במקום לפרט — ואז "🔍 ניתוח הילה" מתחת לתמונה (דורש חיבור בטאב הצוות).</div>
         </div>
 
         {analysis && (
@@ -242,7 +270,7 @@ export default function Journal() {
                   עוד לא מכירה: {rev.unknown.join(' · ')} — ספר לאבי בצ'אט ויוסיפו אותי למילון 🙂
                 </div>
               )}
-              <div style={{ fontSize: 10.5, color: 'var(--dim)', marginTop: 8 }}>תגובה מיידית לפי כללי התזונה שלך · ניתוח מעמיק ותמונות — בצ'אט, עד שיגיע הסנכרון</div>
+              <div style={{ fontSize: 10.5, color: 'var(--dim)', marginTop: 8 }}>תגובה מיידית לפי כללי התזונה שלך · לתמונות — כפתור 🔍 · לניתוח מעמיק — הסקירה השבועית או צ'אט</div>
             </div>
           );
         })() : null}
@@ -266,7 +294,8 @@ export default function Journal() {
           </div>
           <input ref={importRef} type="file" accept="application/json,.json" style={{ display: 'none' }}
             onChange={e => { const f = e.target.files?.[0]; if (f) importBackup(f); e.target.value = ''; }} />
-          <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8 }}>הנתונים חיים בדפדפן הזה בלבד. שמור גיבוי לפני החלפת טלפון או מחיקת האייקון ממסך הבית. סנכרון ענן — בהמשך.</div>
+          {backupMsg && <div style={{ fontSize: 12, marginTop: 8, color: 'var(--good)' }}>{backupMsg}</div>}
+          <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8 }}>⚠️ חשוב: מחיקת האייקון ממסך הבית מוחקת גם את הנתונים המקומיים! גבה לפני, או התחבר לענן (טאב הצוות) — ואז הכל שמור ממילא.</div>
         </div>
       </>)}
 
@@ -284,7 +313,7 @@ export default function Journal() {
         </div>
         <div className="h-sec">קרב מגע</div>
         <div className="card">
-          {db.krav.length === 0 && <div style={{ fontSize: 13, color: 'var(--dim)' }}>אין רישומים — חוזרים בספטמבר 🥊</div>}
+          {db.krav.length === 0 && <div style={{ fontSize: 13, color: 'var(--dim)' }}>אין רישומים עדיין — הראשון כשחוזרים 🥊</div>}
           {[...db.krav].reverse().slice(0, 6).map((k, i) => (
             <div className="list-item" key={i}><span className="d">{k.date}</span> · {k.min} ד' · {['', 'קל', 'בינוני', 'עד הסוף'][k.intensity]} · {k.tags.join(', ')}</div>
           ))}

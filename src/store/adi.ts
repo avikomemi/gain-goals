@@ -88,10 +88,10 @@ export function alerts(db: DB): Alert[] {
   if (wa.length >= 3 && wa[wa.length - 1].avg > wa[wa.length - 2].avg && wa[wa.length - 2].avg > wa[wa.length - 3].avg) {
     out.push({ from: 'עמית', text: 'שלושה שבועות של עלייה במגמה. בלי אשמה — בוא נדבר בסקירה על מה קורה.', sev: 'info' });
   }
-  // water — רק אם עברו לפחות יומיים מאז שהתחיל
-  const waterRecent = db.water.filter(w => w.date >= daysAgo(2)).length;
-  if (db.weights.length > 0 && waterRecent === 0 && startOf(db) <= daysAgo(2)) {
-    out.push({ from: 'ד"ר ארז', text: 'יומיים בלי סימון מים. עם גאוט זה לא מותרות — בקבוק אחד עכשיו.', sev: 'warn' });
+  // water — לפי כמות במונה, רק אם עברו לפחות יומיים מאז שהתחיל
+  const waterMl2d = db.water.filter(w => w.date >= daysAgo(2)).reduce((a, w) => a + (w.ml || 0), 0);
+  if (waterMl2d < 500 && startOf(db) <= daysAgo(2)) {
+    out.push({ from: 'ד"ר ארז', text: 'כמעט בלי מים במונה יומיים. עם גאוט זה לא מותרות — כוס אחת עכשיו, ולחץ "+ כוס" בדשבורד.', sev: 'warn' });
   }
   // pain repeat
   const wk = weekStartOf(today());
@@ -104,7 +104,12 @@ export function alerts(db: DB): Alert[] {
   // high stress
   const lastRev = db.reviews[db.reviews.length - 1];
   if (lastRev && lastRev.stress >= 8) out.push({ from: 'עמית', text: 'הלחץ שדיווחת גבוה. השבוע האימון הוא שסתום — לא עוד מטלה. מוריד ציפיות, שומר רצפה.', sev: 'info' });
-  return out.slice(0, 2); // one focused alert beats ten; max 2
+  // flexibility skipped repeatedly this week
+  const wkNow = weekStartOf(today());
+  const noFlex = db.workouts.filter(w => weekStartOf(w.date) === wkNow && !w.flexDone && !w.stoppedEarly).length;
+  if (noFlex >= 2) out.push({ from: 'נעה', text: `${noFlex} אימונים השבוע בלי בלוק הגמישות — זה הדגש החזק שלך, לא התוספת.`, sev: 'info' });
+  // בטיחות קודמת: warn לפני info, ואז מקסימום 2
+  return out.sort((a, b) => (a.sev === 'warn' ? 0 : 1) - (b.sev === 'warn' ? 0 : 1)).slice(0, 2);
 }
 
 /* ---------- next steps ---------- */
@@ -122,36 +127,42 @@ export function nextSteps(db: DB): string[] {
     const nr = nextRoutine(db);
     const r = PROGRAM.find(p => p.key === nr)!;
     steps.push(`אימון ${nr} — ${r.name}`);
-    const wk = weekStartOf(today());
-    if (!db.waists.some(w => weekStartOf(w.date) === wk)) steps.push('מדידת מותן שבועית');
-    const dow = new Date().getDay();
-    if (dow === 0 && !db.reviews.some(rv => rv.weekStart === wk)) steps.push('הסקירה השבועית עם עמית — הערב');
+    const wk2 = weekStartOf(today());
+    if (!db.waists.some(w => weekStartOf(w.date) === wk2)) steps.push('מדידת מותן שבועית');
   }
+  // הסקירה השבועית רלוונטית גם בשלב הכיול
+  const wk = weekStartOf(today());
+  if (new Date().getDay() === 0 && !db.reviews.some(rv => rv.weekStart === wk)) steps.push('הסקירה השבועית עם עמית — הערב (בטאב הצוות)');
   return steps.slice(0, 3);
 }
 
 /* ---------- heatmap (last 8 weeks) ---------- */
-export function heatmap(db: DB): { date: string; level: 0 | 1 | 2 | 3; pre?: boolean }[] {
-  const cells: { date: string; level: 0 | 1 | 2 | 3; pre?: boolean }[] = [];
+export function heatmap(db: DB): { date: string; level: 0 | 1 | 2 | 3; pre?: boolean; fut?: boolean; today?: boolean }[] {
+  const cells: { date: string; level: 0 | 1 | 2 | 3; pre?: boolean; fut?: boolean; today?: boolean }[] = [];
   const activity = new Map<string, number>();
   db.workouts.forEach(w => activity.set(w.date, (activity.get(w.date) || 0) + 2));
   db.krav.forEach(k => activity.set(k.date, (activity.get(k.date) || 0) + 2));
-  db.water.forEach(w => activity.set(w.date, (activity.get(w.date) || 0) + 1));
+  db.water.forEach(w => { if ((w.ml || 0) > 0) activity.set(w.date, (activity.get(w.date) || 0) + 1); });
   const start = weekStartOf(daysAgo(49));
   const d0 = new Date(start + 'T12:00:00');
+  const now = today();
   for (let i = 0; i < 56; i++) {
     const d = new Date(d0.getTime() + i * 864e5).toISOString().slice(0, 10);
     const a = activity.get(d) || 0;
-    cells.push({ date: d, level: a >= 3 ? 3 : a === 2 ? 2 : a === 1 ? 1 : 0, pre: d < startOf(db) || undefined });
+    cells.push({
+      date: d, level: a >= 3 ? 3 : a === 2 ? 2 : a === 1 ? 1 : 0,
+      pre: d < startOf(db) || undefined, fut: d > now || undefined, today: d === now || undefined,
+    });
   }
   return cells;
 }
 
-export function painByArea(db: DB): { area: string; n: number; last: string }[] {
-  const m = new Map<string, { n: number; last: string }>();
+export function painByArea(db: DB): { area: string; n: number; last: string; maxLevel: number }[] {
+  const m = new Map<string, { n: number; last: string; maxLevel: number }>();
   db.injuries.forEach(j => {
-    const e = m.get(j.area) || { n: 0, last: '' };
+    const e = m.get(j.area) || { n: 0, last: '', maxLevel: 0 };
     e.n++; if (j.date > e.last) e.last = j.date;
+    if (j.level > e.maxLevel) e.maxLevel = j.level;
     m.set(j.area, e);
   });
   return [...m.entries()].map(([area, v]) => ({ area, ...v })).sort((a, b) => b.n - a.n);
@@ -163,7 +174,7 @@ export function reviewDigest(db: DB) {
   const workouts = db.workouts.filter(w => weekStartOf(w.date) === wk).length;
   const kravN = db.krav.filter(k => weekStartOf(k.date) === wk).length;
   const pains = db.injuries.filter(j => weekStartOf(j.date) === wk);
-  const waterDays = db.water.filter(w => weekStartOf(w.date) === wk).length;
+  const waterDays = db.water.filter(w => weekStartOf(w.date) === wk && (w.ml || 0) > 0).length;
   const wa = weeklyAvgWeights(db, 4);
   return { workouts, kravN, pains, waterDays, weeklyAvgs: wa };
 }

@@ -4,7 +4,7 @@ import { reviewDigest, amitDecision, weeklyAvgWeights } from '../store/adi';
 import { supabase } from '../store/cloud';
 
 function CloudCard() {
-  const { session, lastSync, syncNow, recovery, clearRecovery } = useStore();
+  const { session, lastSync, syncError, syncNow, recovery, clearRecovery } = useStore();
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
   const [msg, setMsg] = useState('');
@@ -36,12 +36,18 @@ function CloudCard() {
       <div className="card">
         <div style={{ fontSize: 13 }}>☁️ מחובר: <b>{session.user.email}</b></div>
         <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 4 }}>
-          {lastSync ? `סונכרן לאחרונה: ${new Date(lastSync).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}` : 'מסנכרן...'}
-          {' · '}הנתונים נשמרים בענן אוטומטית ומסתנכרנים בין המכשירים.
+          {lastSync ? `סונכרן לאחרונה: ${new Date(lastSync).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}` : 'עוד לא סונכרן בהפעלה הזאת'}
+          {' · '}נשמר בענן אוטומטית · נמשך מהענן בכל פתיחת אפליקציה.
         </div>
+        {syncError && <div style={{ fontSize: 12, marginTop: 6, color: 'var(--danger)' }}>⚠ הסנכרון האחרון נכשל — נסה "סנכרן עכשיו". ({syncError})</div>}
         <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
-          <button className="ghost" style={{ flex: 1 }} onClick={async () => { setMsg(''); const e = await syncNow(); setMsg(e ? `שגיאה: ${e}` : '✓ סונכרן'); }}>🔄 סנכרן עכשיו</button>
-          <button className="ghost" style={{ flex: '0 0 auto' }} onClick={() => supabase.auth.signOut()}>התנתק</button>
+          <button className="ghost" style={{ flex: 1, opacity: busy ? .6 : 1 }} disabled={busy} onClick={async () => {
+            setMsg(''); setBusy(true);
+            const e = await syncNow();
+            setBusy(false);
+            setMsg(e ? `שגיאה: ${e}` : '✓ סונכרן');
+          }}>{busy ? '⏳ מסנכרן...' : '🔄 סנכרן עכשיו'}</button>
+          <button className="ghost" style={{ flex: '0 0 auto' }} onClick={() => { if (confirm('להתנתק? הנתונים יישארו במכשיר, אבל יפסיקו להסתנכרן.')) supabase.auth.signOut(); }}>התנתק</button>
         </div>
         {msg && <div style={{ fontSize: 12, marginTop: 8, color: msg.startsWith('✓') ? 'var(--good)' : 'var(--danger)' }}>{msg}</div>}
       </div>
@@ -108,7 +114,7 @@ const TEAM = [
   { av: '🔥', name: 'טל', role: 'קונדישן — אינטרוולים ואנרגיה. דוחף לקצה בתוך הגבולות' },
   { av: '🩺', name: 'מאיה', role: 'פיזיותרפיסטית — הגב, הברכיים, כל דיווח פציעה. וטו בטיחות' },
   { av: '⚕️', name: 'ד"ר ארז', role: 'רופא ספורט — גאוט, לחץ דם, שינה. וטו רפואי' },
-  { av: '🥗', name: 'הילה', role: 'תזונאית — יומן האוכל, חלבון 150, מים, קצב 400 ג\'/שבוע' },
+  { av: '🥗', name: 'הילה', role: 'תזונאית — יומן האוכל, חלבון 135, מים, קצב 400 ג\'/שבוע' },
   { av: '📊', name: 'עדי', role: 'אנליסט — הדשבורד, המגמות, ההתרעות, הסקירה' },
 ];
 
@@ -175,7 +181,7 @@ export default function Team() {
       <div className="card">
         <div className="step-i"><b>·</b><span><b style={{ fontWeight: 700 }}>שבוע מינימום:</b> 2×30 דק' — הרצפה שלא יורדים ממנה</span></div>
         <div className="step-i"><b>·</b><span><b style={{ fontWeight: 700 }}>שבוע עמוס:</b> קרב מגע יורד ראשון, ABC נשאר</span></div>
-        <div className="step-i"><b>·</b><span><b style={{ fontWeight: 700 }}>יעד:</b> 85 ק"ג עד דצמבר · ~400 ג'/שבוע · חלבון 150 ג'/יום</span></div>
+        <div className="step-i"><b>·</b><span><b style={{ fontWeight: 700 }}>יעד:</b> 85 ק"ג עד דצמבר · ~400 ג'/שבוע · חלבון 135 ג'/יום</span></div>
         <div className="step-i"><b>·</b><span><b style={{ fontWeight: 700 }}>קדוש:</b> מים סביב אימון ובכל עקצוץ גאוט. במבה עד 50 ג' 🙂</span></div>
       </div>
 

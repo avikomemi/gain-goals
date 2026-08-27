@@ -42,11 +42,38 @@ const EMPTY: DB = {
 
 const KEY = 'fitlog-v3';
 
+// הופך כל צורת נתונים (ישנה/חלקית/מהענן/מגיבוי) ל-DB תקין — לעולם לא זורק, לעולם לא מאבד שדות
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function hydrate(raw: any): DB {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const arr = (x: any) => (Array.isArray(x) ? x.filter(Boolean) : []);
+  const d: DB = {
+    ...EMPTY,
+    ...(raw && typeof raw === 'object' ? raw : {}),
+    weights: arr(raw?.weights), waists: arr(raw?.waists), workouts: arr(raw?.workouts),
+    injuries: arr(raw?.injuries), krav: arr(raw?.krav), food: arr(raw?.food),
+    reviews: arr(raw?.reviews), water: arr(raw?.water), bp: arr(raw?.bp),
+    calib: { ...EMPTY.calib, ...(raw?.calib || {}), runs: { ...EMPTY.calib.runs, ...(raw?.calib?.runs || {}) } },
+    orders: raw?.orders && typeof raw.orders === 'object' ? raw.orders : {},
+  };
+  // מיגרציה: רישומי מים ישנים (סימון בלבד) → נספרים כיעד מלא
+  d.water = d.water.map(w => (w.ml == null ? { ...w, ml: d.waterGoal ?? 1500 } : w));
+  // מיגרציה: תאריך התחלה — הרישום המוקדם ביותר
+  if (!d.startDate) {
+    const dates = [...d.weights, ...d.waists, ...d.injuries, ...d.krav, ...d.food, ...d.water, ...d.workouts, ...d.bp]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map((x: any) => x?.date).filter(Boolean);
+    d.startDate = dates.length ? dates.reduce((a: string, b: string) => (a < b ? a : b)) : today();
+  }
+  return d;
+}
+
 interface Ctx {
   db: DB;
   update: (fn: (d: DB) => DB) => void;
   session: Session | null;
   lastSync: string | null;
+  syncError: string | null;
   syncNow: () => Promise<string | null>;
   recovery: boolean;           // הגיע מקישור איפוס סיסמה — צריך לקבוע חדשה
   clearRecovery: () => void;
@@ -63,24 +90,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     try {
       const raw = localStorage.getItem(KEY);
       if (raw) {
-        const d = { ...EMPTY, ...JSON.parse(raw) } as DB;
-        // מיגרציה: רישומי מים ישנים (סימון בלבד, בלי כמות) → נספרים כיעד מלא
-        d.water = d.water.map(w => (w.ml == null ? { ...w, ml: d.waterGoal ?? 1500 } : w));
-        // מיגרציה: תאריך התחלה — הרישום המוקדם ביותר, כדי שהסטטיסטיקות יימדדו רק מאז
-        if (!d.startDate) {
-          const dates = [...d.weights, ...d.waists, ...d.injuries, ...d.krav, ...d.food, ...d.water, ...d.workouts].map(x => x.date);
-          d.startDate = dates.length ? dates.reduce((a, b) => (a < b ? a : b)) : today();
+        try { return hydrate(JSON.parse(raw)); }
+        catch {
+          // נתונים פגומים — שומרים עותק בצד, לא מוחקים כלום
+          try { localStorage.setItem(`${KEY}-corrupt-${Date.now()}`, raw); } catch { /* full */ }
         }
-        return d;
       }
     } catch { /* fresh */ }
     return { ...EMPTY, startDate: today() };
   });
+
   const [session, setSession] = useState<Session | null>(null);
   const [lastSync, setLastSync] = useState<string | null>(null);
-  const pushTimer = useRef<ReturnType<typeof setTimeout>>();
-
+  const [syncError, setSyncError] = useState<string | null>(null);
   const [recovery, setRecovery] = useState(false);
+  const pushTimer = useRef<ReturnType<typeof setTimeout>>();
+  const dbRef = useRef(db);
+  const pulledRef = useRef(false); // אסור לדחוף לענן לפני שמשכנו ממנו — מגן מדריסת ענן ע"י מכשיר ריק
+
+  useEffect(() => { dbRef.current = db; }, [db]);
 
   // מעקב התחברות
   useEffect(() => {
@@ -88,6 +116,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((e, s) => {
       setSession(s);
       if (e === 'PASSWORD_RECOVERY') setRecovery(true);
+      if (e === 'SIGNED_OUT') pulledRef.current = false;
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -96,36 +125,57 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.from('snapshots').upsert({
       user_id: uid, data: d, updated_at: d.updatedAt || new Date().toISOString(),
     });
-    if (!error) setLastSync(new Date().toISOString());
-    return error ? error.message : null;
+    if (error) { setSyncError(error.message); return error.message; }
+    setLastSync(new Date().toISOString());
+    setSyncError(null);
+    return null;
   };
 
-  // בהתחברות: מושכים מהענן — המעודכן מבין השניים מנצח
+  // בהתחברות: מושכים מהענן — המעודכן מבין השניים מנצח. שגיאת רשת ≠ "אין נתונים בענן".
   useEffect(() => {
     if (!session) return;
     (async () => {
-      const { data: row } = await supabase.from('snapshots').select('data').eq('user_id', session.user.id).maybeSingle();
+      const { data: row, error } = await supabase.from('snapshots')
+        .select('data, updated_at').eq('user_id', session.user.id).maybeSingle();
+      if (error) { setSyncError(error.message); return; } // לא דוחפים כשהמשיכה נכשלה
+      pulledRef.current = true;
       const remote = row?.data as DB | undefined;
-      if (remote && remote.updatedAt && (!db.updatedAt || remote.updatedAt > db.updatedAt)) {
-        setDb({ ...EMPTY, ...remote });
+      const remoteStamp = remote?.updatedAt || row?.updated_at;
+      const local = dbRef.current;
+      if (remote && remoteStamp && (!local.updatedAt || remoteStamp > local.updatedAt)) {
+        setDb(hydrate(remote));
         setLastSync(new Date().toISOString());
+        setSyncError(null);
       } else {
-        await push(db, session.user.id);
+        await push(local, session.user.id);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user?.id]);
 
-  // שמירה מקומית תמיד + דחיפה לענן (מושהית) כשמחוברים
+  // שמירה מקומית תמיד + דחיפה לענן (מושהית) — רק אחרי שמשכנו
   useEffect(() => {
     try { localStorage.setItem(KEY, JSON.stringify(db)); }
     catch { alert('האחסון המקומי מלא — מחק תמונות ישנות מיומן האוכל כדי להמשיך לשמור.'); }
-    if (session) {
+    if (session && pulledRef.current) {
       clearTimeout(pushTimer.current);
       pushTimer.current = setTimeout(() => push(db, session.user.id), 2500);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [db, session]);
+
+  // דחיפה מיידית כשעוזבים את האפליקציה — שלא יאבד העדכון האחרון
+  useEffect(() => {
+    const flush = () => {
+      if (document.visibilityState === 'hidden' && session && pulledRef.current) {
+        clearTimeout(pushTimer.current);
+        push(dbRef.current, session.user.id);
+      }
+    };
+    document.addEventListener('visibilitychange', flush);
+    return () => document.removeEventListener('visibilitychange', flush);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
 
   const update = (fn: (d: DB) => DB) => setDb(prev => {
     const next = fn(structuredClone(prev));
@@ -133,9 +183,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return next;
   });
 
-  const syncNow = () => session ? push(db, session.user.id) : Promise.resolve('לא מחובר');
+  const syncNow = () => (session && pulledRef.current) ? push(dbRef.current, session.user.id) : Promise.resolve('לא מחובר');
 
-  return <StoreCtx.Provider value={{ db, update, session, lastSync, syncNow, recovery, clearRecovery: () => setRecovery(false) }}>{children}</StoreCtx.Provider>;
+  return <StoreCtx.Provider value={{ db, update, session, lastSync, syncError, syncNow, recovery, clearRecovery: () => setRecovery(false) }}>{children}</StoreCtx.Provider>;
 }
 
 export const today = () => new Date().toISOString().slice(0, 10);

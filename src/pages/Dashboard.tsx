@@ -30,8 +30,7 @@ export default function Dashboard() {
   const addWater = (amt: number) => update(d => {
     let e = d.water.find(w => w.date === today());
     if (!e) { e = { date: today(), ml: 0 }; d.water.push(e); }
-    e.ml = Math.max(0, (e.ml || 0) + amt);
-    if (e.ml === 0) d.water = d.water.filter(w => w.date !== today());
+    e.ml = Math.max(0, (e.ml || 0) + amt); // גם 0 נשאר רשום — היסטוריה לא נמחקת
     return d;
   });
   const setGoal = (amt: number) => update(d => { d.waterGoal = Math.max(500, Math.min(4000, (d.waterGoal ?? 1500) + amt)); return d; });

@@ -25,6 +25,9 @@ export default function Workout() {
   const [exIdx, setExIdx] = useState(0);
   const [restLeft, setRestLeft] = useState(0);
   const [whyOpen, setWhyOpen] = useState<string | null>(null);
+  const [injuryAck, setInjuryAck] = useState<string | null>(null); // דיווח כאב שנשמר תוך כדי אימון
+  const [endedByInjury, setEndedByInjury] = useState(false);
+  const [savedFlex, setSavedFlex] = useState(true);
 
   useEffect(() => {
     if (restLeft <= 0) return;
@@ -46,6 +49,7 @@ export default function Workout() {
   };
 
   const saveWorkout = (stoppedEarly: boolean, flexDone: boolean) => {
+    setSavedFlex(flexDone);
     update(d => {
       const w: WorkoutLog = { id: crypto.randomUUID(), date: today(), routine: routine.key, loc, exercises: log, stoppedEarly, flexDone };
       d.workouts.push(w);
@@ -128,7 +132,7 @@ export default function Workout() {
         {db.orders[routine.key]?.length ? (
           <button className="ghost mt12" onClick={() => update(d => { delete d.orders[routine.key]; return d; })}>איפוס לסדר של עמית</button>
         ) : null}
-        <button className="cta mt12" onClick={() => setPhase('pick')}>שמור וחזור</button>
+        <button className="cta mt12" onClick={() => setPhase('pick')}>חזרה (הסדר כבר נשמר)</button>
       </div>
     );
   }
@@ -173,6 +177,9 @@ export default function Workout() {
             ))}
           </div>
         </div>
+        {injuryAck && (
+          <div className="alert mt8">⚠️ <span><b>דיווח הכאב נשמר</b> ({injuryAck}) — מאיה תראה אותו. ממשיכים בזהירות, בלי גבורה.</span></div>
+        )}
         <div className="w-name">{exLog.name}</div>
         <div className="w-meta">
           <span>יעד: <b>{exDef.target}</b></span>
@@ -234,7 +241,7 @@ export default function Workout() {
           }}>
             {exIdx < exList.length - 1 ? 'התרגיל הבא ←' : 'לבלוק הגמישות ←'}
           </button>
-          <button className="ghost" style={{ width: 56, fontSize: 18 }} title="צלם וידאו לפידבק טכניקה — שלח לצוות בצ'אט" onClick={() => alert('צלם וידאו של הביצוע ושלח לעמית בצ\'אט — נעה או רז יחזרו עם תיקונים. (העלאה מתוך האפליקציה תגיע עם הסנכרון)')}>📷</button>
+          <button className="ghost" style={{ width: 56, fontSize: 18 }} title="פידבק טכניקה" onClick={() => alert('פידבק טכניקה: צלם וידאו קצר באפליקציית המצלמה של הטלפון, ושלח לי (אבי) בצ\'אט של קלוד — נעה או רז יחזרו עם תיקונים. צילום מתוך האפליקציה עצמה — בפיתוח.')}>📷</button>
         </div>
         <button className="ghost warn mt8" onClick={() => setPhase('injury')}>⚠ עצור — משהו כואב</button>
         <button className="ghost mt8" onClick={() => setLogAt(e => { e.skipped = true; }) || (exIdx < exList.length - 1 ? setExIdx(exIdx + 1) : setPhase('flex'))}>דלג על התרגיל</button>
@@ -246,9 +253,9 @@ export default function Workout() {
   if (phase === 'injury') {
     return <InjuryFlow
       exerciseName={log[exIdx]?.name}
-      onDone={(saved) => {
-        if (saved) { saveWorkout(true, false); setPhase('done'); }
-        else setPhase('live');
+      onDone={(saved, summary) => {
+        if (saved) { saveWorkout(true, false); setEndedByInjury(true); setPhase('done'); }
+        else { setInjuryAck(summary || null); setPhase('live'); }
       }}
     />;
   }
@@ -282,13 +289,17 @@ export default function Workout() {
     const doneSets = log.reduce((a, e) => a + e.sets.filter(s => s.done).length, 0);
     return (
       <div className="scr fade-in" style={{ textAlign: 'center', paddingTop: 80 }}>
-        <div style={{ fontSize: 60 }}>💥</div>
-        <div className="h-huge mt12">אימון {routine.key}<br /><em>בפנקס.</em></div>
+        <div style={{ fontSize: 60 }}>{endedByInjury ? '🩺' : '💥'}</div>
+        <div className="h-huge mt12">{endedByInjury ? <>נעצר נכון.<br /><em>הדיווח נרשם.</em></> : <>אימון {routine.key}<br /><em>בפנקס.</em></>}</div>
+        {endedByInjury && (
+          <div style={{ fontSize: 13, color: 'var(--dim)', marginTop: 10 }}>מאיה תראה את הדיווח. אם זה גב 4+ — האימון הבא הוא "יום גב רגיש".</div>
+        )}
         <div className="grid3 mt20">
           <div className="cell"><b className="num">{doneSets}</b><span>סטים</span></div>
           <div className="cell"><b className="num">{log.filter(e => !e.skipped).length}</b><span>תרגילים</span></div>
           <div className="cell"><b className="num">{loc === 'home' ? '🏠' : '🏋️'}</b><span>{loc === 'home' ? 'בית' : 'חדר'}</span></div>
         </div>
+        <div style={{ fontSize: 12, color: 'var(--good)', marginTop: 14 }}>✓ נשמר ביומן · {heDate()}{!savedFlex && !endedByInjury && ' · בלי בלוק גמישות'}</div>
         <button className="cta mt20" onClick={() => nav('/')}>חזרה לדשבורד</button>
       </div>
     );
@@ -315,7 +326,7 @@ export default function Workout() {
 }
 
 /* ================= Injury flow ================= */
-function InjuryFlow({ exerciseName, onDone }: { exerciseName?: string; onDone: (saved: boolean) => void }) {
+function InjuryFlow({ exerciseName, onDone }: { exerciseName?: string; onDone: (saved: boolean, summary?: string) => void }) {
   const { update } = useStore();
   const [what, setWhat] = useState('נעצרתי באמצע');
   const [area, setArea] = useState('גב תחתון');
@@ -353,11 +364,14 @@ function InjuryFlow({ exerciseName, onDone }: { exerciseName?: string; onDone: (
       )}
       <button className="cta red mt16" onClick={() => {
         update(d => { d.injuries.push({ date: today(), area, level, exercise: exerciseName, what, note: note || undefined }); return d; });
-        onDone(true);
+        onDone(true, `${area} ${level}/10`);
       }}>שמור דיווח וסיים אימון</button>
       <button className="ghost mt8" onClick={() => {
+        if (area.includes('גב') && level >= 6) {
+          if (!confirm(`מאיה: כאב גב ${level}/10 זה לא "להתאמן בזהירות" — זו הסלמה בהתהוות. ההמלצה החד-משמעית: לעצור היום ולעבור מחר ל"יום גב רגיש". להמשיך בכל זאת?`)) return;
+        }
         update(d => { d.injuries.push({ date: today(), area, level, exercise: exerciseName, what, note: note || undefined }); return d; });
-        onDone(false);
+        onDone(false, `${area} ${level}/10`);
       }}>שמור והמשך להתאמן (בזהירות)</button>
     </div>
   );
@@ -370,7 +384,25 @@ function KravFlow({ onDone, onBack }: { onDone: () => void; onBack: () => void }
   const [intensity, setIntensity] = useState<1 | 2 | 3>(2);
   const [tags, setTags] = useState<string[]>([]);
   const [note, setNote] = useState('');
+  const [saved, setSaved] = useState(false);
   const minNum = Math.max(0, parseInt(min) || 0);
+
+  if (saved) {
+    return (
+      <div className="scr fade-in" style={{ textAlign: 'center', paddingTop: 80 }}>
+        <div style={{ fontSize: 60 }}>🥊</div>
+        <div className="h-huge mt12">קרב מגע<br /><em>בפנקס.</em></div>
+        <div className="grid3 mt20">
+          <div className="cell"><b className="num">{minNum}</b><span>דקות</span></div>
+          <div className="cell"><b className="num">{['', 'קל', 'בינוני', 'עד הסוף'][intensity]}</b><span>עצימות</span></div>
+          <div className="cell"><b className="num">{tags.length || '—'}</b><span>נושאים</span></div>
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--good)', marginTop: 14 }}>✓ נשמר ביומן · {heDate()} · רז רואה את זה בסקירה</div>
+        <button className="cta mt20" onClick={onDone}>חזרה לדשבורד</button>
+      </div>
+    );
+  }
+
   return (
     <div className="scr fade-in">
       <div className="micro">יומן קרב מגע · רז</div>
@@ -404,7 +436,7 @@ function KravFlow({ onDone, onBack }: { onDone: () => void; onBack: () => void }
       <button className="cta mt16" onClick={() => {
         if (minNum === 0) { alert('כמה זמן היה האימון? כתוב מספר דקות.'); return; }
         update(d => { d.krav.push({ date: today(), min: minNum, intensity, tags, note: note || undefined }); return d; });
-        onDone();
+        setSaved(true);
       }}>שמור 🥊</button>
       <button className="ghost mt8" onClick={onBack}>ביטול</button>
     </div>
