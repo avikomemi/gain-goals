@@ -4,7 +4,7 @@ import { reviewDigest, amitDecision, weeklyAvgWeights } from '../store/adi';
 import { supabase } from '../store/cloud';
 
 function CloudCard() {
-  const { session, lastSync, syncNow } = useStore();
+  const { session, lastSync, syncNow, recovery, clearRecovery } = useStore();
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
   const [msg, setMsg] = useState('');
@@ -12,6 +12,24 @@ function CloudCard() {
   const [needConfirm, setNeedConfirm] = useState(false);
 
   const inputStyle = { flex: 1, background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '11px 12px', fontSize: 14 } as const;
+
+  if (session && recovery) {
+    return (
+      <div className="card">
+        <div style={{ fontSize: 13, fontWeight: 700 }}>🔑 קביעת סיסמה חדשה</div>
+        <input style={{ ...inputStyle, width: '100%', marginTop: 8 }} type="password" placeholder="סיסמה חדשה (6+ תווים)" value={pass} onChange={e => setPass(e.target.value)} />
+        <button className="cta mt8" style={{ opacity: busy ? .6 : 1 }} disabled={busy} onClick={async () => {
+          if (pass.length < 6) { setMsg('לפחות 6 תווים.'); return; }
+          setBusy(true);
+          const { error } = await supabase.auth.updateUser({ password: pass });
+          setBusy(false);
+          if (error) setMsg(`שגיאה: ${error.message}`);
+          else { setMsg(''); setPass(''); clearRecovery(); }
+        }}>שמור סיסמה חדשה</button>
+        {msg && <div style={{ fontSize: 12, marginTop: 8, color: 'var(--danger)' }}>{msg}</div>}
+      </div>
+    );
+  }
 
   if (session) {
     return (
@@ -72,6 +90,13 @@ function CloudCard() {
       {needConfirm && (
         <button className="ghost mt8" style={{ width: '100%', opacity: busy ? .6 : 1 }} disabled={busy} onClick={resend}>📧 שלח שוב מייל אישור</button>
       )}
+      <div style={{ fontSize: 12, marginTop: 10, textAlign: 'center', color: 'var(--acc)', fontWeight: 700, cursor: 'pointer' }} onClick={async () => {
+        if (!email.includes('@')) { setMsg('כתוב את המייל למעלה ואז לחץ "שכחתי סיסמה".'); return; }
+        setBusy(true);
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://avikomemi.github.io/gain-goals/' });
+        setBusy(false);
+        setMsg(error ? `שגיאה: ${error.message}` : '✓ נשלח מייל איפוס (בדוק גם בספאם). לחץ על הקישור — תחזור לכאן לקביעת סיסמה חדשה.');
+      }}>שכחתי סיסמה</div>
     </div>
   );
 }

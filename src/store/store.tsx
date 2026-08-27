@@ -48,6 +48,8 @@ interface Ctx {
   session: Session | null;
   lastSync: string | null;
   syncNow: () => Promise<string | null>;
+  recovery: boolean;           // הגיע מקישור איפוס סיסמה — צריך לקבוע חדשה
+  clearRecovery: () => void;
 }
 const StoreCtx = createContext<Ctx | null>(null);
 export const useStore = () => {
@@ -78,10 +80,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [lastSync, setLastSync] = useState<string | null>(null);
   const pushTimer = useRef<ReturnType<typeof setTimeout>>();
 
+  const [recovery, setRecovery] = useState(false);
+
   // מעקב התחברות
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    const { data: sub } = supabase.auth.onAuthStateChange((e, s) => {
+      setSession(s);
+      if (e === 'PASSWORD_RECOVERY') setRecovery(true);
+    });
     return () => sub.subscription.unsubscribe();
   }, []);
 
@@ -128,7 +135,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const syncNow = () => session ? push(db, session.user.id) : Promise.resolve('לא מחובר');
 
-  return <StoreCtx.Provider value={{ db, update, session, lastSync, syncNow }}>{children}</StoreCtx.Provider>;
+  return <StoreCtx.Provider value={{ db, update, session, lastSync, syncNow, recovery, clearRecovery: () => setRecovery(false) }}>{children}</StoreCtx.Provider>;
 }
 
 export const today = () => new Date().toISOString().slice(0, 10);
