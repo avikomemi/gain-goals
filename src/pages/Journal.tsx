@@ -223,6 +223,19 @@ export default function Journal() {
               {rev.notes.map((c, i) => (
                 <div key={i} style={{ fontSize: 13, marginTop: 6, lineHeight: 1.55 }}>{c}</div>
               ))}
+              {rev.est && (
+                <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                  <span className="pill">🔥 ~<b className="num">{rev.est.kcal}</b> קק"ל</span>
+                  <span className="pill">חלבון ~<b className="num">{rev.est.p}</b>/135 גר'</span>
+                  <span className="pill">פחמ' ~<b className="num">{rev.est.c}</b> גר'</span>
+                  <span className="pill">שומן ~<b className="num">{rev.est.f}</b> גר'</span>
+                </div>
+              )}
+              {rev.est && (
+                <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 6 }}>
+                  הערכה גסה לפי מנות טיפוסיות (בלי כמויות מדויקות). היעדים שלך: ~1,800-2,000 קק"ל · חלבון 130-140 · שומן 60-70 · השאר פחמימות.
+                </div>
+              )}
               {rev.unknown.length > 0 && (
                 <div style={{ fontSize: 12, marginTop: 6, color: 'var(--acc2)' }}>
                   עוד לא מכירה: {rev.unknown.join(' · ')} — ספר לאבי בצ'אט ויוסיפו אותי למילון 🙂

@@ -14,7 +14,7 @@ function greeting(): string {
 }
 
 export default function Dashboard() {
-  const { db, update } = useStore();
+  const { db, update, session } = useStore();
   const nav = useNavigate();
   const wa = weeklyAvgWeights(db, 2);
   const cur = wa[wa.length - 1];
@@ -40,7 +40,10 @@ export default function Dashboard() {
   return (
     <div className="scr fade-in">
       <div className="micro">{heDate()} · {db.calib.done ? 'שגרה' : 'שלב כיול'}</div>
-      <div className="h-huge mt8">{greeting()},<br /><em>אבי.</em></div>
+      <div className="h-huge mt8">{greeting()},<br /><em>{session ? 'אבי.' : 'אורח.'}</em></div>
+      {!session && (
+        <div className="alert mt12">👤 <span>אתה במצב מקומי — הנתונים נשמרים רק במכשיר הזה. <b>התחבר בטאב "הצוות"</b> כדי שיסתנכרנו לענן ולכל המכשירים, ושהילה תוכל לנתח תמונות.</span></div>
+      )}
 
       <div className="ringwrap">
         <PulseRing done={currentWeekWorkouts(db)} total={3} />
