@@ -24,15 +24,29 @@ const CATS: Cat[] = [
   { label: 'אלכוהול', keys: ['בירה', 'אלכוהול', 'וודקה', 'ויסקי', 'ערק', 'יין '], note: 'ד"ר ארז מתערב: אלכוהול הוא טריגר גאוט מספר אחת, בירה בראש הרשימה. מינימום, ומים לידו.' },
 ];
 
-export interface HilaResult { found: string[]; notes: string[] }
+export interface HilaResult { found: string[]; notes: string[]; unknown: string[] }
+
+// מילים "שקופות" — לא מזון בפני עצמו, לא נספרות כ"לא זוהה"
+const IGNORE = ['מים', 'כוס', 'בקבוק', 'ללא', 'בלי', 'סוכר', 'מלח', 'שמן', 'בבוקר', 'בערב', 'בצהריים', 'קופסא', 'קופסה', 'גר', 'גרם', 'חצי', 'שקית', 'צלחת', 'כף', 'כפית', 'מנה', 'קטן', 'גדול'];
 
 export function hilaReview(text: string, photoCount = 0): HilaResult {
   const t = text || '';
   const found: string[] = [];
   const notes: string[] = [];
+  const unknown: string[] = [];
 
   if (t.trim().length < 15 && photoCount === 0) {
-    return { found, notes: ['רשימה קצרה מדי בשביל להגיב ברצינות — פרט קצת יותר, או צלם.'] };
+    return { found, notes: ['רשימה קצרה מדי בשביל להגיב ברצינות — פרט קצת יותר, או צלם.'], unknown };
+  }
+
+  // פירוק לשורות/פריטים — מה שלא מזוהה נאמר בפירוש
+  const segments = t.split(/[\n,.·;]+/).map(s => s.trim()).filter(s => s.length > 1);
+  for (const seg of segments) {
+    const matched = CATS.some(c => c.keys.some(k => seg.includes(k)));
+    if (!matched) {
+      const stripped = seg.split(/\s+/).filter(w => !IGNORE.some(ig => w.includes(ig)) && !/^\d+['"]?$/.test(w)).join(' ');
+      if (stripped.length > 2) unknown.push(seg.length > 28 ? seg.slice(0, 28) + '…' : seg);
+    }
   }
 
   const hits = CATS.filter(c => c.keys.some(k => t.includes(k)));
@@ -53,5 +67,5 @@ export function hilaReview(text: string, photoCount = 0): HilaResult {
   if (photoCount > 0)
     notes.push(`יש ${photoCount === 1 ? 'תמונה אחת' : photoCount + ' תמונות'} ביומן — לחץ "🔍 ניתוח הילה" מתחת לתמונה ואסתכל עליה באמת (דורש חיבור לענן, בטאב הצוות).`);
 
-  return { found, notes: notes.slice(0, 5) };
+  return { found, notes: notes.slice(0, 5), unknown: unknown.slice(0, 4) };
 }

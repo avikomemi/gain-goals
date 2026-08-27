@@ -131,11 +131,11 @@ export default function Journal() {
         <div className="h-sec">🩺 לחץ דם</div>
         <div className="card">
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <input inputMode="numeric" placeholder="גבוה (120)" value={sys} onChange={e => setSys(e.target.value.replace(/\D/g, ''))}
-              style={{ flex: 1, background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '11px 12px', fontSize: 15 }} />
+            <input inputMode="numeric" placeholder="120" value={sys} onChange={e => setSys(e.target.value.replace(/\D/g, ''))}
+              style={{ flex: 1, minWidth: 0, width: '100%', textAlign: 'center', background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '11px 6px', fontSize: 15 }} />
             <span style={{ color: 'var(--dim)', fontWeight: 900 }}>/</span>
-            <input inputMode="numeric" placeholder="נמוך (80)" value={dia} onChange={e => setDia(e.target.value.replace(/\D/g, ''))}
-              style={{ flex: 1, background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '11px 12px', fontSize: 15 }} />
+            <input inputMode="numeric" placeholder="80" value={dia} onChange={e => setDia(e.target.value.replace(/\D/g, ''))}
+              style={{ flex: 1, minWidth: 0, width: '100%', textAlign: 'center', background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '11px 6px', fontSize: 15 }} />
             <button className="cta" style={{ width: 90 }} onClick={() => {
               const s = parseInt(sys), d2 = parseInt(dia);
               if (s > 60 && s < 260 && d2 > 35 && d2 < 160 && d2 < s) {
@@ -223,6 +223,11 @@ export default function Journal() {
               {rev.notes.map((c, i) => (
                 <div key={i} style={{ fontSize: 13, marginTop: 6, lineHeight: 1.55 }}>{c}</div>
               ))}
+              {rev.unknown.length > 0 && (
+                <div style={{ fontSize: 12, marginTop: 6, color: 'var(--acc2)' }}>
+                  עוד לא מכירה: {rev.unknown.join(' · ')} — ספר לאבי בצ'אט ויוסיפו אותי למילון 🙂
+                </div>
+              )}
               <div style={{ fontSize: 10.5, color: 'var(--dim)', marginTop: 8 }}>תגובה מיידית לפי כללי התזונה שלך · ניתוח מעמיק ותמונות — בצ'אט, עד שיגיע הסנכרון</div>
             </div>
           );

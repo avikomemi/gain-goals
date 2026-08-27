@@ -9,6 +9,7 @@ function CloudCard() {
   const [pass, setPass] = useState('');
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
+  const [needConfirm, setNeedConfirm] = useState(false);
 
   const inputStyle = { flex: 1, background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '11px 12px', fontSize: 14 } as const;
 
@@ -36,8 +37,24 @@ function CloudCard() {
       ? await supabase.auth.signUp({ email, password: pass })
       : await supabase.auth.signInWithPassword({ email, password: pass });
     setBusy(false);
-    if (error) setMsg(error.message.includes('already registered') ? 'המייל כבר רשום — נסה "התחברות".' : `שגיאה: ${error.message}`);
-    else if (mode === 'up') setMsg('✓ נשלח מייל אישור — פתח אותו, לחץ על הקישור, וחזור להתחבר כאן.');
+    if (error) {
+      if (error.message.toLowerCase().includes('not confirmed')) {
+        setNeedConfirm(true);
+        setMsg('המייל עוד לא אושר. חפש בתיבת הספאם/Junk מייל מ-noreply@mail.app.supabase.io ולחץ על הקישור שבו — ואז התחבר שוב.');
+      } else if (error.message.includes('already registered')) setMsg('המייל כבר רשום — נסה "התחברות".');
+      else setMsg(`שגיאה: ${error.message}`);
+    } else if (mode === 'up') {
+      setNeedConfirm(true);
+      setMsg('✓ נשלח מייל אישור — בדוק גם בספאם (השולח: noreply@mail.app.supabase.io). לחץ על הקישור וחזור להתחבר.');
+    }
+  };
+
+  const resend = async () => {
+    if (!email.includes('@')) { setMsg('כתוב את המייל למעלה ואז שלח שוב.'); return; }
+    setBusy(true);
+    const { error } = await supabase.auth.resend({ type: 'signup', email });
+    setBusy(false);
+    setMsg(error ? `שגיאה בשליחה חוזרת: ${error.message}` : '✓ נשלח שוב — בדוק את תיבת הדואר ואת הספאם.');
   };
 
   return (
@@ -52,6 +69,9 @@ function CloudCard() {
         </div>
       </div>
       {msg && <div style={{ fontSize: 12, marginTop: 8, color: msg.startsWith('✓') ? 'var(--good)' : 'var(--danger)' }}>{msg}</div>}
+      {needConfirm && (
+        <button className="ghost mt8" style={{ width: '100%', opacity: busy ? .6 : 1 }} disabled={busy} onClick={resend}>📧 שלח שוב מייל אישור</button>
+      )}
     </div>
   );
 }
