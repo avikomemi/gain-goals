@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useStore, today } from '../store/store';
+import { hilaReview } from '../store/hila';
 
 // דוחס תמונת מנה לתמונה קטנה שנשמרת ביומן (מקומי, עד הסנכרון)
 function compressImage(file: File): Promise<string> {
@@ -26,9 +27,32 @@ export default function Journal() {
   const [cm, setCm] = useState('');
   const [food, setFood] = useState('');
   const [tab, setTab] = useState<'log' | 'history'>('log');
+  const [foodSaved, setFoodSaved] = useState(false);
 
   const foodToday = db.food.find(f => f.date === today());
   const fileRef = useRef<HTMLInputElement>(null);
+  const importRef = useRef<HTMLInputElement>(null);
+
+  const exportBackup = () => {
+    const blob = new Blob([JSON.stringify(db, null, 1)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `fitlog-backup-${today()}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  const importBackup = (file: File) => {
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const p = JSON.parse(String(r.result));
+        if (!p || !Array.isArray(p.weights) || !Array.isArray(p.workouts)) throw new Error('bad');
+        if (confirm('השחזור יחליף את כל הנתונים הנוכחיים בגיבוי. להמשיך?')) update(() => p);
+      } catch { alert('הקובץ לא נראה כמו גיבוי של FitLog.'); }
+    };
+    r.readAsText(file);
+  };
 
   const addPhoto = async (file: File) => {
     try {
@@ -115,20 +139,32 @@ export default function Journal() {
           <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
             onChange={e => { const f = e.target.files?.[0]; if (f) addPhoto(f); e.target.value = ''; }} />
           <div style={{ display: 'flex', gap: 10 }}>
-            <button className="ghost mt8" style={{ flex: 1 }} onClick={() => {
+            <button className="ghost mt8" style={{ flex: 1, ...(foodSaved ? { borderColor: 'var(--good)', color: 'var(--good)' } : {}) }} onClick={() => {
               const text = (food || foodToday?.text || '').trim();
-              if (!text && !foodToday?.photos?.length) return;
+              if (!text && !foodToday?.photos?.length) { alert('כתוב משהו או צלם מנה — ואז שמור.'); return; }
               update(d => {
                 let en = d.food.find(x => x.date === today());
                 if (!en) { en = { date: today(), text: '' }; d.food.push(en); }
                 en.text = text;
                 return d;
               });
-            }}>שמור · הילה תגיב בסקירה</button>
+              setFoodSaved(true);
+              setTimeout(() => setFoodSaved(false), 3000);
+            }}>{foodSaved ? '✓ נשמר ביומן של היום' : 'שמור · הילה תגיב מיד'}</button>
             <button className="ghost mt8" style={{ flex: '0 0 auto' }} onClick={() => fileRef.current?.click()}>📷 צלם מנה</button>
           </div>
-          <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8 }}>מנה מורכבת? צלם במקום לפרט. ניתוח אוטומטי (קלוריות/חלבון) יגיע עם הסנכרון — בינתיים שלח לי בצ'אט והילה תעריך.</div>
+          <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8 }}>מנה מורכבת? צלם במקום לפרט. ניתוח קלוריות מלא יגיע עם הסנכרון — בינתיים שלח תמונה בצ'אט והילה תעריך.</div>
         </div>
+
+        {foodToday?.text ? (
+          <div className="decision">
+            <span className="who">הילה · תגובה להיום</span>
+            {hilaReview(foodToday.text).map((c, i) => (
+              <div key={i} style={{ fontSize: 13, marginTop: 6, lineHeight: 1.55 }}>{c}</div>
+            ))}
+            <div style={{ fontSize: 10.5, color: 'var(--dim)', marginTop: 8 }}>תגובה מיידית לפי כללי התזונה שלך · הניתוח המעמיק — בסקירה השבועית ובצ'אט</div>
+          </div>
+        ) : null}
 
         <div className="h-sec">✅ משימות כיול</div>
         <div className="card">
@@ -140,6 +176,17 @@ export default function Journal() {
           ))}
           <div className="step-i"><b>·</b><span>אימוני כיול: A {db.calib.runs.A}/2 · B {db.calib.runs.B}/2 · C {db.calib.runs.C}/2</span></div>
         </div>
+
+        <div className="h-sec">💾 גיבוי ושחזור</div>
+        <div className="card">
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button className="ghost" style={{ flex: 1 }} onClick={exportBackup}>⬇ גיבוי לקובץ</button>
+            <button className="ghost" style={{ flex: 1 }} onClick={() => importRef.current?.click()}>⬆ שחזור מקובץ</button>
+          </div>
+          <input ref={importRef} type="file" accept="application/json,.json" style={{ display: 'none' }}
+            onChange={e => { const f = e.target.files?.[0]; if (f) importBackup(f); e.target.value = ''; }} />
+          <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8 }}>הנתונים חיים בדפדפן הזה בלבד. שמור גיבוי לפני החלפת טלפון או מחיקת האייקון ממסך הבית. סנכרון ענן — בהמשך.</div>
+        </div>
       </>)}
 
       {tab === 'history' && (<>
@@ -149,7 +196,7 @@ export default function Journal() {
           {[...db.workouts].reverse().slice(0, 10).map(w => (
             <div className="list-item" key={w.id}>
               <span className="d">{w.date}</span> · אימון {w.routine} · {w.loc === 'home' ? '🏠' : '🏋️'}
-              {w.stoppedEarly && <span style={{ color: 'var(--acc)' }}> · נעצר</span>}
+              {w.stoppedEarly && <span style={{ color: 'var(--danger)' }}> · נעצר</span>}
               {w.flexDone && ' · גמישות ✓'}
             </div>
           ))}

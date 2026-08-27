@@ -53,7 +53,7 @@ export default function Dashboard() {
             </span>
           </div>
           <div className="row"><span className="k">מותן</span><span className="v num">{waist ?? '—'} <small>ס"מ</small></span></div>
-          <div className="row"><span className="k">רצף ללא השבתה</span><span className="v num">{streak} <small>שבועות</small></span></div>
+          <div className="row"><span className="k">רצף ללא השבתה</span><span className="v num">{streak} <small>{streak === 1 ? 'שבוע' : 'שבועות'}</small></span></div>
         </div>
       </div>
 

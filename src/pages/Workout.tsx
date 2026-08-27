@@ -176,7 +176,7 @@ export default function Workout() {
         <div className="w-name">{exLog.name}</div>
         <div className="w-meta">
           <span>יעד: <b>{exDef.target}</b></span>
-          {exNote(exDef, loc) && <span style={{ color: 'var(--acc)' }}>{exNote(exDef, loc)}</span>}
+          {exNote(exDef, loc) && <span style={{ color: 'var(--acc2)' }}>{exNote(exDef, loc)}</span>}
         </div>
         <div className="mt12 spread">
           <span className="pill">
@@ -266,7 +266,7 @@ export default function Workout() {
           ))}
         </div>
         {routine.finisher && (
-          <div className="card mt12" style={{ borderColor: 'rgba(216,31,42,.3)' }}>
+          <div className="card mt12" style={{ borderColor: 'rgba(15,118,110,.35)' }}>
             <b style={{ fontWeight: 900, fontSize: 14 }}>{routine.finisher.name}</b>
             <div style={{ fontSize: 12.5, color: 'var(--dim)', marginTop: 3 }}>{routine.finisher.dose} · {routine.finisher.note}</div>
           </div>

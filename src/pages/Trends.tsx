@@ -60,7 +60,7 @@ export default function Trends() {
           : pains.map(p => (
             <div className="list-item spread" key={p.area}>
               <span><b style={{ fontWeight: 700 }}>{p.area}</b> <span style={{ color: 'var(--dim)', fontSize: 11 }}>· אחרון {p.last}</span></span>
-              <span className="num" style={{ fontWeight: 900, color: p.n >= 3 ? 'var(--acc)' : 'var(--ink)' }}>{p.n}</span>
+              <span className="num" style={{ fontWeight: 900, color: p.n >= 3 ? 'var(--danger)' : 'var(--ink)' }}>{p.n}</span>
             </div>
           ))}
       </div>
