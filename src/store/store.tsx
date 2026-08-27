@@ -11,6 +11,7 @@ export interface WorkoutLog {
 }
 export interface WeightEntry { date: string; kg: number }
 export interface WaistEntry { date: string; cm: number }
+export interface BpEntry { date: string; sys: number; dia: number }
 export interface Injury { date: string; area: string; level: number; exercise?: string; what: string; note?: string }
 export interface KravLog { date: string; min: number; intensity: 1 | 2 | 3; tags: string[]; note?: string }
 export interface FoodLog { date: string; text: string; photos?: string[] }
@@ -26,7 +27,7 @@ export interface Calib {
 export interface DB {
   weights: WeightEntry[]; waists: WaistEntry[]; workouts: WorkoutLog[];
   injuries: Injury[]; krav: KravLog[]; food: FoodLog[]; reviews: Review[];
-  water: WaterDay[]; calib: Calib;
+  water: WaterDay[]; bp: BpEntry[]; calib: Calib;
   orders: { A?: string[]; B?: string[]; C?: string[] };
   waterGoal?: number; // מ"ל ליום — יעד אישי, ניתן לשינוי בדשבורד
   startDate?: string; // היום שבו אבי התחיל — כל הסטטיסטיקות נמדדות מכאן, לא לפני
@@ -34,7 +35,7 @@ export interface DB {
 }
 
 const EMPTY: DB = {
-  weights: [], waists: [], workouts: [], injuries: [], krav: [], food: [], reviews: [], water: [],
+  weights: [], waists: [], workouts: [], injuries: [], krav: [], food: [], reviews: [], water: [], bp: [],
   calib: { waist: false, bp: false, firstWeight: false, flexTests: false, runs: { A: 0, B: 0, C: 0 }, done: false },
   orders: {},
 };

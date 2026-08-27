@@ -37,6 +37,8 @@ export default function Journal() {
   };
   const [kg, setKg] = useState('');
   const [cm, setCm] = useState('');
+  const [sys, setSys] = useState('');
+  const [dia, setDia] = useState('');
   const [food, setFood] = useState('');
   const [tab, setTab] = useState<'log' | 'history'>('log');
   const [foodSaved, setFoodSaved] = useState(false);
@@ -124,6 +126,38 @@ export default function Journal() {
               setCm('');
             }}>שמור</button>
           </div>
+        </div>
+
+        <div className="h-sec">🩺 לחץ דם</div>
+        <div className="card">
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <input inputMode="numeric" placeholder="גבוה (120)" value={sys} onChange={e => setSys(e.target.value.replace(/\D/g, ''))}
+              style={{ flex: 1, background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '11px 12px', fontSize: 15 }} />
+            <span style={{ color: 'var(--dim)', fontWeight: 900 }}>/</span>
+            <input inputMode="numeric" placeholder="נמוך (80)" value={dia} onChange={e => setDia(e.target.value.replace(/\D/g, ''))}
+              style={{ flex: 1, background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '11px 12px', fontSize: 15 }} />
+            <button className="cta" style={{ width: 90 }} onClick={() => {
+              const s = parseInt(sys), d2 = parseInt(dia);
+              if (s > 60 && s < 260 && d2 > 35 && d2 < 160 && d2 < s) {
+                update(d => {
+                  d.bp.push({ date: today(), sys: s, dia: d2 });
+                  if (!d.calib.bp) d.calib.bp = true;
+                  return d;
+                });
+                setSys(''); setDia('');
+              } else alert('בדוק את המספרים — למשל 111 / 73.');
+            }}>שמור</button>
+          </div>
+          {db.bp.length > 0 && (() => {
+            const last = db.bp[db.bp.length - 1];
+            const ok = last.sys < 120 && last.dia < 80;
+            const elevated = last.sys >= 130 || last.dia >= 85;
+            return (
+              <div style={{ fontSize: 12, marginTop: 8, color: ok ? 'var(--good)' : elevated ? 'var(--danger)' : 'var(--ink)' }}>
+                אחרון: <b className="num">{last.sys}/{last.dia}</b> ({last.date}) · {ok ? 'ד"ר ארז: מצוין — קורט המלח האטלנטי במים מאושר 🧂' : elevated ? 'ד"ר ארז: מוגבר — מדוד שוב מחר בבוקר במנוחה; אם נשאר כך, בלי קורט מלח ודבר איתי.' : 'תקין. מדידה חוזרת בעוד חודש.'}
+              </div>
+            );
+          })()}
         </div>
 
         <div className="h-sec">🍽️ יומן אוכל · היום {foodToday && '✓'}</div>
