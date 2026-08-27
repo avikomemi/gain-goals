@@ -112,6 +112,7 @@ input,textarea,select{font-family:inherit;color:var(--ink)}
 .heat{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:12px}
 .heat i{aspect-ratio:1;border-radius:3px;background:var(--track)}
 .heat i.l1{background:rgba(216,31,42,.3)} .heat i.l2{background:rgba(216,31,42,.6)} .heat i.l3{background:var(--acc)}
+.heat i.pre{opacity:.18}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
 .cell{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:11px 8px;text-align:center}
 .cell b{font-size:20px;font-weight:900;display:block}

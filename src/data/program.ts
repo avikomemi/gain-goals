@@ -22,6 +22,7 @@ export interface RoutineDef {
   name: string;
   icon: string;
   focus: string;
+  why: string;             // מה האימון משיג ואיך הוא מתחבר למטרות של אבי
   flexTitle: string;
   warmup: string[];
   exercises: ExerciseDef[];
@@ -41,9 +42,10 @@ export const WARMUP_COMMON = [
 export const PROGRAM: RoutineDef[] = [
   {
     key: 'A',
-    name: 'כוח ונפיצות',
+    name: 'Explosive Power',
     icon: '🏋️',
     focus: 'שימור שריר בגירעון + מערכת עצבים צעירה. הפליאומטריה מיד אחרי החימום — כשהגוף חם!',
+    why: 'Explosive Power = כוח מהיר: לייצר הרבה כוח בשבריר שנייה (קפיצה, דחיקה מתפרצת). בגיל 49 זו היכולת הראשונה שנעלמת אם לא מאמנים אותה — והיא בדיוק מה שמגן על הברכיים בנחיתות, נותן מהירות לקרב מגע, ושומר על השריר בזמן החיטוב.',
     flexTitle: 'גמישות A · ירכיים',
     warmup: WARMUP_COMMON,
     exercises: [
@@ -64,9 +66,10 @@ export const PROGRAM: RoutineDef[] = [
   },
   {
     key: 'B',
-    name: 'פלג גוף עליון',
+    name: 'Upper Body',
     icon: '💪',
     focus: 'משיכה ודחיקה בכל הכיוונים — מסת שריר, יציבה, כוח לקרב מגע ולטבעות.',
+    why: 'מסת שריר עליונה היא המנוע של החיטוב (שריר שורף קלוריות גם במנוחה) והבסיס לעבודה על הטבעות שבדרך. משיכה ודחיקה מאוזנות = כתפיים בריאות ויציבה טובה מול שעות מחשב.',
     flexTitle: 'גמישות B · כתפיים ובית חזה',
     warmup: [...WARMUP_COMMON, 'Scapula Pulls ×8'],
     exercises: [
@@ -85,9 +88,10 @@ export const PROGRAM: RoutineDef[] = [
   },
   {
     key: 'C',
-    name: 'פלג גוף תחתון',
+    name: 'Lower Body',
     icon: '🦵',
     focus: 'רגליים חזקות בלי להעמיס על עמוד השדרה. חד-רגלי = יציבות לבעיטות.',
+    why: 'הרגליים הן קבוצת השריר הגדולה בגוף — האימון שמזיז הכי הרבה בחיטוב. עבודה חד-רגלית בונה יציבות לברכיים (בלי מיניסקוס ימין, קרע שמאל) ובסיס לבעיטות — בלי בר כבד על עמוד השדרה.',
     flexTitle: 'גמישות C · המסטרינג וגב',
     warmup: WARMUP_COMMON,
     exercises: [

@@ -24,6 +24,7 @@ export default function Workout() {
   const [log, setLog] = useState<ExLog[]>([]);
   const [exIdx, setExIdx] = useState(0);
   const [restLeft, setRestLeft] = useState(0);
+  const [whyOpen, setWhyOpen] = useState<string | null>(null);
 
   useEffect(() => {
     if (restLeft <= 0) return;
@@ -72,6 +73,11 @@ export default function Workout() {
                 <b style={{ fontSize: 16, fontWeight: 900 }}>{r.icon} אימון {r.key} · {r.name}</b>
                 {r.key === nr && <span className="dir ease" style={{ marginInlineStart: 8 }}>הבא בתור</span>}
                 <div style={{ fontSize: 12, color: 'var(--dim)', marginTop: 4 }}>{r.focus}</div>
+                <div style={{ fontSize: 12, marginTop: 6, cursor: 'pointer', color: 'var(--acc)', fontWeight: 700 }}
+                  onClick={() => setWhyOpen(whyOpen === r.key ? null : r.key)}>
+                  {whyOpen === r.key ? '▴ מה האימון הזה משיג' : '▾ מה האימון הזה משיג?'}
+                </div>
+                {whyOpen === r.key && <div style={{ fontSize: 12.5, marginTop: 6, lineHeight: 1.55 }}>{r.why}</div>}
               </div>
             </div>
             <div className="seg mt12">
@@ -360,16 +366,23 @@ function InjuryFlow({ exerciseName, onDone }: { exerciseName?: string; onDone: (
 /* ================= Krav flow ================= */
 function KravFlow({ onDone, onBack }: { onDone: () => void; onBack: () => void }) {
   const { update } = useStore();
-  const [min, setMin] = useState(60);
+  const [min, setMin] = useState('60');
   const [intensity, setIntensity] = useState<1 | 2 | 3>(2);
   const [tags, setTags] = useState<string[]>([]);
   const [note, setNote] = useState('');
+  const minNum = Math.max(0, parseInt(min) || 0);
   return (
     <div className="scr fade-in">
       <div className="micro">יומן קרב מגע · רז</div>
       <div className="h-huge mt8">איך היה <em>באימון?</em></div>
-      <div className="field"><label>משך (דקות)</label>
-        <div className="seg">{[45, 60, 75, 90].map(m => <b key={m} className={min === m ? 'on' : ''} onClick={() => setMin(m)}>{m}</b>)}</div>
+      <div className="field"><label>משך (דקות) — כתוב מה שהיה בפועל</label>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button className="ok" onClick={() => setMin(String(Math.max(0, minNum - 5)))}>−5</button>
+          <input inputMode="numeric" value={min} onChange={e => setMin(e.target.value.replace(/[^0-9]/g, ''))}
+            style={{ width: 76, textAlign: 'center', background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '10px 8px', fontSize: 16, fontWeight: 800 }} />
+          <button className="ok" onClick={() => setMin(String(minNum + 5))}>+5</button>
+          <span style={{ fontSize: 12, color: 'var(--dim)' }}>דקות</span>
+        </div>
       </div>
       <div className="field"><label>עצימות</label>
         <div className="seg">
@@ -389,7 +402,8 @@ function KravFlow({ onDone, onBack }: { onDone: () => void; onBack: () => void }
         <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="אנרגיה טובה, הברך החזיקה..." />
       </div>
       <button className="cta mt16" onClick={() => {
-        update(d => { d.krav.push({ date: today(), min, intensity, tags, note: note || undefined }); return d; });
+        if (minNum === 0) { alert('כמה זמן היה האימון? כתוב מספר דקות.'); return; }
+        update(d => { d.krav.push({ date: today(), min: minNum, intensity, tags, note: note || undefined }); return d; });
         onDone();
       }}>שמור 🥊</button>
       <button className="ghost mt8" onClick={onBack}>ביטול</button>

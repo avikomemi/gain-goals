@@ -1,5 +1,24 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useStore, today } from '../store/store';
+
+// דוחס תמונת מנה לתמונה קטנה שנשמרת ביומן (מקומי, עד הסנכרון)
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 640;
+      const sc = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * sc);
+      c.height = Math.round(img.height * sc);
+      c.getContext('2d')!.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src);
+      resolve(c.toDataURL('image/jpeg', 0.55));
+    };
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+}
 
 export default function Journal() {
   const { db, update } = useStore();
@@ -9,6 +28,19 @@ export default function Journal() {
   const [tab, setTab] = useState<'log' | 'history'>('log');
 
   const foodToday = db.food.find(f => f.date === today());
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const addPhoto = async (file: File) => {
+    try {
+      const url = await compressImage(file);
+      update(d => {
+        let en = d.food.find(x => x.date === today());
+        if (!en) { en = { date: today(), text: '' }; d.food.push(en); }
+        en.photos = [...(en.photos || []), url];
+        return d;
+      });
+    } catch { alert('לא הצלחתי לקרוא את התמונה — נסה שוב.'); }
+  };
 
   return (
     <div className="scr fade-in">
@@ -66,15 +98,36 @@ export default function Journal() {
             placeholder={'טקסט חופשי: "יוגורט פרו, סלט טונה+טחינה, במבה 50, 4 קפה..."'}
             style={{ width: '100%', minHeight: 84, background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '11px 12px', fontSize: 14, resize: 'vertical' }}
           />
-          <button className="ghost mt8" onClick={() => {
-            const text = food || foodToday?.text || '';
-            if (!text.trim()) return;
-            update(d => {
-              d.food = d.food.filter(f => f.date !== today());
-              d.food.push({ date: today(), text: text.trim() });
-              return d;
-            });
-          }}>שמור יומן אוכל · הילה תגיב בסקירה</button>
+          {foodToday?.photos?.length ? (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+              {foodToday.photos.map((p, i) => (
+                <div key={i} style={{ position: 'relative' }}>
+                  <img src={p} alt={`מנה ${i + 1}`} style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--line)' }} />
+                  <span onClick={() => update(d => {
+                    const en = d.food.find(x => x.date === today());
+                    if (en?.photos) en.photos = en.photos.filter((_, j) => j !== i);
+                    return d;
+                  })} style={{ position: 'absolute', top: -6, insetInlineEnd: -6, width: 20, height: 20, borderRadius: 10, background: 'var(--acc)', color: '#fff', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>×</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+            onChange={e => { const f = e.target.files?.[0]; if (f) addPhoto(f); e.target.value = ''; }} />
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button className="ghost mt8" style={{ flex: 1 }} onClick={() => {
+              const text = (food || foodToday?.text || '').trim();
+              if (!text && !foodToday?.photos?.length) return;
+              update(d => {
+                let en = d.food.find(x => x.date === today());
+                if (!en) { en = { date: today(), text: '' }; d.food.push(en); }
+                en.text = text;
+                return d;
+              });
+            }}>שמור · הילה תגיב בסקירה</button>
+            <button className="ghost mt8" style={{ flex: '0 0 auto' }} onClick={() => fileRef.current?.click()}>📷 צלם מנה</button>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8 }}>מנה מורכבת? צלם במקום לפרט. ניתוח אוטומטי (קלוריות/חלבון) יגיע עם הסנכרון — בינתיים שלח לי בצ'אט והילה תעריך.</div>
         </div>
 
         <div className="h-sec">✅ משימות כיול</div>
@@ -118,7 +171,14 @@ export default function Journal() {
         <div className="h-sec">יומן אוכל</div>
         <div className="card">
           {[...db.food].reverse().slice(0, 5).map((f, i) => (
-            <div className="list-item" key={i}><span className="d">{f.date}</span> · {f.text}</div>
+            <div className="list-item" key={i}>
+              <span className="d">{f.date}</span> · {f.text || '(תמונות בלבד)'}
+              {f.photos?.length ? (
+                <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                  {f.photos.map((p, j) => <img key={j} src={p} alt="" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 5, border: '1px solid var(--line)' }} />)}
+                </div>
+              ) : null}
+            </div>
           ))}
           {db.food.length === 0 && <div style={{ fontSize: 13, color: 'var(--dim)' }}>עוד לא נרשם</div>}
         </div>

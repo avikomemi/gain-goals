@@ -48,9 +48,9 @@ export default function Trends() {
           {['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'].map(d => <span key={d} style={{ flex: 1, textAlign: 'center' }}>{d}</span>)}
         </div>
         <div className="heat">
-          {cells.map(c => <i key={c.date} className={c.level ? `l${c.level}` : ''} title={c.date} />)}
+          {cells.map(c => <i key={c.date} className={c.pre ? 'pre' : c.level ? `l${c.level}` : ''} title={c.pre ? `${c.date} · לפני ההתחלה` : c.date} />)}
         </div>
-        <div className="chart-cap mt8"><span>ריק=כלום · בהיר=מים · כהה=אימון</span><span>אדום מלא = אימון+מים</span></div>
+        <div className="chart-cap mt8"><span>ריק=כלום · בהיר=מים · כהה=אימון</span><span>מעומעם = לפני ההתחלה</span></div>
       </div>
 
       <div className="h-sec">מפת כאב</div>

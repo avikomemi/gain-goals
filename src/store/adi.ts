@@ -4,6 +4,9 @@ import { PROGRAM } from '../data/program';
 
 export interface Alert { from: string; text: string; sev: 'warn' | 'info' }
 
+// כל הסטטיסטיקות נמדדות מיום ההתחלה של אבי — לא לפני
+const startOf = (db: DB) => db.startDate ?? today();
+
 /* ---------- weekly aggregates ---------- */
 export function weeklyAvgWeights(db: DB, weeks = 6): { week: string; avg: number }[] {
   const map = new Map<string, number[]>();
@@ -29,9 +32,12 @@ export function lastWaist(db: DB): number | null {
 
 export function streakWeeksNoInjuryStop(db: DB): number {
   // consecutive weeks (back from current) without a back injury report level>=4
+  // נספר רק מאז תאריך ההתחלה — שבועות שלפני לא נחשבים "רצף"
+  const firstWeek = weekStartOf(startOf(db));
   let n = 0;
   for (let i = 0; i < 26; i++) {
     const wk = weekStartOf(daysAgo(i * 7));
+    if (wk < firstWeek) break;
     const bad = db.injuries.some(j => weekStartOf(j.date) === wk && j.area.includes('גב') && j.level >= 4);
     if (bad) break;
     n++;
@@ -82,9 +88,9 @@ export function alerts(db: DB): Alert[] {
   if (wa.length >= 3 && wa[wa.length - 1].avg > wa[wa.length - 2].avg && wa[wa.length - 2].avg > wa[wa.length - 3].avg) {
     out.push({ from: 'עמית', text: 'שלושה שבועות של עלייה במגמה. בלי אשמה — בוא נדבר בסקירה על מה קורה.', sev: 'info' });
   }
-  // water
+  // water — רק אם עברו לפחות יומיים מאז שהתחיל
   const waterRecent = db.water.filter(w => w.date >= daysAgo(2)).length;
-  if (db.weights.length > 0 && waterRecent === 0) {
+  if (db.weights.length > 0 && waterRecent === 0 && startOf(db) <= daysAgo(2)) {
     out.push({ from: 'ד"ר ארז', text: 'יומיים בלי סימון מים. עם גאוט זה לא מותרות — בקבוק אחד עכשיו.', sev: 'warn' });
   }
   // pain repeat
@@ -125,8 +131,8 @@ export function nextSteps(db: DB): string[] {
 }
 
 /* ---------- heatmap (last 8 weeks) ---------- */
-export function heatmap(db: DB): { date: string; level: 0 | 1 | 2 | 3 }[] {
-  const cells: { date: string; level: 0 | 1 | 2 | 3 }[] = [];
+export function heatmap(db: DB): { date: string; level: 0 | 1 | 2 | 3; pre?: boolean }[] {
+  const cells: { date: string; level: 0 | 1 | 2 | 3; pre?: boolean }[] = [];
   const activity = new Map<string, number>();
   db.workouts.forEach(w => activity.set(w.date, (activity.get(w.date) || 0) + 2));
   db.krav.forEach(k => activity.set(k.date, (activity.get(k.date) || 0) + 2));
@@ -136,7 +142,7 @@ export function heatmap(db: DB): { date: string; level: 0 | 1 | 2 | 3 }[] {
   for (let i = 0; i < 56; i++) {
     const d = new Date(d0.getTime() + i * 864e5).toISOString().slice(0, 10);
     const a = activity.get(d) || 0;
-    cells.push({ date: d, level: a >= 3 ? 3 : a === 2 ? 2 : a === 1 ? 1 : 0 });
+    cells.push({ date: d, level: a >= 3 ? 3 : a === 2 ? 2 : a === 1 ? 1 : 0, pre: d < startOf(db) || undefined });
   }
   return cells;
 }
