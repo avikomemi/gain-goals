@@ -96,7 +96,8 @@ export const PROGRAM: RoutineDef[] = [
     warmup: WARMUP_COMMON,
     exercises: [
       { id: 'c-pistol', name: 'Box Pistol Squat', target: '3×4-6', setsDefault: 3, repsDefault: 5, area: 'ברך', note: '⚠️ קופסה גבוהה — טווח חלקי בלבד (מיניסקוס)', gym: { name: 'Pistol to High Box' }, home: { name: 'Pistol to Chair' } },
-      { id: 'c-step', name: 'Step-Ups', target: '3×5-6 לרגל', setsDefault: 3, repsDefault: 6, weighted: true, area: 'ברך', gym: { note: 'קדימה + צד' }, home: { name: 'Stairs / Sturdy Stool' } },
+      { id: 'c-step', name: 'Front Step-Up', target: '3×5-6 לרגל', setsDefault: 3, repsDefault: 6, weighted: true, area: 'ברך', home: { name: 'Front Step-Up (Stairs / Stool)' } },
+      { id: 'c-step-lat', name: 'Lateral Step-Up', target: '3×5-6 לרגל', setsDefault: 3, repsDefault: 6, weighted: true, area: 'ברך', note: 'עלייה מהצד — יציבות לברכיים ולבעיטות', home: { name: 'Lateral Step-Up (Stairs / Stool)' } },
       { id: 'c-cossack', name: 'Cossack Squat', target: '3×6-8', setsDefault: 3, repsDefault: 7, area: 'ברך', note: 'טווח שליטה — בלי עומק מקסימלי', gym: { note: 'עם משקל אם קל' }, home: { note: 'משקל גוף / תיק' } },
       { id: 'c-box', name: 'Box Squat', target: '3×8', setsDefault: 3, repsDefault: 8, weighted: true, area: 'גב תחתון', note: 'גב ניטרלי, לא חזק ונמוך', gym: { note: 'מוט / קטלבל' }, home: { name: 'To Couch — Slow Tempo' } },
       { id: 'c-ham', name: 'Hamstrings', target: '3×6-8', setsDefault: 3, repsDefault: 7, area: 'ברך', gym: { name: 'Nordic Curl', note: 'איטי ומבוקר' }, home: { name: 'Nordic (Couch Anchor) / SL Bridge' } },

@@ -10,11 +10,14 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks(id: string) {
-          if (id.includes('node_modules')) {
-            if (id.includes('recharts') || id.includes('d3-')) return 'charts';
-            if (id.includes('jspdf') || id.includes('html2canvas') || id.includes('purify')) return 'pdf';
-            return 'vendor';
-          }
+          if (id.includes('node_modules')) return 'vendor';
+          if (id.includes('/pages/Dashboard')) return 'p-dash';
+          if (id.includes('/pages/Workout')) return 'p-workout';
+          if (id.includes('/pages/Journal')) return 'p-journal';
+          if (id.includes('/pages/Trends')) return 'p-trends';
+          if (id.includes('/pages/Team')) return 'p-team';
+          if (id.includes('/data/program')) return 'program';
+          if (id.includes('/store/')) return 'store';
         },
       },
     },

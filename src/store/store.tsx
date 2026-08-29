@@ -131,25 +131,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return null;
   };
 
-  // בהתחברות: מושכים מהענן — המעודכן מבין השניים מנצח. שגיאת רשת ≠ "אין נתונים בענן".
+  // משיכה מהענן — המעודכן מבין השניים מנצח. שגיאת רשת ≠ "אין נתונים בענן".
+  const pull = async (uid: string): Promise<string | null> => {
+    const { data: row, error } = await supabase.from('snapshots')
+      .select('data, updated_at').eq('user_id', uid).maybeSingle();
+    if (error) { setSyncError(error.message); return error.message; } // לא דוחפים כשהמשיכה נכשלה
+    pulledRef.current = true;
+    const remote = row?.data as DB | undefined;
+    const remoteStamp = remote?.updatedAt || row?.updated_at;
+    const local = dbRef.current;
+    if (remote && remoteStamp && (!local.updatedAt || remoteStamp > local.updatedAt)) {
+      setDb(hydrate(remote));
+      setLastSync(new Date().toISOString());
+      setSyncError(null);
+      return null;
+    }
+    return push(local, uid);
+  };
+
+  // בהתחברות: משיכה ראשונית
   useEffect(() => {
-    if (!session) return;
-    (async () => {
-      const { data: row, error } = await supabase.from('snapshots')
-        .select('data, updated_at').eq('user_id', session.user.id).maybeSingle();
-      if (error) { setSyncError(error.message); return; } // לא דוחפים כשהמשיכה נכשלה
-      pulledRef.current = true;
-      const remote = row?.data as DB | undefined;
-      const remoteStamp = remote?.updatedAt || row?.updated_at;
-      const local = dbRef.current;
-      if (remote && remoteStamp && (!local.updatedAt || remoteStamp > local.updatedAt)) {
-        setDb(hydrate(remote));
-        setLastSync(new Date().toISOString());
-        setSyncError(null);
-      } else {
-        await push(local, session.user.id);
-      }
-    })();
+    if (session) pull(session.user.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user?.id]);
 
@@ -183,7 +185,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return next;
   });
 
-  const syncNow = () => (session && pulledRef.current) ? push(dbRef.current, session.user.id) : Promise.resolve('לא מחובר');
+  const syncNow = async (): Promise<string | null> => {
+    if (!session) return 'לא מחובר — התחבר קודם';
+    // אם המשיכה הראשונית לא קרתה/נכשלה — הכפתור משלים אותה בעצמו במקום לסרב
+    return pulledRef.current ? push(dbRef.current, session.user.id) : pull(session.user.id);
+  };
 
   return <StoreCtx.Provider value={{ db, update, session, lastSync, syncError, syncNow, recovery, clearRecovery: () => setRecovery(false) }}>{children}</StoreCtx.Provider>;
 }
