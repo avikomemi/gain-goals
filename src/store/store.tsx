@@ -29,6 +29,7 @@ export interface DB {
   injuries: Injury[]; krav: KravLog[]; food: FoodLog[]; reviews: Review[];
   water: WaterDay[]; bp: BpEntry[]; calib: Calib;
   orders: { A?: string[]; B?: string[]; C?: string[] };
+  restSec?: number; // זמן מנוחה בין סטים (שניות) — נבחר ע"י אבי, נזכר בין אימונים ומכשירים
   waterGoal?: number; // מ"ל ליום — יעד אישי, ניתן לשינוי בדשבורד
   startDate?: string; // היום שבו אבי התחיל — כל הסטטיסטיקות נמדדות מכאן, לא לפני
   updatedAt?: string; // חותמת שינוי אחרון — לסנכרון ענן (המעודכן מנצח)

@@ -15,25 +15,114 @@ function orderedExercises(r: RoutineDef, saved?: string[]) {
   return out;
 }
 
+const LIVE_KEY = 'fitlog-live';           // מצב אימון חי — מקומי בלבד, לא מסונכרן לענן
+const LIVE_MAX_AGE = 6 * 60 * 60 * 1000;  // אימון שנשמר לפני יותר מ-6 שעות לא משוחזר (כנראה ננטש)
+const REST_PRESETS = [60, 90, 120];
+const PHASES_PERSIST: Phase[] = ['warmup', 'live', 'flex', 'injury'];
+
+// צלצול סוף-מנוחה: Web Audio (שני צלילים חדים שנשמעים גם מעל מוזיקה) + רטט אם יש
+function ringBell(ac: AudioContext | null) {
+  try {
+    if (ac) {
+      if (ac.state === 'suspended') ac.resume();
+      const beep = (at: number, freq: number) => {
+        const osc = ac.createOscillator();
+        const g = ac.createGain();
+        osc.type = 'square';
+        osc.frequency.value = freq;
+        const t0 = ac.currentTime + at;
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(0.5, t0 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.34);
+        osc.connect(g); g.connect(ac.destination);
+        osc.start(t0); osc.stop(t0 + 0.36);
+      };
+      beep(0, 880); beep(0.3, 1245);
+    }
+  } catch { /* אין אודיו — נסתמך על רטט/ויזואל */ }
+  try { navigator.vibrate?.([220, 120, 260]); } catch { /* לא נתמך (iOS) */ }
+}
+
+// שחזור אימון פעיל שנשמר (סעיף 12) — מחזיר null אם אין/פגום/ישן/לא-אימון-פעיל
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function loadLive(): any | null {
+  try {
+    const raw = localStorage.getItem(LIVE_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    const routine = PROGRAM.find(p => p.key === s.routineKey);
+    const fresh = s.ts && (Date.now() - s.ts) < LIVE_MAX_AGE;
+    if (routine && fresh && PHASES_PERSIST.includes(s.phase) && Array.isArray(s.log)) {
+      return { ...s, routine };
+    }
+  } catch { /* פגום — מתעלמים, לא מאבדים את ה-DB */ }
+  return null;
+}
+
 export default function Workout() {
   const { db, update } = useStore();
   const nav = useNavigate();
-  const [phase, setPhase] = useState<Phase>('pick');
-  const [routine, setRoutine] = useState<RoutineDef>(PROGRAM.find(p => p.key === nextRoutine(db))!);
-  const [loc, setLoc] = useState<Loc>('home');
-  const [log, setLog] = useState<ExLog[]>([]);
-  const [exIdx, setExIdx] = useState(0);
-  const [restLeft, setRestLeft] = useState(0);
+  const restored = useRef(loadLive()).current; // אימון פעיל שנשמר לפני רענון/יציאה (סעיף 12)
+  const [phase, setPhase] = useState<Phase>(restored ? restored.phase : 'pick');
+  const [routine, setRoutine] = useState<RoutineDef>(restored?.routine ?? PROGRAM.find(p => p.key === nextRoutine(db))!);
+  const [loc, setLoc] = useState<Loc>(restored?.loc ?? 'home');
+  const [log, setLog] = useState<ExLog[]>(restored?.log ?? []);
+  const [exIdx, setExIdx] = useState<number>(restored?.exIdx ?? 0);
+  const [restEndAt, setRestEndAt] = useState<number | null>(restored?.restEndAt ?? null); // חותמת סיום מנוחה (ms) — שורדת רענון
+  const [now, setNow] = useState(() => Date.now());
   const [whyOpen, setWhyOpen] = useState<string | null>(null);
-  const [injuryAck, setInjuryAck] = useState<string | null>(null); // דיווח כאב שנשמר תוך כדי אימון
-  const [endedByInjury, setEndedByInjury] = useState(false);
+  const [injuryAck, setInjuryAck] = useState<string | null>(restored?.injuryAck ?? null); // דיווח כאב שנשמר תוך כדי אימון
+  const [endedByInjury, setEndedByInjury] = useState<boolean>(restored?.endedByInjury ?? false);
   const [savedFlex, setSavedFlex] = useState(true);
 
+  const audioRef = useRef<AudioContext | null>(null);
+  const restSec = db.restSec ?? 90;
+
+  // יצירת/העָרַת AudioContext — חייב לקרות בתוך מחוות משתמש (דרישת iOS)
+  const ensureAudio = () => {
+    try {
+      if (!audioRef.current) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const AC = window.AudioContext || (window as any).webkitAudioContext;
+        if (AC) audioRef.current = new AC();
+      }
+      if (audioRef.current?.state === 'suspended') audioRef.current.resume();
+    } catch { /* אין אודיו — רטט/ויזואל בלבד */ }
+  };
+
+  const startRest = () => { ensureAudio(); setNow(Date.now()); setRestEndAt(Date.now() + restSec * 1000); };
+
+  // שעון מנוחה מבוסס-חותמת-זמן: מתקתק כל 250ms (מדויק, שורד רענון)
   useEffect(() => {
-    if (restLeft <= 0) return;
-    const t = setTimeout(() => setRestLeft(r => r - 1), 1000);
-    return () => clearTimeout(t);
-  }, [restLeft]);
+    if (!restEndAt) return;
+    const iv = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(iv);
+  }, [restEndAt]);
+
+  // צלצול כשהמנוחה נגמרה (סעיף 2) — כולל צלצול מיידי בחזרה אם הזמן כבר עבר (סעיף 7ב)
+  useEffect(() => {
+    if (restEndAt && now >= restEndAt) { ringBell(audioRef.current); setRestEndAt(null); }
+  }, [now, restEndAt]);
+
+  // שימור מצב אימון חי ל-localStorage (סעיף 12) — נמחק כשהאימון נגמר/ננטש
+  useEffect(() => {
+    try {
+      if (PHASES_PERSIST.includes(phase)) {
+        localStorage.setItem(LIVE_KEY, JSON.stringify({
+          v: 1, ts: Date.now(), phase, routineKey: routine.key, loc, log, exIdx, restEndAt, injuryAck, endedByInjury,
+        }));
+      } else {
+        localStorage.removeItem(LIVE_KEY);
+      }
+    } catch { /* אחסון מלא — לא קריטי לשימור החי */ }
+  }, [phase, routine, loc, log, exIdx, restEndAt, injuryAck, endedByInjury]);
+
+  const abandonLive = () => {
+    if (!confirm('לצאת מהאימון? המצב הנוכחי לא יישמר ביומן.')) return;
+    setRestEndAt(null); setInjuryAck(null); setEndedByInjury(false);
+    localStorage.removeItem(LIVE_KEY);
+    setPhase('pick');
+  };
 
   const startLive = (r: RoutineDef, l: Loc) => {
     setRoutine(r); setLoc(l);
@@ -166,6 +255,7 @@ export default function Workout() {
     const prev = db.workouts.flatMap(w => w.exercises).filter(e => e.id === exDef.id && !e.skipped).pop();
 
     const setLogAt = (fn: (e: ExLog) => void) => setLog(ls => { const c = structuredClone(ls); fn(c[exIdx]); return c; });
+    const restLeft = restEndAt ? Math.max(0, Math.ceil((restEndAt - now) / 1000)) : 0;
 
     return (
       <div className="scr fade-in" key={exDef.id}>
@@ -214,7 +304,7 @@ export default function Workout() {
                   </span>
                 </div>
               )}
-              <div className="ok" onClick={() => { setLogAt(e => { e.sets[si].done = !e.sets[si].done; }); if (!s.done) setRestLeft(90); }}>
+              <div className="ok" onClick={() => { const wasDone = s.done; setLogAt(e => { e.sets[si].done = !e.sets[si].done; }); if (!wasDone) startRest(); else setRestEndAt(null); }}>
                 {s.done ? '✓' : ''}
               </div>
             </div>
@@ -222,8 +312,23 @@ export default function Workout() {
         </div>
         <button className="addset" onClick={() => setLogAt(e => { e.sets.push({ ...e.sets[e.sets.length - 1], done: false }); })}>+ הוסף סט</button>
 
+        <div className="field" style={{ marginTop: 12 }}>
+          <label>זמן מנוחה בין סטים</label>
+          <div className="seg">
+            {REST_PRESETS.map(n => (
+              <b key={n} className={restSec === n ? 'on' : ''} onClick={() => update(d => { d.restSec = n; return d; })}>{n} שנ'</b>
+            ))}
+            <b className={!REST_PRESETS.includes(restSec) ? 'on' : ''} onClick={() => {
+              const v = prompt('זמן מנוחה בשניות:', String(restSec));
+              if (v == null) return;
+              const n = Math.max(5, Math.min(600, parseInt(v, 10) || 0));
+              if (n) update(d => { d.restSec = n; return d; });
+            }}>{!REST_PRESETS.includes(restSec) ? `${restSec} שנ' ✎` : 'מותאם'}</b>
+          </div>
+        </div>
+
         {restLeft > 0 && (
-          <div className="alert mt12" style={{ borderColor: 'var(--line)' }}>⏱️ <span>מנוחה: <b className="num">{Math.floor(restLeft / 60)}:{String(restLeft % 60).padStart(2, '0')}</b> <button className="pill" style={{ marginInlineStart: 10 }} onClick={() => setRestLeft(0)}>דלג</button></span></div>
+          <div className="alert mt12" style={{ borderColor: 'var(--acc)' }}>⏱️ <span>מנוחה: <b className="num">{Math.floor(restLeft / 60)}:{String(restLeft % 60).padStart(2, '0')}</b> <button className="pill" style={{ marginInlineStart: 10 }} onClick={() => setRestEndAt(null)}>דלג</button></span></div>
         )}
 
         <div className="rpe">
@@ -235,16 +340,19 @@ export default function Workout() {
 
         <div className="mt16" style={{ display: 'flex', gap: 10 }}>
           <button className="cta" style={{ flex: 1 }} onClick={() => {
-            setRestLeft(0);
+            // שעון המנוחה ממשיך לרוץ למעבר לתרגיל הבא (סעיף 7) — לא מאפסים
             if (exIdx < exList.length - 1) setExIdx(exIdx + 1);
             else setPhase('flex');
           }}>
-            {exIdx < exList.length - 1 ? 'התרגיל הבא ←' : 'לבלוק הגמישות ←'}
+            {exIdx < exList.length - 1
+              ? `התרגיל הבא: ${exList[exIdx + 1].name} ←`
+              : 'לבלוק הגמישות ←'}
           </button>
           <button className="ghost" style={{ width: 56, fontSize: 18 }} title="פידבק טכניקה" onClick={() => alert('פידבק טכניקה: צלם וידאו קצר באפליקציית המצלמה של הטלפון, ושלח לי (אבי) בצ\'אט של קלוד — נעה או רז יחזרו עם תיקונים. צילום מתוך האפליקציה עצמה — בפיתוח.')}>📷</button>
         </div>
         <button className="ghost warn mt8" onClick={() => setPhase('injury')}>⚠ עצור — משהו כואב</button>
         <button className="ghost mt8" onClick={() => setLogAt(e => { e.skipped = true; }) || (exIdx < exList.length - 1 ? setExIdx(exIdx + 1) : setPhase('flex'))}>דלג על התרגיל</button>
+        <button className="ghost mt8" style={{ opacity: .7 }} onClick={abandonLive}>יציאה מהאימון (בלי לשמור)</button>
       </div>
     );
   }
