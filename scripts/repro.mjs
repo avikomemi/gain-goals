@@ -46,6 +46,18 @@ const hasRemove = await p.evaluate(() => (document.getElementById('root')?.inner
 console.log(`[${hasRemove ? 'ok   ' : 'MISS '}] remove-set button (item 1)`);
 if (!hasRemove) fail = true;
 
+// RPE color scale (item 3): click 10, expect danger warning + colored button
+await p.locator('.rpe b', { hasText: '10' }).first().click();
+await p.waitForTimeout(300);
+const rpe10 = await p.evaluate(() => {
+  const b = [...document.querySelectorAll('.rpe b')].find(x => x.textContent.trim() === '10');
+  const bg = b ? getComputedStyle(b).backgroundColor : '';
+  const warn = (document.getElementById('root')?.innerText || '').includes('כואב מאוד');
+  return { colored: bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent', warn };
+});
+console.log(`[${rpe10.colored && rpe10.warn ? 'ok   ' : 'MISS '}] RPE 10 colored=${rpe10.colored} warning=${rpe10.warn}`);
+if (!(rpe10.colored && rpe10.warn)) fail = true;
+
 // RELOAD -> restore path (the crash scenario)
 await p.reload({ waitUntil: 'networkidle' });
 await p.waitForTimeout(1400);

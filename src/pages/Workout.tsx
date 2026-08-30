@@ -18,6 +18,8 @@ function orderedExercises(r: RoutineDef, saved?: string[]) {
 const LIVE_KEY = 'fitlog-live';           // מצב אימון חי — מקומי בלבד, לא מסונכרן לענן
 const LIVE_MAX_AGE = 6 * 60 * 60 * 1000;  // אימון שנשמר לפני יותר מ-6 שעות לא משוחזר (כנראה ננטש)
 const REST_PRESETS = [60, 90, 120];
+// סולם צבע למאמץ (RPE): ירוק=קל → אדום בוהק=כואב מאוד (סעיף 3)
+const RPE_COLOR: Record<number, string> = { 6: '#16a34a', 7: '#65a30d', 8: '#d97706', 9: '#ea580c', 10: '#d81f2a' };
 const PHASES_PERSIST: Phase[] = ['warmup', 'live', 'flex', 'injury'];
 
 // צלצול סוף-מנוחה: Web Audio (שני צלילים חדים שנשמעים גם מעל מוזיקה) + רטט אם יש
@@ -338,10 +340,16 @@ export default function Workout() {
 
         <div className="rpe">
           <span>מאמץ</span>
-          {[6, 7, 8, 9, 10].map(n => (
-            <b key={n} className={exLog.rpe === n ? 'on' : ''} onClick={() => setLogAt(e => { e.rpe = n; })}>{n}</b>
-          ))}
+          {[6, 7, 8, 9, 10].map(n => {
+            const c = RPE_COLOR[n];
+            const on = exLog.rpe === n;
+            return (
+              <b key={n} className={on ? 'on' : ''} onClick={() => setLogAt(e => { e.rpe = n; })}
+                style={{ borderColor: c, color: on ? '#fff' : c, background: on ? c : 'transparent' }}>{n}</b>
+            );
+          })}
         </div>
+        {exLog.rpe === 10 && <div style={{ fontSize: 11.5, color: 'var(--danger)', marginTop: 4, textAlign: 'center' }}>10 = כואב מאוד — אם זה כאב מפרק, עצור ודווח</div>}
 
         <div className="mt16" style={{ display: 'flex', gap: 10 }}>
           <button className="cta" style={{ flex: 1 }} onClick={() => {
