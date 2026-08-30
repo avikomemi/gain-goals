@@ -3,6 +3,15 @@
 
 export type Loc = 'home' | 'gym';
 
+// פרמטר מותאם לתרגיל מעבר למשקל (למשל גובה קופסה/מדרגה) — לתיעוד ולניתוח תנועה בעתיד
+export interface ExParam {
+  key: string;             // מזהה יציב לשמירה
+  label: string;           // תווית בעברית
+  unit?: string;           // יחידה (ס"מ וכו')
+  step?: number;           // צעד הכפתורים ± (ברירת מחדל 1)
+  def?: number;            // ערך התחלתי אם אין היסטוריה
+}
+
 export interface ExerciseDef {
   id: string;
   name: string;            // base Hebrew name
@@ -15,6 +24,7 @@ export interface ExerciseDef {
   home?: { name?: string; note?: string };
   note?: string;           // shared note
   area?: string;           // body area for pain correlation
+  params?: ExParam[];      // פרמטרים מותאמים (גובה קופסה/מדרגה וכו') — סעיף 5
 }
 
 export interface RoutineDef {
@@ -95,11 +105,11 @@ export const PROGRAM: RoutineDef[] = [
     flexTitle: 'גמישות C · המסטרינג וגב',
     warmup: WARMUP_COMMON,
     exercises: [
-      { id: 'c-pistol', name: 'Box Pistol Squat', target: '3×4-6', setsDefault: 3, repsDefault: 5, area: 'ברך', note: '⚠️ קופסה גבוהה — טווח חלקי בלבד (מיניסקוס)', gym: { name: 'Pistol to High Box' }, home: { name: 'Pistol to Chair' } },
-      { id: 'c-step', name: 'Front Step-Up', target: '3×5-6 לרגל', setsDefault: 3, repsDefault: 6, weighted: true, area: 'ברך', home: { name: 'Front Step-Up (Stairs / Stool)' } },
-      { id: 'c-step-lat', name: 'Lateral Step-Up', target: '3×5-6 לרגל', setsDefault: 3, repsDefault: 6, weighted: true, area: 'ברך', note: 'עלייה מהצד — יציבות לברכיים ולבעיטות', home: { name: 'Lateral Step-Up (Stairs / Stool)' } },
+      { id: 'c-pistol', name: 'Box Pistol Squat', target: '3×4-6', setsDefault: 3, repsDefault: 5, area: 'ברך', note: '⚠️ קופסה גבוהה — טווח חלקי בלבד (מיניסקוס)', gym: { name: 'Pistol to High Box' }, home: { name: 'Pistol to Chair' }, params: [{ key: 'boxH', label: 'גובה קופסה', unit: 'ס"מ', step: 5, def: 45 }] },
+      { id: 'c-step', name: 'Front Step-Up', target: '3×5-6 לרגל', setsDefault: 3, repsDefault: 6, weighted: true, area: 'ברך', home: { name: 'Front Step-Up (Stairs / Stool)' }, params: [{ key: 'stepH', label: 'גובה מדרגה', unit: 'ס"מ', step: 5, def: 30 }] },
+      { id: 'c-step-lat', name: 'Lateral Step-Up', target: '3×5-6 לרגל', setsDefault: 3, repsDefault: 6, weighted: true, area: 'ברך', note: 'עלייה מהצד — יציבות לברכיים ולבעיטות', home: { name: 'Lateral Step-Up (Stairs / Stool)' }, params: [{ key: 'stepH', label: 'גובה מדרגה', unit: 'ס"מ', step: 5, def: 30 }] },
       { id: 'c-cossack', name: 'Cossack Squat', target: '3×6-8', setsDefault: 3, repsDefault: 7, area: 'ברך', note: 'טווח שליטה — בלי עומק מקסימלי', gym: { note: 'עם משקל אם קל' }, home: { note: 'משקל גוף / תיק' } },
-      { id: 'c-box', name: 'Box Squat', target: '3×8', setsDefault: 3, repsDefault: 8, weighted: true, area: 'גב תחתון', note: 'גב ניטרלי, לא חזק ונמוך', gym: { note: 'מוט / קטלבל' }, home: { name: 'To Couch — Slow Tempo' } },
+      { id: 'c-box', name: 'Box Squat', target: '3×8', setsDefault: 3, repsDefault: 8, weighted: true, area: 'גב תחתון', note: 'גב ניטרלי, לא חזק ונמוך', gym: { note: 'מוט / קטלבל' }, home: { name: 'To Couch — Slow Tempo' }, params: [{ key: 'boxH', label: 'גובה קופסה', unit: 'ס"מ', step: 5, def: 40 }] },
       { id: 'c-ham', name: 'Hamstrings', target: '3×6-8', setsDefault: 3, repsDefault: 7, area: 'ברך', gym: { name: 'Nordic Curl', note: 'איטי ומבוקר' }, home: { name: 'Nordic (Couch Anchor) / SL Bridge' } },
     ],
     flexibility: [

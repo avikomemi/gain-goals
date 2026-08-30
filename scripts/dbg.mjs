@@ -2,33 +2,26 @@ import { chromium } from 'playwright';
 const URL = process.env.TARGET || 'http://localhost:5055/';
 const b = await chromium.launch();
 const p = await b.newPage();
-p.on('pageerror', e => console.log('PAGEERROR', (e.stack || e.message).split('\n')[0]));
+let fail = false;
+p.on('pageerror', e => { console.log('PAGEERROR', (e.stack || e.message).split('\n')[0]); fail = true; });
 await p.goto(URL + '#/workout', { waitUntil: 'networkidle' });
 await p.waitForTimeout(800);
-await p.getByText('בית · בלי ציוד').first().click();
+// start routine C (knee day — has box/step-height params)
+await p.locator('.card', { hasText: 'אימון C' }).getByText('בית · בלי ציוד').click();
 await p.waitForTimeout(300);
 await p.getByText('סיימתי חימום').first().click();
-await p.waitForTimeout(300);
-
-let found = false;
-for (let i = 0; i < 8; i++) {
-  found = await p.evaluate(() => !![...document.querySelectorAll('.stp button')].find(x => x.title === 'משקל גוף בלבד'));
-  if (found) break;
-  const next = await p.$('button.cta');
-  const label = next ? await next.innerText() : '';
-  if (!label.includes('התרגיל הבא')) break;
-  await next.click();
-  await p.waitForTimeout(300);
-}
-console.log('weighted exercise found:', found);
-if (found) {
-  await p.evaluate(() => [...document.querySelectorAll('.stp button')].find(x => x.title === 'משקל גוף בלבד').click());
-  await p.waitForTimeout(300);
-  const ok = await p.evaluate(() => {
-    const stp = [...document.querySelectorAll('.stp')].find(s => s.innerText.includes('גוף'));
-    return stp ? stp.innerText.replace(/\n/g, ' ') : 'NONE';
-  });
-  console.log('after toggle, weight cell shows:', JSON.stringify(ok));
-  await p.screenshot({ path: 'scripts/repro-shot.png', fullPage: true });
-}
+await p.waitForTimeout(400);
+const name = await p.locator('.w-name').first().innerText();
+const hasParam = await p.evaluate(() => (document.getElementById('root')?.innerText || '').includes('גובה קופסה'));
+console.log(`exercise=${JSON.stringify(name)} boxHeight-stepper=${hasParam}`);
+if (!hasParam) fail = true;
+// bump the box height + and read value
+const before = await p.evaluate(() => {
+  const row = [...document.querySelectorAll('.spread')].find(s => s.innerText.includes('גובה קופסה'));
+  return row ? row.innerText.replace(/\n/g, ' ') : 'NONE';
+});
+console.log('param row:', JSON.stringify(before));
+await p.screenshot({ path: 'scripts/repro-shot.png', fullPage: true });
 await b.close();
+console.log(fail ? 'RESULT: FAIL' : 'RESULT: PASS');
+process.exit(fail ? 1 : 0);

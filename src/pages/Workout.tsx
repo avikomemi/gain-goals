@@ -156,7 +156,11 @@ export default function Workout() {
       const sets = prev?.sets?.length
         ? prev.sets.map(s => ({ ...s, done: false }))
         : Array.from({ length: ex.setsDefault }, () => ({ reps: ex.repsDefault, weight: ex.weighted ? 0 : undefined, done: false }));
-      return { id: ex.id, name: exName(ex, l), sets, rpe: undefined };
+      // סעיף 5 — פרמטרים מותאמים: נזכרים מהפעם הקודמת, אחרת ברירת המחדל של התרגיל
+      const params = ex.params?.length
+        ? Object.fromEntries(ex.params.map(p => [p.key, prev?.params?.[p.key] ?? p.def ?? 0]))
+        : undefined;
+      return { id: ex.id, name: exName(ex, l), sets, rpe: undefined, params };
     }));
     setExIdx(0);
     setPhase('warmup');
@@ -311,8 +315,29 @@ export default function Workout() {
               ? <>פעם קודמת: <b className="num">{prev.sets.map(s => s.reps).join('·')}</b>{prev.sets[0]?.bw ? ' · משקל גוף' : prev.sets[0]?.weight ? ` @ ${prev.sets[0].weight} ק"ג` : ''}</>
               : 'פעם ראשונה בתרגיל — היום קובעים בסיס (כיול).'}
           </div>
+          {prev?.params && exDef.params?.length ? (
+            <div style={{ fontSize: 12.5, marginTop: 4, color: 'var(--dim)' }}>
+              {exDef.params.map(p => `${p.label}: ${prev.params![p.key]}${p.unit ? ' ' + p.unit : ''}`).join(' · ')}
+            </div>
+          ) : null}
           <div style={{ fontSize: 12.5, marginTop: 6, lineHeight: 1.5, color: 'var(--acc)' }}>{why}</div>
         </div>
+
+        {/* סעיף 5 — פרמטרים מותאמים (גובה קופסה/מדרגה) */}
+        {exDef.params?.length ? (
+          <div className="mt12">
+            {exDef.params.map(p => (
+              <div key={p.key} className="spread" style={{ alignItems: 'center', marginTop: 6, fontSize: 13 }}>
+                <span style={{ color: 'var(--dim)', fontWeight: 700 }}>{p.label}{p.unit ? ` · ${p.unit}` : ''}</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <button className="ok" onClick={() => setLogAt(e => { const v = e.params?.[p.key] ?? p.def ?? 0; e.params = { ...e.params, [p.key]: Math.max(0, v - (p.step ?? 1)) }; })}>−</button>
+                  <b className="num" style={{ minWidth: 40, textAlign: 'center' }}>{exLog.params?.[p.key] ?? p.def ?? 0}</b>
+                  <button className="ok" onClick={() => setLogAt(e => { const v = e.params?.[p.key] ?? p.def ?? 0; e.params = { ...e.params, [p.key]: v + (p.step ?? 1) }; })}>+</button>
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : null}
 
         <div className="mt12">
           {exLog.sets.map((s, si) => (
