@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PROGRAM, RoutineDef, Loc, exName, exNote, BODY_AREAS, KRAV_TAGS, SENSITIVE_BACK_DAY } from '../data/program';
 import { useStore, today, WorkoutLog, ExLog } from '../store/store';
@@ -310,7 +310,12 @@ export default function Workout() {
             </div>
           ))}
         </div>
-        <button className="addset" onClick={() => setLogAt(e => { e.sets.push({ ...e.sets[e.sets.length - 1], done: false }); })}>+ הוסף סט</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="addset" style={{ flex: 1 }} onClick={() => setLogAt(e => { e.sets.push({ ...e.sets[e.sets.length - 1], done: false }); })}>+ הוסף סט</button>
+          {exLog.sets.length > 1 && (
+            <button className="addset" style={{ flex: 1 }} onClick={() => setLogAt(e => { e.sets.pop(); })}>− הסר סט</button>
+          )}
+        </div>
 
         <div className="field" style={{ marginTop: 12 }}>
           <label>זמן מנוחה בין סטים</label>
@@ -351,7 +356,7 @@ export default function Workout() {
           <button className="ghost" style={{ width: 56, fontSize: 18 }} title="פידבק טכניקה" onClick={() => alert('פידבק טכניקה: צלם וידאו קצר באפליקציית המצלמה של הטלפון, ושלח לי (אבי) בצ\'אט של קלוד — נעה או רז יחזרו עם תיקונים. צילום מתוך האפליקציה עצמה — בפיתוח.')}>📷</button>
         </div>
         <button className="ghost warn mt8" onClick={() => setPhase('injury')}>⚠ עצור — משהו כואב</button>
-        <button className="ghost mt8" onClick={() => setLogAt(e => { e.skipped = true; }) || (exIdx < exList.length - 1 ? setExIdx(exIdx + 1) : setPhase('flex'))}>דלג על התרגיל</button>
+        <button className="ghost mt8" onClick={() => { setLogAt(e => { e.skipped = true; }); if (exIdx < exList.length - 1) setExIdx(exIdx + 1); else setPhase('flex'); }}>דלג על התרגיל</button>
         <button className="ghost mt8" style={{ opacity: .7 }} onClick={abandonLive}>יציאה מהאימון (בלי לשמור)</button>
       </div>
     );

@@ -6,7 +6,10 @@ cd "$(dirname "$0")/.."
 msg="${1:?שימוש: ./scripts/deploy.sh \"הודעת קומיט\"}"
 
 echo "→ type-check"
-npx tsc --noEmit
+# חשוב: tsconfig.json הוא solution-file (files:[], references) — tsc --noEmit עליו לא בודק כלום.
+# חייבים לבדוק את הפרויקטים בפועל, אחרת שגיאות (למשל import חסר) עוברות בשקט וגורמות למסך לבן.
+npx tsc -p tsconfig.app.json --noEmit
+npx tsc -p tsconfig.node.json --noEmit
 
 echo "→ build"
 npm run build
