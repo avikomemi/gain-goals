@@ -3,7 +3,7 @@ import { Loc } from '../data/program';
 import { supabase } from './cloud';
 import type { Session } from '@supabase/supabase-js';
 
-export interface SetLog { reps: number; weight?: number; done: boolean }
+export interface SetLog { reps: number; weight?: number; done: boolean; bw?: boolean }
 export interface ExLog { id: string; name: string; sets: SetLog[]; rpe?: number; skipped?: boolean }
 export interface WorkoutLog {
   id: string; date: string; routine: 'A' | 'B' | 'C'; loc: Loc;

@@ -77,6 +77,11 @@ export default function Workout() {
   const [endedByInjury, setEndedByInjury] = useState<boolean>(restored?.endedByInjury ?? false);
   const [savedFlex, setSavedFlex] = useState(true);
 
+  // סעיף 11 — פאנל כאב מהיר (בלי לעזוב את מסך האימון)
+  const [painOpen, setPainOpen] = useState(false);
+  const [painArea, setPainArea] = useState<string>('');
+  const [painLevel, setPainLevel] = useState<number | null>(null);
+
   const audioRef = useRef<AudioContext | null>(null);
   const restSec = db.restSec ?? 90;
 
@@ -124,6 +129,24 @@ export default function Workout() {
     setRestEndAt(null); setInjuryAck(null); setEndedByInjury(false);
     localStorage.removeItem(LIVE_KEY);
     setPhase('pick');
+  };
+
+  // הודעת הצוות לכאב 6+ (כתום-אדום) — לפי אזור הגוף והפרופיל הרפואי
+  const painMessage = (area: string, level: number): string => {
+    if (area.includes('גב')) return `מאיה: גב ${level}/10 — עוצרים עם העומס. האימון הבא הוא "יום גב רגיש" עד שהכאב יורד מתחת ל-2.`;
+    if (area.includes('גאוט')) return 'ד"ר ארז: מצב חירום מים — בקבוק עכשיו, אפס עומס על כף הרגל, רק עליון/גמישות.';
+    if (area.includes('ברך')) return `מאיה: כאב ברך ${level}/10 — בלי כיפוף עמוק בעומס. מדללים או מחליפים את התרגיל, בלי גבורה.`;
+    return `מאיה: כאב ${level}/10 — עוצרים את התרגיל ומעריכים לפני שממשיכים. בלי גבורה.`;
+  };
+
+  const savePain = (stop: boolean) => {
+    if (!painLevel) return;
+    const area = painArea || 'אחר';
+    const level = painLevel;
+    update(d => { d.injuries.push({ date: today(), area, level, exercise: log[exIdx]?.name, what: 'כאב תוך אימון' }); return d; });
+    setPainOpen(false); setPainArea(''); setPainLevel(null);
+    if (stop) { saveWorkout(true, false); setEndedByInjury(true); setPhase('done'); }
+    else { setInjuryAck(`${area} ${level}/10`); }
   };
 
   const startLive = (r: RoutineDef, l: Loc) => {
@@ -298,12 +321,20 @@ export default function Workout() {
               </div>
               {exDef.weighted && (
                 <div className="stp">
-                  <span>ק"ג</span>
-                  <span style={{ display: 'flex', alignItems: 'center' }}>
-                    <button onClick={() => setLogAt(e => { e.sets[si].weight = Math.max(0, (e.sets[si].weight || 0) - 1); })}>−</button>
-                    <b className="num">{s.weight ?? 0}</b>
-                    <button onClick={() => setLogAt(e => { e.sets[si].weight = (e.sets[si].weight || 0) + 1; })}>+</button>
-                  </span>
+                  <span>{s.bw ? 'משקל' : 'ק"ג'}</span>
+                  {s.bw ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <b className="num" style={{ fontSize: 13 }}>גוף</b>
+                      <button title="חזרה למשקל חיצוני" onClick={() => setLogAt(e => { e.sets[si].bw = false; })}>⚖️</button>
+                    </span>
+                  ) : (
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      <button onClick={() => setLogAt(e => { e.sets[si].weight = Math.max(0, (e.sets[si].weight || 0) - 1); })}>−</button>
+                      <b className="num">{s.weight ?? 0}</b>
+                      <button onClick={() => setLogAt(e => { e.sets[si].weight = (e.sets[si].weight || 0) + 1; })}>+</button>
+                      <button title="משקל גוף בלבד" style={{ marginInlineStart: 4 }} onClick={() => setLogAt(e => { e.sets[si].bw = true; })}>⚖️</button>
+                    </span>
+                  )}
                 </div>
               )}
               <div className="ok" onClick={() => { const wasDone = s.done; setLogAt(e => { e.sets[si].done = !e.sets[si].done; }); if (!wasDone) startRest(); else setRestEndAt(null); }}>
@@ -363,7 +394,34 @@ export default function Workout() {
           </button>
           <button className="ghost" style={{ width: 56, fontSize: 18 }} title="פידבק טכניקה" onClick={() => alert('פידבק טכניקה: צלם וידאו קצר באפליקציית המצלמה של הטלפון, ושלח לי (אבי) בצ\'אט של קלוד — נעה או רז יחזרו עם תיקונים. צילום מתוך האפליקציה עצמה — בפיתוח.')}>📷</button>
         </div>
-        <button className="ghost warn mt8" onClick={() => setPhase('injury')}>⚠ עצור — משהו כואב</button>
+        <button className="ghost warn mt8" onClick={() => setPainOpen(o => !o)}>⚠ משהו כואב</button>
+
+        {painOpen && (
+          <div className="card mt8" style={{ borderColor: 'var(--danger)' }}>
+            <div className="field"><label>איפה כואב</label>
+              <div className="tagrow">
+                {BODY_AREAS.map(a => <b key={a} className={painArea === a ? 'on' : ''} onClick={() => setPainArea(a)}>{a}</b>)}
+              </div>
+            </div>
+            <div className="field"><label>רמת כאב{painLevel ? ` · ${painLevel}/10` : ''}</label>
+              <div className="seg">
+                {[2, 3, 4, 5, 6, 7, 8].map(n => {
+                  const col = n >= 6 ? '#d81f2a' : n >= 4 ? '#d97706' : '#16a34a';
+                  const on = painLevel === n;
+                  return <b key={n} className={on ? 'on' : ''} onClick={() => setPainLevel(n)}
+                    style={{ borderColor: col, color: on ? '#fff' : col, background: on ? col : 'transparent' }}>{n}</b>;
+                })}
+              </div>
+            </div>
+            {painLevel != null && painLevel >= 6 && (
+              <div className="alert mt8" style={{ borderColor: 'var(--danger)' }}>🚨 <span><b>{painMessage(painArea || 'אחר', painLevel)}</b></span></div>
+            )}
+            <button className="cta mt12" disabled={!painLevel} style={{ opacity: painLevel ? 1 : .5 }} onClick={() => savePain(false)}>שמור והמשך בזהירות</button>
+            <button className="cta red mt8" disabled={!painLevel} style={{ opacity: painLevel ? 1 : .5 }} onClick={() => savePain(true)}>עצור את האימון</button>
+            <button className="ghost mt8" onClick={() => { setPainOpen(false); setPainArea(''); setPainLevel(null); }}>ביטול</button>
+          </div>
+        )}
+
         <button className="ghost mt8" onClick={() => { setLogAt(e => { e.skipped = true; }); if (exIdx < exList.length - 1) setExIdx(exIdx + 1); else setPhase('flex'); }}>דלג על התרגיל</button>
         <button className="ghost mt8" style={{ opacity: .7 }} onClick={abandonLive}>יציאה מהאימון (בלי לשמור)</button>
       </div>

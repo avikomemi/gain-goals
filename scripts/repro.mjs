@@ -58,6 +58,39 @@ const rpe10 = await p.evaluate(() => {
 console.log(`[${rpe10.colored && rpe10.warn ? 'ok   ' : 'MISS '}] RPE 10 colored=${rpe10.colored} warning=${rpe10.warn}`);
 if (!(rpe10.colored && rpe10.warn)) fail = true;
 
+// Pain panel (item 11): open, pick back + level 6 -> expect danger message, then cancel
+await p.getByText('משהו כואב').first().click();
+await p.waitForTimeout(200);
+await p.locator('.tagrow b', { hasText: 'גב תחתון' }).first().click();
+await p.locator('.seg b', { hasText: /^6$/ }).first().click();
+await p.waitForTimeout(200);
+const pain = await p.evaluate(() => ({
+  danger: (document.getElementById('root')?.innerText || '').includes('יום גב רגיש'),
+  stopBtn: !![...document.querySelectorAll('button')].find(b => b.textContent.includes('עצור את האימון')),
+}));
+console.log(`[${pain.danger && pain.stopBtn ? 'ok   ' : 'MISS '}] pain panel: 6+ alert=${pain.danger} stop-btn=${pain.stopBtn}`);
+if (!(pain.danger && pain.stopBtn)) fail = true;
+await p.getByText('ביטול').first().click();
+await p.waitForTimeout(200);
+
+// Bodyweight toggle (item 4): only on weighted exercises — non-fatal if current isn't weighted
+const bw = await p.evaluate(() => {
+  const btn = [...document.querySelectorAll('.stp button')].find(b => b.title === 'משקל גוף בלבד');
+  if (!btn) return { present: false };
+  btn.click();
+  return { present: true };
+});
+if (bw.present) {
+  await p.waitForTimeout(200);
+  const bwOk = await p.evaluate(() => (document.getElementById('root')?.innerText || '').includes('גוף'));
+  console.log(`[${bwOk ? 'ok   ' : 'MISS '}] bodyweight toggle -> "גוף" shown`);
+  if (!bwOk) fail = true;
+  // revert so it doesn't affect restore assertion
+  await p.evaluate(() => { const r = [...document.querySelectorAll('.stp button')].find(b => b.title === 'חזרה למשקל חיצוני'); r && r.click(); });
+} else {
+  console.log('[skip ] bodyweight toggle — current exercise is not weighted');
+}
+
 // RELOAD -> restore path (the crash scenario)
 await p.reload({ waitUntil: 'networkidle' });
 await p.waitForTimeout(1400);
