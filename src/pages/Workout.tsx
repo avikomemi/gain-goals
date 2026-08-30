@@ -383,6 +383,8 @@ export default function Workout() {
         {exLog.rpe === 10 && <div style={{ fontSize: 11.5, color: 'var(--danger)', marginTop: 4, textAlign: 'center' }}>10 = כואב מאוד — אם זה כאב מפרק, עצור ודווח</div>}
 
         <div className="mt16" style={{ display: 'flex', gap: 10 }}>
+          <button className="ghost" style={{ width: 56, fontSize: 18 }} title={exIdx > 0 ? 'התרגיל הקודם' : 'חזרה לחימום'}
+            onClick={() => { if (exIdx > 0) setExIdx(exIdx - 1); else setPhase('warmup'); }}>→</button>
           <button className="cta" style={{ flex: 1 }} onClick={() => {
             // שעון המנוחה ממשיך לרוץ למעבר לתרגיל הבא (סעיף 7) — לא מאפסים
             if (exIdx < exList.length - 1) setExIdx(exIdx + 1);

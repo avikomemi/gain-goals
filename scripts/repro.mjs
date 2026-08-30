@@ -46,6 +46,19 @@ const hasRemove = await p.evaluate(() => (document.getElementById('root')?.inner
 console.log(`[${hasRemove ? 'ok   ' : 'MISS '}] remove-set button (item 1)`);
 if (!hasRemove) fail = true;
 
+// Back navigation (item 9): advance to next, go back, set must still be marked
+const nameBefore = await p.locator('.w-name').first().innerText();
+await p.locator('button.cta', { hasText: 'התרגיל הבא' }).first().click();
+await p.waitForTimeout(300);
+const nameNext = await p.locator('.w-name').first().innerText();
+await p.locator('button[title="התרגיל הקודם"]').first().click();
+await p.waitForTimeout(300);
+const nameBack = await p.locator('.w-name').first().innerText();
+const doneAfterBack = await p.locator('.set.done').count();
+const backOk = nameNext !== nameBefore && nameBack === nameBefore && doneAfterBack >= 1;
+console.log(`[${backOk ? 'ok   ' : 'MISS '}] back-nav: "${nameBefore}" -> "${nameNext}" -> "${nameBack}" done=${doneAfterBack}`);
+if (!backOk) fail = true;
+
 // RPE color scale (item 3): click 10, expect danger warning + colored button
 await p.locator('.rpe b', { hasText: '10' }).first().click();
 await p.waitForTimeout(300);
