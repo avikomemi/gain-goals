@@ -300,11 +300,18 @@ export default function Workout() {
           <span>יעד: <b>{exDef.target}</b></span>
           {exNote(exDef, loc) && <span style={{ color: 'var(--acc2)' }}>{exNote(exDef, loc)}</span>}
         </div>
-        <div className="mt12 spread">
-          <span className="pill">
-            {prev ? <>פעם קודמת: <b className="num">{prev.sets.map(s => s.reps).join(' · ')}</b>{prev.sets[0]?.weight ? ` @ ${prev.sets[0].weight} ק"ג` : ''}</> : 'פעם ראשונה — כיול'}
-          </span>
-          <span className={`dir ${dir}`} title={why} onClick={() => alert(why)}>{dirLabel}</span>
+        {/* סעיף 14 — כרטיס מאמן בולט: מה עשית קודם, היעד עכשיו, והנחיית עמית */}
+        <div className="card mt12" style={{ borderColor: 'var(--acc)' }}>
+          <div className="spread" style={{ alignItems: 'center' }}>
+            <span style={{ fontSize: 12, color: 'var(--dim)', fontWeight: 800 }}>🎯 עמית</span>
+            <span className={`dir ${dir}`}>{dirLabel}</span>
+          </div>
+          <div style={{ fontSize: 13, marginTop: 8 }}>
+            {prev
+              ? <>פעם קודמת: <b className="num">{prev.sets.map(s => s.reps).join('·')}</b>{prev.sets[0]?.bw ? ' · משקל גוף' : prev.sets[0]?.weight ? ` @ ${prev.sets[0].weight} ק"ג` : ''}</>
+              : 'פעם ראשונה בתרגיל — היום קובעים בסיס (כיול).'}
+          </div>
+          <div style={{ fontSize: 12.5, marginTop: 6, lineHeight: 1.5, color: 'var(--acc)' }}>{why}</div>
         </div>
 
         <div className="mt12">

@@ -34,6 +34,7 @@ await p.waitForTimeout(400);
 await check('live', 'מאמץ');
 
 // verify new controls present
+await check('coach card (item 14)', 'עמית');
 await check('rest chooser present', 'זמן מנוחה בין סטים');
 
 // mark first set done -> timer should start
