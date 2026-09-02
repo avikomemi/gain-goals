@@ -61,9 +61,14 @@ function loadLive(): any | null {
     const s = JSON.parse(raw);
     const routine = PROGRAM.find(p => p.key === s.routineKey);
     const fresh = s.ts && (Date.now() - s.ts) < LIVE_MAX_AGE;
-    if (routine && fresh && PHASES_PERSIST.includes(s.phase) && Array.isArray(s.log)) {
+    // אימון פעיל שנשמר לפני שינוי בתוכנית = לא תואם (שמות/סדר מעורבבים). משליכים ומתחילים נקי.
+    const matchesProgram = routine && Array.isArray(s.log)
+      && s.log.length === routine.exercises.length
+      && s.log.every((e: { id: string }) => routine.exercises.some(x => x.id === e.id));
+    if (routine && fresh && matchesProgram && PHASES_PERSIST.includes(s.phase)) {
       return { ...s, routine };
     }
+    localStorage.removeItem(LIVE_KEY); // ננטש/לא-תואם — ניקוי כדי שלא ישוחזר שוב
   } catch { /* פגום — מתעלמים, לא מאבדים את ה-DB */ }
   return null;
 }
@@ -474,7 +479,7 @@ export default function Workout() {
             else setPhase('flex');
           }}>
             {exIdx < exList.length - 1
-              ? `התרגיל הבא: ${exList[exIdx + 1].name} ←`
+              ? `התרגיל הבא: ${exName(exList[exIdx + 1], loc)} ←`
               : 'לבלוק הגמישות ←'}
           </button>
           <button className="ghost" style={{ width: 56, fontSize: 18 }} title="פידבק טכניקה" onClick={() => alert('פידבק טכניקה: צלם וידאו קצר באפליקציית המצלמה של הטלפון, ושלח לי (אבי) בצ\'אט של קלוד — נעה או רז יחזרו עם תיקונים. צילום מתוך האפליקציה עצמה — בפיתוח.')}>📷</button>
