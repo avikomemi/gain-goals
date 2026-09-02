@@ -29,20 +29,24 @@ const PHASES_PERSIST: Phase[] = ['warmup', 'live', 'flex', 'injury'];
 function ringBell(ac: AudioContext | null) {
   try {
     if (ac) {
-      if (ac.state === 'suspended') ac.resume();
-      const beep = (at: number, freq: number) => {
-        const osc = ac.createOscillator();
-        const g = ac.createGain();
-        osc.type = 'square';
-        osc.frequency.value = freq;
-        const t0 = ac.currentTime + at;
-        g.gain.setValueAtTime(0.0001, t0);
-        g.gain.exponentialRampToValueAtTime(0.5, t0 + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.34);
-        osc.connect(g); g.connect(ac.destination);
-        osc.start(t0); osc.stop(t0 + 0.36);
+      const play = () => {
+        const beep = (at: number, freq: number) => {
+          const osc = ac.createOscillator();
+          const g = ac.createGain();
+          osc.type = 'square';
+          osc.frequency.value = freq;
+          const t0 = ac.currentTime + at;
+          g.gain.setValueAtTime(0.0001, t0);
+          g.gain.exponentialRampToValueAtTime(0.6, t0 + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.34);
+          osc.connect(g); g.connect(ac.destination);
+          osc.start(t0); osc.stop(t0 + 0.36);
+        };
+        beep(0, 880); beep(0.3, 1245); beep(0.6, 880);
       };
-      beep(0, 880); beep(0.3, 1245);
+      // iOS: הקונטקסט עלול להיות מושהה — קודם resume, ורק כשחזר לפעול מנגנים
+      if (ac.state === 'suspended') ac.resume().then(play).catch(() => { /* אין אודיו — ויזואל */ });
+      else play();
     }
   } catch { /* אין אודיו — נסתמך על רטט/ויזואל */ }
   try { navigator.vibrate?.([220, 120, 260]); } catch { /* לא נתמך (iOS) */ }
@@ -74,6 +78,7 @@ export default function Workout() {
   const [log, setLog] = useState<ExLog[]>(restored?.log ?? []);
   const [exIdx, setExIdx] = useState<number>(restored?.exIdx ?? 0);
   const [restEndAt, setRestEndAt] = useState<number | null>(restored?.restEndAt ?? null); // חותמת סיום מנוחה (ms) — שורדת רענון
+  const [restDone, setRestDone] = useState(false); // המנוחה נגמרה — התראה ויזואלית (גיבוי לצליל, קריטי ב-iOS מושתק)
   const [now, setNow] = useState(() => Date.now());
   const [whyOpen, setWhyOpen] = useState<string | null>(null);
   const [injuryAck, setInjuryAck] = useState<string | null>(restored?.injuryAck ?? null); // דיווח כאב שנשמר תוך כדי אימון
@@ -104,7 +109,7 @@ export default function Workout() {
     } catch { /* אין אודיו — רטט/ויזואל בלבד */ }
   };
 
-  const startRest = () => { ensureAudio(); setNow(Date.now()); setRestEndAt(Date.now() + restSec * 1000); };
+  const startRest = () => { ensureAudio(); setRestDone(false); setNow(Date.now()); setRestEndAt(Date.now() + restSec * 1000); };
 
   // שעון מנוחה מבוסס-חותמת-זמן: מתקתק כל 250ms (מדויק, שורד רענון)
   useEffect(() => {
@@ -115,7 +120,7 @@ export default function Workout() {
 
   // צלצול כשהמנוחה נגמרה (סעיף 2) — כולל צלצול מיידי בחזרה אם הזמן כבר עבר (סעיף 7ב)
   useEffect(() => {
-    if (restEndAt && now >= restEndAt) { ringBell(audioRef.current); setRestEndAt(null); }
+    if (restEndAt && now >= restEndAt) { ringBell(audioRef.current); setRestEndAt(null); setRestDone(true); }
   }, [now, restEndAt]);
 
   // סעיף 6 — טיימר מתיחה: תיקתוק + צלצול בסיום, ומסמן את המתיחה כבוצעה
@@ -406,7 +411,7 @@ export default function Workout() {
                   )}
                 </div>
               )}
-              <div className="ok" onClick={() => { const wasDone = s.done; setLogAt(e => { e.sets[si].done = !e.sets[si].done; }); if (!wasDone) startRest(); else setRestEndAt(null); }}>
+              <div className="ok" onClick={() => { const wasDone = s.done; setLogAt(e => { e.sets[si].done = !e.sets[si].done; }); if (!wasDone) startRest(); else { setRestEndAt(null); setRestDone(false); } }}>
                 {s.done ? '✓' : ''}
               </div>
             </div>
@@ -435,7 +440,10 @@ export default function Workout() {
         </div>
 
         {restLeft > 0 && (
-          <div className="alert mt12" style={{ borderColor: 'var(--acc)' }}>⏱️ <span>מנוחה: <b className="num">{Math.floor(restLeft / 60)}:{String(restLeft % 60).padStart(2, '0')}</b> <button className="pill" style={{ marginInlineStart: 10 }} onClick={() => setRestEndAt(null)}>דלג</button></span></div>
+          <div className="alert mt12" style={{ borderColor: 'var(--acc)' }}>⏱️ <span>מנוחה: <b className="num">{Math.floor(restLeft / 60)}:{String(restLeft % 60).padStart(2, '0')}</b> <button className="pill" style={{ marginInlineStart: 10 }} onClick={() => { setRestEndAt(null); setRestDone(false); }}>דלג</button></span></div>
+        )}
+        {restDone && (
+          <div className="alert mt12 pulse" style={{ borderColor: 'var(--acc2)', background: 'rgba(217,119,6,.10)' }}>🔔 <span><b>נגמרה המנוחה — קדימה לסט הבא!</b> <button className="pill" style={{ marginInlineStart: 10 }} onClick={() => setRestDone(false)}>אוקיי</button></span></div>
         )}
 
         <div className="rpe">
