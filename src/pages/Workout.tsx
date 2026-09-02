@@ -179,9 +179,15 @@ export default function Workout() {
     setRoutine(r); setLoc(l);
     setLog(orderedExercises(r, db.orders[r.key]).map(ex => {
       const prev = db.workouts.flatMap(w => w.exercises).filter(e => e.id === ex.id && !e.skipped).pop();
+      // ברירת מחדל: תרגיל שהמאמן כתב עם משקל → מתחיל בק"ג; שאר התרגילים (לא-זמן) → משקל גוף עם אפשרות להוסיף משקל חיצוני
       const sets = prev?.sets?.length
         ? prev.sets.map(s => ({ ...s, done: false }))
-        : Array.from({ length: ex.setsDefault }, () => ({ reps: ex.repsDefault, weight: ex.weighted ? 0 : undefined, done: false }));
+        : Array.from({ length: ex.setsDefault }, () => ({
+            reps: ex.repsDefault,
+            weight: ex.weighted ? 0 : undefined,
+            bw: (!ex.weighted && !ex.timeBased) ? true : undefined,
+            done: false,
+          }));
       // סעיף 5 — פרמטרים מותאמים: נזכרים מהפעם הקודמת, אחרת ברירת המחדל של התרגיל
       const params = ex.params?.length
         ? Object.fromEntries(ex.params.map(p => [p.key, prev?.params?.[p.key] ?? p.def ?? 0]))
@@ -390,13 +396,13 @@ export default function Workout() {
                   <button onClick={() => setLogAt(e => { e.sets[si].reps += 1; })}>+</button>
                 </span>
               </div>
-              {exDef.weighted && (
+              {!exDef.timeBased && (
                 <div className="stp">
-                  <span>{s.bw ? 'משקל' : 'ק"ג'}</span>
-                  {s.bw ? (
+                  <span>{(s.bw || s.weight === undefined) ? 'משקל גוף' : 'ק"ג'}</span>
+                  {(s.bw || s.weight === undefined) ? (
                     <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <b className="num" style={{ fontSize: 13 }}>גוף</b>
-                      <button title="חזרה למשקל חיצוני" onClick={() => setLogAt(e => { e.sets[si].bw = false; })}>⚖️</button>
+                      <button title="הוסף משקל חיצוני" onClick={() => setLogAt(e => { e.sets[si].bw = false; if (e.sets[si].weight === undefined) e.sets[si].weight = 0; })}>⚖️＋</button>
                     </span>
                   ) : (
                     <span style={{ display: 'flex', alignItems: 'center' }}>
