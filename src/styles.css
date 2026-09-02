@@ -79,12 +79,12 @@ input,textarea,select{font-family:inherit;color:var(--ink)}
 .dir{font-size:11px;font-weight:900}
 .dir.add{color:var(--good)} .dir.keep{color:var(--dim)} .dir.ease{color:var(--acc)}
 .set{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line2)}
-.set .sn{font-size:10px;color:var(--dim);font-weight:700;letter-spacing:.08em;width:36px}
-.stp{flex:1;display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 10px;gap:6px}
+.set .sn{font-size:10px;color:var(--dim);font-weight:700;letter-spacing:.08em;width:36px;flex:0 0 36px}
+.stp{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 10px;gap:6px}
 .stp span{font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.06em}
 .stp b{font-size:19px;font-weight:900;min-width:26px;text-align:center}
-.stp button{color:var(--dim);font-size:18px;font-weight:400;background:none;border:0;width:28px;height:28px;line-height:1}
-.set .ok{width:36px;height:36px;border-radius:5px;border:1px solid var(--line);background:var(--card);color:var(--dim);display:flex;align-items:center;justify-content:center;font-size:15px}
+.stp button{color:var(--dim);font-size:18px;font-weight:400;background:none;border:0;width:28px;height:28px;line-height:1;flex:0 0 28px}
+.set .ok{width:36px;height:36px;flex:0 0 36px;border-radius:5px;border:1px solid var(--line);background:var(--card);color:var(--dim);display:flex;align-items:center;justify-content:center;font-size:15px}
 .set.done .ok{background:var(--acc);border-color:var(--acc);color:#fff}
 .addset{margin-top:10px;width:100%;background:none;border:1px dashed var(--line);border-radius:6px;color:var(--dim);font-size:12.5px;font-weight:700;padding:10px}
 .rpe{display:flex;gap:6px;margin-top:14px;align-items:center}

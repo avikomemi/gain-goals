@@ -18,6 +18,9 @@ function orderedExercises(r: RoutineDef, saved?: string[]) {
 const LIVE_KEY = 'fitlog-live';           // מצב אימון חי — מקומי בלבד, לא מסונכרן לענן
 const LIVE_MAX_AGE = 6 * 60 * 60 * 1000;  // אימון שנשמר לפני יותר מ-6 שעות לא משוחזר (כנראה ננטש)
 const REST_PRESETS = [60, 90, 120];
+// סעיף 3 — מספר שאפשר גם להקליד ידנית (לא רק +/−); שקוף, יושב בין הכפתורים
+const NUM_INPUT: React.CSSProperties = { width: 46, minWidth: 0, textAlign: 'center', background: 'transparent', border: 0, fontSize: 19, fontWeight: 900, fontVariantNumeric: 'tabular-nums', letterSpacing: '-.02em', padding: 0, color: 'inherit' };
+const clampNum = (raw: string, max = 999) => Math.min(max, Math.max(0, parseInt(raw.replace(/[^0-9]/g, ''), 10) || 0));
 // סולם צבע למאמץ (RPE): ירוק=קל → אדום בוהק=כואב מאוד (סעיף 3)
 const RPE_COLOR: Record<number, string> = { 6: '#16a34a', 7: '#65a30d', 8: '#d97706', 9: '#ea580c', 10: '#d81f2a' };
 const PHASES_PERSIST: Phase[] = ['warmup', 'live', 'flex', 'injury'];
@@ -77,6 +80,10 @@ export default function Workout() {
   const [endedByInjury, setEndedByInjury] = useState<boolean>(restored?.endedByInjury ?? false);
   const [savedFlex, setSavedFlex] = useState(true);
 
+  // סעיף 6 — בלוק גמישות אינטראקטיבי: צ'קבוקס פר-מתיחה + טיימר למתיחות מתוזמנות (מעקב תוך-אימון, לא נשמר ביומן)
+  const [flexChecked, setFlexChecked] = useState<Record<number, boolean>>({});
+  const [flexTimer, setFlexTimer] = useState<{ i: number; endAt: number } | null>(null);
+
   // סעיף 11 — פאנל כאב מהיר (בלי לעזוב את מסך האימון)
   const [painOpen, setPainOpen] = useState(false);
   const [painArea, setPainArea] = useState<string>('');
@@ -110,6 +117,20 @@ export default function Workout() {
   useEffect(() => {
     if (restEndAt && now >= restEndAt) { ringBell(audioRef.current); setRestEndAt(null); }
   }, [now, restEndAt]);
+
+  // סעיף 6 — טיימר מתיחה: תיקתוק + צלצול בסיום, ומסמן את המתיחה כבוצעה
+  useEffect(() => {
+    if (!flexTimer) return;
+    const iv = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(iv);
+  }, [flexTimer]);
+  useEffect(() => {
+    if (flexTimer && now >= flexTimer.endAt) {
+      ringBell(audioRef.current);
+      setFlexChecked(c => ({ ...c, [flexTimer.i]: true }));
+      setFlexTimer(null);
+    }
+  }, [now, flexTimer]);
 
   // שימור מצב אימון חי ל-localStorage (סעיף 12) — נמחק כשהאימון נגמר/ננטש
   useEffect(() => {
@@ -282,6 +303,8 @@ export default function Workout() {
     const { dir, why } = direction(db, exDef.id, exDef.area);
     const dirLabel = dir === 'add' ? '▲ הוסף' : dir === 'ease' ? '▼ הקל' : '◼ שמור';
     const prev = db.workouts.flatMap(w => w.exercises).filter(e => e.id === exDef.id && !e.skipped).pop();
+    // סעיף 5 — טיפ מתחלף: סבב לפי מספר האימונים, כך שכל פעם משהו אחר
+    const tip = exDef.tips?.length ? exDef.tips[(db.workouts.length + exIdx) % exDef.tips.length] : null;
 
     const setLogAt = (fn: (e: ExLog) => void) => setLog(ls => { const c = structuredClone(ls); fn(c[exIdx]); return c; });
     const restLeft = restEndAt ? Math.max(0, Math.ceil((restEndAt - now) / 1000)) : 0;
@@ -323,6 +346,14 @@ export default function Workout() {
           <div style={{ fontSize: 12.5, marginTop: 6, lineHeight: 1.5, color: 'var(--acc)' }}>{why}</div>
         </div>
 
+        {/* סעיף 5 — טיפ מתחלף מהצוות */}
+        {tip && (
+          <div className="card mt8" style={{ borderColor: 'rgba(217,119,6,.35)' }}>
+            <span style={{ fontSize: 11, color: 'var(--acc2)', fontWeight: 800 }}>💡 טיפ</span>
+            <div style={{ fontSize: 12.5, marginTop: 4, lineHeight: 1.5 }}>{tip}</div>
+          </div>
+        )}
+
         {/* סעיף 5 — פרמטרים מותאמים (גובה קופסה/מדרגה) */}
         {exDef.params?.length ? (
           <div className="mt12">
@@ -347,7 +378,10 @@ export default function Workout() {
                 <span>{exDef.timeBased ? 'שניות' : 'חזרות'}</span>
                 <span style={{ display: 'flex', alignItems: 'center' }}>
                   <button onClick={() => setLogAt(e => { e.sets[si].reps = Math.max(0, e.sets[si].reps - 1); })}>−</button>
-                  <b className="num">{s.reps}</b>
+                  <input className="num" inputMode="numeric" value={s.reps} aria-label="חזרות"
+                    onFocus={ev => ev.currentTarget.select()}
+                    onChange={ev => { const v = clampNum(ev.target.value); setLogAt(e => { e.sets[si].reps = v; }); }}
+                    style={NUM_INPUT} />
                   <button onClick={() => setLogAt(e => { e.sets[si].reps += 1; })}>+</button>
                 </span>
               </div>
@@ -362,7 +396,10 @@ export default function Workout() {
                   ) : (
                     <span style={{ display: 'flex', alignItems: 'center' }}>
                       <button onClick={() => setLogAt(e => { e.sets[si].weight = Math.max(0, (e.sets[si].weight || 0) - 1); })}>−</button>
-                      <b className="num">{s.weight ?? 0}</b>
+                      <input className="num" inputMode="numeric" value={s.weight ?? 0} aria-label='משקל (ק"ג)'
+                        onFocus={ev => ev.currentTarget.select()}
+                        onChange={ev => { const v = clampNum(ev.target.value); setLogAt(e => { e.sets[si].weight = v; }); }}
+                        style={NUM_INPUT} />
                       <button onClick={() => setLogAt(e => { e.sets[si].weight = (e.sets[si].weight || 0) + 1; })}>+</button>
                       <button title="משקל גוף בלבד" style={{ marginInlineStart: 4 }} onClick={() => setLogAt(e => { e.sets[si].bw = true; })}>⚖️</button>
                     </span>
@@ -479,11 +516,30 @@ export default function Workout() {
       <div className="scr fade-in">
         <div className="micro">אימון {routine.key} · שלב אחרון</div>
         <div className="h-huge mt8">{routine.flexTitle.split('·')[1]}<em>.</em></div>
-        <div style={{ fontSize: 12.5, color: 'var(--dim)', marginTop: 6 }}>הגמישות היא חלק מהאימון — הדגש החזק שלך. של נעה.</div>
+        <div style={{ fontSize: 12.5, color: 'var(--dim)', marginTop: 6 }}>הגמישות היא חלק מהאימון — הדגש החזק שלך. של נעה. סמן כל מתיחה, ולמתיחות בזמן — לחץ ▶ והטיימר יצלצל.</div>
         <div className="card mt12">
-          {routine.flexibility.map((f, i) => (
-            <div className="step-i" key={i}><b>·</b><span><b style={{ fontWeight: 700 }}>{f.name}</b> — {f.dose}</span></div>
-          ))}
+          {routine.flexibility.map((f, i) => {
+            const secs = (f.dose.match(/(\d+)\D*שנ/) || [])[1];
+            const timed = !!secs;
+            const running = flexTimer?.i === i;
+            const left = running ? Math.max(0, Math.ceil((flexTimer!.endAt - now) / 1000)) : 0;
+            const checked = !!flexChecked[i];
+            return (
+              <div className="set" key={i} style={{ alignItems: 'center' }}>
+                <span style={{ flex: 1, minWidth: 0, fontSize: 13.5 }}>
+                  <b style={{ fontWeight: 700 }}>{f.name}</b> <span style={{ color: 'var(--dim)' }}>— {f.dose}</span>
+                </span>
+                {timed && (
+                  <button className="pill" style={{ flex: '0 0 auto' }}
+                    onClick={() => { ensureAudio(); if (running) { setFlexTimer(null); } else { setNow(Date.now()); setFlexTimer({ i, endAt: Date.now() + parseInt(secs) * 1000 }); } }}>
+                    {running ? `⏱️ ${left}` : `▶ ${secs}שנ'`}
+                  </button>
+                )}
+                <div className="ok" style={checked ? { background: 'var(--acc)', borderColor: 'var(--acc)', color: '#fff' } : {}}
+                  onClick={() => setFlexChecked(c => ({ ...c, [i]: !c[i] }))}>{checked ? '✓' : ''}</div>
+              </div>
+            );
+          })}
         </div>
         {routine.finisher && (
           <div className="card mt12" style={{ borderColor: 'rgba(15,118,110,.35)' }}>
@@ -493,6 +549,7 @@ export default function Workout() {
         )}
         <button className="cta mt16" onClick={() => { saveWorkout(false, true); setPhase('done'); }}>סיים אימון 🎉</button>
         <button className="ghost mt8" onClick={() => { saveWorkout(false, false); setPhase('done'); }}>סיים בלי גמישות (נעה רושמת לפניה)</button>
+        <button className="ghost mt8" style={{ opacity: .8 }} onClick={() => setPhase('live')}>→ חזרה לתרגילים</button>
       </div>
     );
   }

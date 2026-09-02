@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { useStore, today, hydrate } from '../store/store';
+import { useStore, today, hydrate, WorkoutLog, ExLog } from '../store/store';
 import { hilaReview } from '../store/hila';
 import { supabase } from '../store/cloud';
 
@@ -46,6 +46,8 @@ export default function Journal() {
   const foodToday = db.food.find(f => f.date === today());
   const fileRef = useRef<HTMLInputElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
+  // סעיף 2 — עריכת אימון שמור (חזרה לאימון ותיקון בדיעבד)
+  const [draft, setDraft] = useState<WorkoutLog | null>(null);
 
   const [backupMsg, setBackupMsg] = useState('');
   const exportBackup = () => {
@@ -86,6 +88,22 @@ export default function Journal() {
       });
     } catch { alert('לא הצלחתי לקרוא את התמונה — נסה שוב.'); }
   };
+
+  // סעיף 2 — כשנבחר אימון לעריכה, מציגים את העורך במקום המסך הרגיל (אחרי כל ה-hooks)
+  if (draft) {
+    return (
+      <WorkoutEditor
+        w={draft}
+        onCancel={() => setDraft(null)}
+        onSave={exs => { update(d => { const t = d.workouts.find(x => x.id === draft.id); if (t) t.exercises = exs; return d; }); setDraft(null); }}
+        onDelete={() => {
+          if (!confirm('למחוק את האימון הזה מהיומן? אי אפשר לשחזר, וזה משפיע גם על הניתוחים.')) return;
+          update(d => { d.workouts = d.workouts.filter(x => x.id !== draft.id); return d; });
+          setDraft(null);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="scr fade-in">
@@ -304,12 +322,14 @@ export default function Journal() {
         <div className="card">
           {db.workouts.length === 0 && <div style={{ fontSize: 13, color: 'var(--dim)' }}>עדיין אין — הראשון מחכה לך 🥋</div>}
           {[...db.workouts].reverse().slice(0, 10).map(w => (
-            <div className="list-item" key={w.id}>
+            <div className="list-item" key={w.id} style={{ cursor: 'pointer' }} onClick={() => setDraft(structuredClone(w))}>
               <span className="d">{w.date}</span> · אימון {w.routine} · {w.loc === 'home' ? '🏠' : '🏋️'}
               {w.stoppedEarly && <span style={{ color: 'var(--danger)' }}> · נעצר</span>}
               {w.flexDone && ' · גמישות ✓'}
+              <span style={{ float: 'right', color: 'var(--acc)', fontSize: 12, fontWeight: 700 }}>ערוך ✎</span>
             </div>
           ))}
+          {db.workouts.length > 0 && <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8 }}>הקש על אימון כדי לתקן חזרות/משקל או למחוק.</div>}
         </div>
         <div className="h-sec">קרב מגע</div>
         <div className="card">
@@ -340,6 +360,81 @@ export default function Journal() {
           {db.food.length === 0 && <div style={{ fontSize: 13, color: 'var(--dim)' }}>עוד לא נרשם</div>}
         </div>
       </>)}
+    </div>
+  );
+}
+
+/* ================= Workout editor (סעיף 2) ================= */
+const EDIT_NUM: React.CSSProperties = { width: 46, minWidth: 0, textAlign: 'center', background: 'transparent', border: 0, fontSize: 19, fontWeight: 900, fontVariantNumeric: 'tabular-nums', letterSpacing: '-.02em', padding: 0, color: 'inherit' };
+const editClamp = (raw: string, max = 999) => Math.min(max, Math.max(0, parseInt(raw.replace(/[^0-9]/g, ''), 10) || 0));
+
+function WorkoutEditor({ w, onSave, onDelete, onCancel }: { w: WorkoutLog; onSave: (exs: ExLog[]) => void; onDelete: () => void; onCancel: () => void }) {
+  const [ex, setEx] = useState<ExLog[]>(() => structuredClone(w.exercises));
+  const setAt = (i: number, fn: (e: ExLog) => void) => setEx(list => { const c = structuredClone(list); fn(c[i]); return c; });
+  const weighted = (s: ExLog['sets'][number]) => s.weight !== undefined || s.bw;
+
+  return (
+    <div className="scr fade-in">
+      <div className="micro">עריכת אימון · {w.date} · {w.loc === 'home' ? '🏠 בית' : '🏋️ חדר'}</div>
+      <div className="h-huge mt8">אימון {w.routine}<em>.</em></div>
+      <div style={{ fontSize: 12.5, color: 'var(--dim)', marginTop: 6 }}>תקן חזרות/משקל/סטים בדיעבד, או מחק את האימון. השינוי חל על היומן ועל הניתוחים של עדי.</div>
+
+      {ex.map((e, i) => (
+        <div className="card mt12" key={e.id} style={e.skipped ? { opacity: .6 } : {}}>
+          <div className="spread" style={{ alignItems: 'center' }}>
+            <b style={{ fontSize: 14, fontWeight: 800 }}>{e.name}</b>
+            <button className="pill" onClick={() => setAt(i, x => { x.skipped = !x.skipped; })}>{e.skipped ? '↩︎ בטל דילוג' : 'סמן כדולג'}</button>
+          </div>
+          {e.sets.map((s, si) => (
+            <div className={`set ${s.done ? 'done' : ''}`} key={si}>
+              <span className="sn">סט {si + 1}</span>
+              <div className="stp">
+                <span>חזרות</span>
+                <span style={{ display: 'flex', alignItems: 'center' }}>
+                  <button onClick={() => setAt(i, x => { x.sets[si].reps = Math.max(0, x.sets[si].reps - 1); })}>−</button>
+                  <input className="num" inputMode="numeric" value={s.reps} aria-label="חזרות"
+                    onFocus={ev => ev.currentTarget.select()}
+                    onChange={ev => { const v = editClamp(ev.target.value); setAt(i, x => { x.sets[si].reps = v; }); }}
+                    style={EDIT_NUM} />
+                  <button onClick={() => setAt(i, x => { x.sets[si].reps += 1; })}>+</button>
+                </span>
+              </div>
+              {weighted(s) && (
+                <div className="stp">
+                  <span>{s.bw ? 'משקל' : 'ק"ג'}</span>
+                  {s.bw ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <b className="num" style={{ fontSize: 13 }}>גוף</b>
+                      <button title="חזרה למשקל חיצוני" onClick={() => setAt(i, x => { x.sets[si].bw = false; })}>⚖️</button>
+                    </span>
+                  ) : (
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      <button onClick={() => setAt(i, x => { x.sets[si].weight = Math.max(0, (x.sets[si].weight || 0) - 1); })}>−</button>
+                      <input className="num" inputMode="numeric" value={s.weight ?? 0} aria-label='משקל (ק"ג)'
+                        onFocus={ev => ev.currentTarget.select()}
+                        onChange={ev => { const v = editClamp(ev.target.value); setAt(i, x => { x.sets[si].weight = v; }); }}
+                        style={EDIT_NUM} />
+                      <button onClick={() => setAt(i, x => { x.sets[si].weight = (x.sets[si].weight || 0) + 1; })}>+</button>
+                      <button title="משקל גוף בלבד" style={{ marginInlineStart: 4 }} onClick={() => setAt(i, x => { x.sets[si].bw = true; })}>⚖️</button>
+                    </span>
+                  )}
+                </div>
+              )}
+              <div className="ok" onClick={() => setAt(i, x => { x.sets[si].done = !x.sets[si].done; })}>{s.done ? '✓' : ''}</div>
+            </div>
+          ))}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="addset" style={{ flex: 1 }} onClick={() => setAt(i, x => { x.sets.push({ ...x.sets[x.sets.length - 1], done: false }); })}>+ הוסף סט</button>
+            {e.sets.length > 1 && (
+              <button className="addset" style={{ flex: 1 }} onClick={() => setAt(i, x => { x.sets.pop(); })}>− הסר סט</button>
+            )}
+          </div>
+        </div>
+      ))}
+
+      <button className="cta mt16" onClick={() => onSave(ex)}>שמור שינויים</button>
+      <button className="ghost mt8" onClick={onCancel}>ביטול</button>
+      <button className="cta red mt8" onClick={onDelete}>מחק את האימון</button>
     </div>
   );
 }
