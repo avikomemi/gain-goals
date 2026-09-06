@@ -22,6 +22,14 @@ function compressImage(file: File): Promise<string> {
   });
 }
 
+// תאריך של היום מינוס offset ימים — נשען על UTC כמו today() כדי שיהיה עקבי
+const dayStr = (offset: number) => {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - offset);
+  return d.toISOString().slice(0, 10);
+};
+const dateLabel = (date: string) => date === dayStr(0) ? 'היום' : date === dayStr(1) ? 'אתמול' : date;
+
 export default function Journal() {
   const { db, update, session } = useStore();
   const [analysis, setAnalysis] = useState<{ i: number; text: string } | null>(null);
@@ -48,6 +56,8 @@ export default function Journal() {
   const importRef = useRef<HTMLInputElement>(null);
   // סעיף 2 — עריכת אימון שמור (חזרה לאימון ותיקון בדיעבד)
   const [draft, setDraft] = useState<WorkoutLog | null>(null);
+  // עריכת יומן אוכל של יום קודם (עד שבוע אחורה) — התאריך הנערך, או null
+  const [foodDraft, setFoodDraft] = useState<string | null>(null);
 
   const [backupMsg, setBackupMsg] = useState('');
   const exportBackup = () => {
@@ -103,6 +113,11 @@ export default function Journal() {
         }}
       />
     );
+  }
+
+  // עריכת יומן אוכל של יום נבחר (עד שבוע אחורה)
+  if (foodDraft) {
+    return <FoodDayEditor date={foodDraft} onClose={() => setFoodDraft(null)} />;
   }
 
   return (
@@ -258,40 +273,10 @@ export default function Journal() {
           </div>
         )}
 
-        {(foodToday?.text || foodToday?.photos?.length) ? (() => {
-          const rev = hilaReview(foodToday?.text || '', foodToday?.photos?.length || 0,
-            db.water.find(w => w.date === today())?.ml ?? 0, db.waterGoal ?? 1500);
-          return (
-            <div className="decision">
-              <span className="who">הילה · תגובה להיום</span>
-              {rev.found.length > 0 && (
-                <div style={{ fontSize: 11.5, color: 'var(--dim)', marginTop: 6 }}>זיהיתי: {rev.found.join(' · ')}</div>
-              )}
-              {rev.notes.map((c, i) => (
-                <div key={i} style={{ fontSize: 13, marginTop: 6, lineHeight: 1.55 }}>{c}</div>
-              ))}
-              {rev.est && (
-                <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-                  <span className="pill">🔥 ~<b className="num">{rev.est.kcal}</b> קק"ל</span>
-                  <span className="pill">חלבון ~<b className="num">{rev.est.p}</b>/135 גר'</span>
-                  <span className="pill">פחמ' ~<b className="num">{rev.est.c}</b> גר'</span>
-                  <span className="pill">שומן ~<b className="num">{rev.est.f}</b> גר'</span>
-                </div>
-              )}
-              {rev.est && (
-                <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 6 }}>
-                  הערכה גסה לפי מנות טיפוסיות (בלי כמויות מדויקות). היעדים שלך: ~1,800-2,000 קק"ל · חלבון 130-140 · שומן 60-70 · השאר פחמימות.
-                </div>
-              )}
-              {rev.unknown.length > 0 && (
-                <div style={{ fontSize: 12, marginTop: 6, color: 'var(--acc2)' }}>
-                  עוד לא מכירה: {rev.unknown.join(' · ')} — ספר לאבי בצ'אט ויוסיפו אותי למילון 🙂
-                </div>
-              )}
-              <div style={{ fontSize: 10.5, color: 'var(--dim)', marginTop: 8 }}>תגובה מיידית לפי כללי התזונה שלך · לתמונות — כפתור 🔍 · לניתוח מעמיק — הסקירה השבועית או צ'אט</div>
-            </div>
-          );
-        })() : null}
+        {(foodToday?.text || foodToday?.photos?.length) ? (
+          <HilaResponse text={foodToday?.text || ''} photoCount={foodToday?.photos?.length || 0}
+            waterMl={db.water.find(w => w.date === today())?.ml ?? 0} waterGoal={db.waterGoal ?? 1500} title="תגובה להיום" />
+        ) : null}
 
         <div className="h-sec">✅ משימות כיול</div>
         <div className="card">
@@ -345,19 +330,21 @@ export default function Journal() {
             <div className="list-item" key={i}><span className="d">{j.date}</span> · {j.area} · כאב {j.level}/10{j.exercise ? ` · ${j.exercise}` : ''}</div>
           ))}
         </div>
-        <div className="h-sec">יומן אוכל</div>
+        <div className="h-sec">יומן אוכל · שבוע אחרון</div>
         <div className="card">
-          {[...db.food].reverse().slice(0, 5).map((f, i) => (
-            <div className="list-item" key={i}>
-              <span className="d">{f.date}</span> · {f.text || '(תמונות בלבד)'}
-              {f.photos?.length ? (
-                <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-                  {f.photos.map((p, j) => <img key={j} src={p} alt="" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 5, border: '1px solid var(--line)' }} />)}
-                </div>
-              ) : null}
-            </div>
-          ))}
-          {db.food.length === 0 && <div style={{ fontSize: 13, color: 'var(--dim)' }}>עוד לא נרשם</div>}
+          {[0, 1, 2, 3, 4, 5, 6].map(dayStr).map(date => {
+            const f = db.food.find(x => x.date === date);
+            const preview = f?.text
+              ? (f.text.length > 42 ? f.text.slice(0, 42) + '…' : f.text)
+              : (f?.photos?.length ? '(תמונות בלבד)' : '(לא נרשם)');
+            return (
+              <div className="list-item" key={date} style={{ cursor: 'pointer' }} onClick={() => setFoodDraft(date)}>
+                <span className="d">{dateLabel(date)}</span> · <span style={{ color: f?.text || f?.photos?.length ? 'var(--ink)' : 'var(--dim)' }}>{preview}</span>
+                <span style={{ float: 'right', color: 'var(--acc)', fontSize: 12, fontWeight: 700 }}>ערוך ✎</span>
+              </div>
+            );
+          })}
+          <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8 }}>הקש על יום כדי למלא או לתקן — ולקבל תחשיב קלורי גם בדיעבד, עד שבוע לאחור.</div>
         </div>
       </>)}
     </div>
@@ -435,6 +422,104 @@ function WorkoutEditor({ w, onSave, onDelete, onCancel }: { w: WorkoutLog; onSav
       <button className="cta mt16" onClick={() => onSave(ex)}>שמור שינויים</button>
       <button className="ghost mt8" onClick={onCancel}>ביטול</button>
       <button className="cta red mt8" onClick={onDelete}>מחק את האימון</button>
+    </div>
+  );
+}
+
+/* ============ תגובת הילה (משותף: יומן היום + עריכת יום קודם) ============ */
+function HilaResponse({ text, photoCount, waterMl, waterGoal, title }: { text: string; photoCount: number; waterMl: number; waterGoal: number; title: string }) {
+  const rev = hilaReview(text, photoCount, waterMl, waterGoal);
+  return (
+    <div className="decision">
+      <span className="who">הילה · {title}</span>
+      {rev.found.length > 0 && (
+        <div style={{ fontSize: 11.5, color: 'var(--dim)', marginTop: 6 }}>זיהיתי: {rev.found.join(' · ')}</div>
+      )}
+      {rev.notes.map((c, i) => (
+        <div key={i} style={{ fontSize: 13, marginTop: 6, lineHeight: 1.55 }}>{c}</div>
+      ))}
+      {rev.est && (
+        <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+          <span className="pill">🔥 ~<b className="num">{rev.est.kcal}</b> קק"ל</span>
+          <span className="pill">חלבון ~<b className="num">{rev.est.p}</b>/135 גר'</span>
+          <span className="pill">פחמ' ~<b className="num">{rev.est.c}</b> גר'</span>
+          <span className="pill">שומן ~<b className="num">{rev.est.f}</b> גר'</span>
+        </div>
+      )}
+      {rev.est && (
+        <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 6 }}>
+          הערכה גסה לפי מנות טיפוסיות (בלי כמויות מדויקות). היעדים שלך: ~1,800-2,000 קק"ל · חלבון 130-140 · שומן 60-70 · השאר פחמימות.
+        </div>
+      )}
+      {rev.unknown.length > 0 && (
+        <div style={{ fontSize: 12, marginTop: 6, color: 'var(--acc2)' }}>
+          עוד לא מכירה: {rev.unknown.join(' · ')} — ספר לאבי בצ'אט ויוסיפו אותי למילון 🙂
+        </div>
+      )}
+      <div style={{ fontSize: 10.5, color: 'var(--dim)', marginTop: 8 }}>תגובה מיידית לפי כללי התזונה שלך · לתמונות — כפתור 🔍 · לניתוח מעמיק — הסקירה השבועית או צ'אט</div>
+    </div>
+  );
+}
+
+/* ============ עריכת יומן אוכל של יום קודם (עד שבוע אחורה) ============ */
+function FoodDayEditor({ date, onClose }: { date: string; onClose: () => void }) {
+  const { db, update } = useStore();
+  const entry = db.food.find(f => f.date === date);
+  const photos = entry?.photos || [];
+  const [text, setText] = useState(entry?.text || '');
+  const [saved, setSaved] = useState(false);
+  const waterMl = db.water.find(w => w.date === date)?.ml ?? 0;
+
+  const save = () => {
+    const t = text.trim();
+    if (!t && photos.length === 0) { alert('כתוב מה אכלת ביום הזה — ואז שמור.'); return; }
+    update(d => {
+      let en = d.food.find(x => x.date === date);
+      if (!en) { en = { date, text: '' }; d.food.push(en); }
+      en.text = t;
+      d.food.sort((a, b) => a.date.localeCompare(b.date));
+      return d;
+    });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  };
+
+  return (
+    <div className="scr fade-in">
+      <div className="micro">עריכת יומן אוכל · {dateLabel(date)} ({date})</div>
+      <div className="h-huge mt8">מה <em>אכלת?</em></div>
+      <div style={{ fontSize: 12.5, color: 'var(--dim)', marginTop: 6 }}>מלא או תקן את היום הזה בדיעבד — הילה תגיב ותיתן תחשיב קלורי. משפיע גם על הניתוחים של עדי.</div>
+
+      <div className="card mt12">
+        <textarea
+          value={text}
+          onChange={e => setText(e.target.value)}
+          placeholder={'טקסט חופשי: "יוגורט פרו, סלט טונה+טחינה, גבינת סקי, 4 קפה..."'}
+          style={{ width: '100%', minWidth: 0, minHeight: 96, background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '11px 12px', fontSize: 14, resize: 'vertical' }}
+        />
+        {photos.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+            {photos.map((p, i) => (
+              <div key={i} style={{ position: 'relative' }}>
+                <img src={p} alt={`מנה ${i + 1}`} style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--line)' }} />
+                <span onClick={() => {
+                  if (!confirm('למחוק את התמונה הזאת מהיומן?')) return;
+                  update(d => { const en = d.food.find(x => x.date === date); if (en?.photos) en.photos = en.photos.filter(ph => ph !== p); return d; });
+                }} style={{ position: 'absolute', top: -6, insetInlineEnd: -6, width: 20, height: 20, borderRadius: 10, background: 'var(--acc)', color: '#fff', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>×</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <button className="ghost mt8" style={{ width: '100%', ...(saved ? { borderColor: 'var(--good)', color: 'var(--good)' } : {}) }} onClick={save}>
+          {saved ? '✓ נשמר ליום הזה' : 'שמור · הילה תגיב מיד'}
+        </button>
+      </div>
+
+      {(text.trim() || photos.length) ? (
+        <HilaResponse text={text} photoCount={photos.length} waterMl={waterMl} waterGoal={db.waterGoal ?? 1500} title={dateLabel(date)} />
+      ) : null}
+
+      <button className="ghost mt16" style={{ width: '100%' }} onClick={onClose}>← חזרה להיסטוריה</button>
     </div>
   );
 }
