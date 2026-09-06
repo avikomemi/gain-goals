@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useStore, today, hydrate, WorkoutLog, ExLog } from '../store/store';
 import { hilaReview } from '../store/hila';
+import { estimateFood } from '../store/foodDB';
 import { supabase } from '../store/cloud';
 
 // דוחס תמונת מנה לתמונה קטנה שנשמרת ביומן (מקומי, עד הסנכרון)
@@ -428,32 +429,35 @@ function WorkoutEditor({ w, onSave, onDelete, onCancel }: { w: WorkoutLog; onSav
 
 /* ============ תגובת הילה (משותף: יומן היום + עריכת יום קודם) ============ */
 function HilaResponse({ text, photoCount, waterMl, waterGoal, title }: { text: string; photoCount: number; waterMl: number; waterGoal: number; title: string }) {
+  const { db } = useStore();
   const rev = hilaReview(text, photoCount, waterMl, waterGoal);
+  const est = estimateFood(text, db.foods || []);
+  const hasNums = est.lines.length > 0;
   return (
     <div className="decision">
       <span className="who">הילה · {title}</span>
-      {rev.found.length > 0 && (
-        <div style={{ fontSize: 11.5, color: 'var(--dim)', marginTop: 6 }}>זיהיתי: {rev.found.join(' · ')}</div>
+      {hasNums && (
+        <div style={{ fontSize: 11.5, color: 'var(--dim)', marginTop: 6 }}>זיהיתי: {est.lines.map(l => `${l.name} ${l.qtyLabel}`).join(' · ')}</div>
       )}
       {rev.notes.map((c, i) => (
         <div key={i} style={{ fontSize: 13, marginTop: 6, lineHeight: 1.55 }}>{c}</div>
       ))}
-      {rev.est && (
+      {hasNums && (
         <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-          <span className="pill">🔥 ~<b className="num">{rev.est.kcal}</b> קק"ל</span>
-          <span className="pill">חלבון ~<b className="num">{rev.est.p}</b>/135 גר'</span>
-          <span className="pill">פחמ' ~<b className="num">{rev.est.c}</b> גר'</span>
-          <span className="pill">שומן ~<b className="num">{rev.est.f}</b> גר'</span>
+          <span className="pill">🔥 ~<b className="num">{est.total.kcal}</b> קק"ל</span>
+          <span className="pill">חלבון ~<b className="num">{est.total.p}</b>/135 גר'</span>
+          <span className="pill">פחמ' ~<b className="num">{est.total.c}</b> גר'</span>
+          <span className="pill">שומן ~<b className="num">{est.total.f}</b> גר'</span>
         </div>
       )}
-      {rev.est && (
+      {hasNums && (
         <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 6 }}>
-          הערכה גסה לפי מנות טיפוסיות (בלי כמויות מדויקות). היעדים שלך: ~1,800-2,000 קק"ל · חלבון 130-140 · שומן 60-70 · השאר פחמימות.
+          לפי ערכים אמיתיים פר-100-גרם והכמויות שציינת (בלי מספר — מנה טיפוסית). היעדים שלך: ~1,800-2,000 קק"ל · חלבון 130-140 · שומן 60-70.
         </div>
       )}
-      {rev.unknown.length > 0 && (
+      {est.notInDB.length > 0 && (
         <div style={{ fontSize: 12, marginTop: 6, color: 'var(--acc2)' }}>
-          עוד לא מכירה: {rev.unknown.join(' · ')} — ספר לאבי בצ'אט ויוסיפו אותי למילון 🙂
+          לא במסד עדיין: {est.notInDB.join(' · ')} — הוסף כמות לדיוק, וסריקת ברקוד בדרך 🙂
         </div>
       )}
       <div style={{ fontSize: 10.5, color: 'var(--dim)', marginTop: 8 }}>תגובה מיידית לפי כללי התזונה שלך · לתמונות — כפתור 🔍 · לניתוח מעמיק — הסקירה השבועית או צ'אט</div>

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { Loc } from '../data/program';
 import { supabase } from './cloud';
+import { FoodItem, mergeFoods } from './foodDB';
 import type { Session } from '@supabase/supabase-js';
 
 export interface SetLog { reps: number; weight?: number; done: boolean; bw?: boolean }
@@ -29,6 +30,7 @@ export interface DB {
   injuries: Injury[]; krav: KravLog[]; food: FoodLog[]; reviews: Review[];
   water: WaterDay[]; bp: BpEntry[]; calib: Calib;
   orders: { A?: string[]; B?: string[]; C?: string[] };
+  foods?: FoodItem[]; // מסד תזונה אישי (ערכים פר-100-גרם) — נזרע מ-SEED_FOODS, גדל עם הזמן
   restSec?: number; // זמן מנוחה בין סטים (שניות) — נבחר ע"י אבי, נזכר בין אימונים ומכשירים
   waterGoal?: number; // מ"ל ליום — יעד אישי, ניתן לשינוי בדשבורד
   startDate?: string; // היום שבו אבי התחיל — כל הסטטיסטיקות נמדדות מכאן, לא לפני
@@ -57,6 +59,8 @@ export function hydrate(raw: any): DB {
     calib: { ...EMPTY.calib, ...(raw?.calib || {}), runs: { ...EMPTY.calib.runs, ...(raw?.calib?.runs || {}) } },
     orders: raw?.orders && typeof raw.orders === 'object' ? raw.orders : {},
   };
+  // זריעה/מיזוג של מסד התזונה — פריטי-זרע חדשים נכנסים, עריכות של אבי נשמרות
+  d.foods = mergeFoods(d.foods);
   // מיגרציה: רישומי מים ישנים (סימון בלבד) → נספרים כיעד מלא
   d.water = d.water.map(w => (w.ml == null ? { ...w, ml: d.waterGoal ?? 1500 } : w));
   // מיגרציה: תאריך התחלה — הרישום המוקדם ביותר
@@ -98,7 +102,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch { /* fresh */ }
-    return { ...EMPTY, startDate: today() };
+    return hydrate({ startDate: today() }); // התקנה טרייה — עדיין עוברת דרך hydrate כדי לזרוע foods ושדות ברירת-מחדל
   });
 
   const [session, setSession] = useState<Session | null>(null);
