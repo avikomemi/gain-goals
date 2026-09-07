@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useRef, useState, ReactNod
 import { Loc } from '../data/program';
 import { supabase } from './cloud';
 import { FoodItem, mergeFoods } from './foodDB';
-import { readFitbitCallback, exchangeFitbitCode, clearFitbitCallbackUrl } from './fitbit';
+import { readFitbitCallback, exchangeFitbitCode, clearFitbitCallbackUrl, syncFitbit } from './fitbit';
 import type { Session } from '@supabase/supabase-js';
 
 export interface SetLog { reps: number; weight?: number; done: boolean; bw?: boolean }
@@ -36,7 +36,9 @@ export interface DB {
   waterGoal?: number; // מ"ל ליום — יעד אישי, ניתן לשינוי בדשבורד
   startDate?: string; // היום שבו אבי התחיל — כל הסטטיסטיקות נמדדות מכאן, לא לפני
   updatedAt?: string; // חותמת שינוי אחרון — לסנכרון ענן (המעודכן מנצח)
-  fitbit?: { connected: boolean; connectedAt?: string; scope?: string; fitbitUserId?: string }; // סטטוס חיבור Fitbit (הטוקן עצמו בשרת בלבד)
+  fitbit?: { connected: boolean; connectedAt?: string; scope?: string; fitbitUserId?: string; lastSync?: string }; // סטטוס חיבור Fitbit (הטוקן עצמו בשרת בלבד)
+  sleep?: { date: string; minutes: number; deep?: number; rem?: number; light?: number; awake?: number; inBed?: number }[]; // שינה מ-Fitbit (דקות שינה לפי לילה)
+  steps?: { date: string; count: number }[]; // צעדים יומיים מ-Fitbit
 }
 
 const EMPTY: DB = {
@@ -58,6 +60,7 @@ export function hydrate(raw: any): DB {
     weights: arr(raw?.weights), waists: arr(raw?.waists), workouts: arr(raw?.workouts),
     injuries: arr(raw?.injuries), krav: arr(raw?.krav), food: arr(raw?.food),
     reviews: arr(raw?.reviews), water: arr(raw?.water), bp: arr(raw?.bp),
+    sleep: arr(raw?.sleep), steps: arr(raw?.steps),
     calib: { ...EMPTY.calib, ...(raw?.calib || {}), runs: { ...EMPTY.calib.runs, ...(raw?.calib?.runs || {}) } },
     orders: raw?.orders && typeof raw.orders === 'object' ? raw.orders : {},
   };
@@ -73,6 +76,13 @@ export function hydrate(raw: any): DB {
     d.startDate = dates.length ? dates.reduce((a: string, b: string) => (a < b ? a : b)) : today();
   }
   return d;
+}
+
+// upsert per-day records (steps/sleep) — incoming wins, sorted by date
+export function mergeByDate<T extends { date: string }>(existing: T[] | undefined, incoming: T[] | undefined): T[] {
+  const m = new Map<string, T>((existing || []).map(x => [x.date, x]));
+  for (const it of incoming || []) m.set(it.date, it);
+  return [...m.values()].sort((a, b) => a.date.localeCompare(b.date));
 }
 
 interface Ctx {
@@ -115,6 +125,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const dbRef = useRef(db);
   const pulledRef = useRef(false); // אסור לדחוף לענן לפני שמשכנו ממנו — מגן מדריסת ענן ע"י מכשיר ריק
   const fitbitHandledRef = useRef(false); // callback של Fitbit מטופל פעם אחת בלבד
+  const fitbitSyncedRef = useRef(false); // סנכרון Fitbit רץ פעם אחת לכל טעינת אפליקציה
 
   useEffect(() => { dbRef.current = db; }, [db]);
 
@@ -211,6 +222,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
+
+  // סנכרון Fitbit פעם אחת לכל טעינה (כשמחוברים) — מושך שינה+צעדים וממזג ליומן
+  useEffect(() => {
+    if (!session || !db.fitbit?.connected || fitbitSyncedRef.current) return;
+    fitbitSyncedRef.current = true;
+    (async () => {
+      const { data, error } = await syncFitbit();
+      if (error || !data) return; // תקלת רשת — שקט, ננסה בפתיחה הבאה
+      if (data.needsReconnect) {
+        // הטוקן פג (מגבלת 7 הימים של Testing) — מסמנים מנותק כדי שאבי יחבר שוב
+        update(d => (d.fitbit ? { ...d, fitbit: { ...d.fitbit, connected: false } } : d));
+        return;
+      }
+      if (data.ok) {
+        update(d => {
+          if (data.steps?.length) d.steps = mergeByDate(d.steps, data.steps);
+          if (data.sleep?.length) d.sleep = mergeByDate(d.sleep, data.sleep);
+          if (d.fitbit) d.fitbit.lastSync = data.syncedAt;
+          return d;
+        });
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, db.fitbit?.connected]);
 
   const syncNow = async (): Promise<string | null> => {
     if (!session) return 'לא מחובר — התחבר קודם';

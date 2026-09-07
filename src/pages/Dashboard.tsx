@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useStore, today } from '../store/store';
+import { useStore, today, daysAgo } from '../store/store';
 import { alerts, nextSteps, nextRoutine, weeklyAvgWeights, lastWaist, streakWeeksNoInjuryStop, currentWeekWorkouts } from '../store/adi';
 import { PROGRAM } from '../data/program';
 import { PulseRing, Alerts, heDate } from '../components/bits';
@@ -36,6 +36,10 @@ export default function Dashboard() {
   const setGoal = (amt: number) => update(d => { d.waterGoal = Math.max(500, Math.min(4000, (d.waterGoal ?? 1500) + amt)); return d; });
   const pct = Math.min(100, Math.round((ml / goal) * 100));
 
+  const lastSleep = db.sleep && db.sleep.length ? db.sleep[db.sleep.length - 1] : undefined;
+  const lastSteps = db.steps && db.steps.length ? db.steps[db.steps.length - 1] : undefined;
+  const dayLabel = (d: string) => d === today() ? 'היום' : d === daysAgo(1) ? 'אתמול' : d.slice(5).replace('-', '/');
+
   return (
     <div className="scr fade-in">
       <div className="micro">{heDate()} · {db.calib.done ? 'שגרה' : 'שלב כיול'}</div>
@@ -58,6 +62,26 @@ export default function Dashboard() {
           <div className="row"><span className="k">רצף ללא השבתה</span><span className="v num">{streak} <small>{streak === 1 ? 'שבוע' : 'שבועות'}</small></span></div>
         </div>
       </div>
+
+      {db.fitbit?.connected && (lastSleep || lastSteps) && (<>
+        <div className="h-sec">⌚ מ-Fitbit</div>
+        <div className="card">
+          <div className="grid3">
+            <div className="cell">
+              <b className="num">{lastSleep ? `${Math.floor(lastSleep.minutes / 60)}:${String(lastSleep.minutes % 60).padStart(2, '0')}` : '—'}</b>
+              <span>שינה{lastSleep ? ` · ${dayLabel(lastSleep.date)}` : ''}</span>
+            </div>
+            <div className="cell">
+              <b className="num">{lastSleep?.deep != null ? lastSleep.deep : '—'}</b>
+              <span>עמוקה (דק')</span>
+            </div>
+            <div className="cell">
+              <b className="num">{lastSteps ? lastSteps.count.toLocaleString('he-IL') : '—'}</b>
+              <span>צעדים{lastSteps ? ` · ${dayLabel(lastSteps.date)}` : ''}</span>
+            </div>
+          </div>
+        </div>
+      </>)}
 
       <div className="h-sec">הצעדים הבאים · עדי</div>
       <div className="card">

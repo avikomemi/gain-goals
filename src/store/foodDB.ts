@@ -26,6 +26,8 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'tuna', names: ['טונה'], per100: [116, 26, 0, 1], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
   { id: 'chicken', names: ['חזה עוף', 'עוף', 'פרגית', 'שניצל'], per100: [165, 31, 0, 3.6], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
   { id: 'whey', names: ['אבקת חלבון', 'שייק חלבון', 'וויי', 'פרוטאין', 'סקופ'], per100: [380, 75, 8, 6], unit: 'unit', unitGrams: 30, unitLabel: 'מנה', def: 1, gout: 'ok', src: 'תווית' },
+  { id: 'steak', names: ['סטייק', 'סטיק', 'אנטריקוט', 'בשר בקר', 'בקר'], per100: [271, 25, 0, 19], unit: 'g', def: 150, gout: 'high', src: 'USDA' },
+  { id: 'multiyog', names: ['יוגורט מולטי', 'מולטי'], per100: [71, 6.5, 4.6, 3], unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
 
   // ---- פחמימות ----
   { id: 'pita', names: ['פיתה', 'פיתת'], per100: [275, 9, 55, 1.2], unit: 'unit', unitGrams: 60, unitLabel: 'פיתה', def: 1, src: 'USDA' },
@@ -47,10 +49,12 @@ export const SEED_FOODS: FoodItem[] = [
 
   // ---- ירקות / פירות ----
   { id: 'salad', names: ['סלט ירקות', 'סלט', 'ירקות'], per100: [25, 1, 5, 0.2], unit: 'g', def: 200, src: 'USDA' },
+  { id: 'coleslaw', names: ['קולסלאו', 'כרוב במיונז'], per100: [150, 1, 13, 11], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
   { id: 'tomato', names: ['עגבנייה', 'עגבניה', 'עגבניות'], per100: [18, 0.9, 3.9, 0.2], unit: 'unit', unitGrams: 120, unitLabel: 'יח', def: 1, src: 'USDA' },
   { id: 'apple', names: ['תפוח עץ', 'תפוח '], per100: [52, 0.3, 14, 0.2], unit: 'unit', unitGrams: 180, unitLabel: 'יח', def: 1, src: 'USDA' },
   { id: 'banana', names: ['בננה'], per100: [89, 1.1, 23, 0.3], unit: 'unit', unitGrams: 120, unitLabel: 'יח', def: 1, src: 'USDA' },
   { id: 'date', names: ['תמר', 'תמרים'], per100: [282, 2.5, 75, 0.4], unit: 'unit', unitGrams: 8, unitLabel: 'יח', def: 3, src: 'USDA' },
+  { id: 'blueberry', names: ['אוכמניות', 'אוכמנית', 'בלוברי'], per100: [57, 0.7, 14, 0.3], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
 
   // ---- חטיפים / שתייה ----
   { id: 'bamba', names: ['במבה'], per100: [530, 13, 49, 33], unit: 'g', def: 50, src: 'תווית' },

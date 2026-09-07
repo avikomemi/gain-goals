@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useStore, today, weekStartOf } from '../store/store';
+import { useStore, today, weekStartOf, mergeByDate } from '../store/store';
 import { reviewDigest, amitDecision, weeklyAvgWeights } from '../store/adi';
 import { supabase } from '../store/cloud';
-import { beginFitbitConnect, disconnectFitbit, fitbitConfigured } from '../store/fitbit';
+import { beginFitbitConnect, disconnectFitbit, fitbitConfigured, syncFitbit } from '../store/fitbit';
 
 function CloudCard() {
   const { session, lastSync, syncError, syncNow, recovery, clearRecovery } = useStore();
@@ -111,6 +111,7 @@ function CloudCard() {
 function FitbitCard() {
   const { session, db, update } = useStore();
   const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
   const fb = db.fitbit;
 
   if (!session) {
@@ -127,15 +128,34 @@ function FitbitCard() {
         <div style={{ fontSize: 13 }}>⌚ מחובר ל-<b>Fitbit</b> ✓</div>
         <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 4 }}>
           {fb.connectedAt ? `חובר: ${new Date(fb.connectedAt).toLocaleDateString('he-IL')}` : ''}
-          {' · '}שינה וצעדים יימשכו בכל פתיחה ופעם ביום.
+          {fb.lastSync ? ` · סונכרן: ${new Date(fb.lastSync).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}` : ' · עוד לא סונכרן'}
         </div>
-        <button className="ghost mt8" style={{ opacity: busy ? .6 : 1 }} disabled={busy} onClick={async () => {
-          if (!confirm('לנתק את Fitbit? נפסיק למשוך נתונים ממנו.')) return;
-          setBusy(true);
-          await disconnectFitbit();
-          update(d => ({ ...d, fitbit: undefined }));
-          setBusy(false);
-        }}>נתק Fitbit</button>
+        {msg && <div style={{ fontSize: 12, marginTop: 6, color: msg.startsWith('✓') ? 'var(--good)' : 'var(--danger)' }}>{msg}</div>}
+        <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+          <button className="ghost" style={{ flex: 1, opacity: busy ? .6 : 1 }} disabled={busy} onClick={async () => {
+            setMsg(''); setBusy(true);
+            const { data, error } = await syncFitbit();
+            setBusy(false);
+            if (error || !data) { setMsg('שגיאת רשת — נסה שוב.'); return; }
+            if (data.needsReconnect) { update(d => (d.fitbit ? { ...d, fitbit: { ...d.fitbit, connected: false } } : d)); setMsg('החיבור פג (7 ימים) — התחבר שוב.'); return; }
+            if (data.ok) {
+              update(d => {
+                if (data.steps?.length) d.steps = mergeByDate(d.steps, data.steps);
+                if (data.sleep?.length) d.sleep = mergeByDate(d.sleep, data.sleep);
+                if (d.fitbit) d.fitbit.lastSync = data.syncedAt;
+                return d;
+              });
+              setMsg(`✓ נמשך: ${data.sleep?.length || 0} לילות שינה · ${data.steps?.length || 0} ימי צעדים`);
+            }
+          }}>{busy ? '⏳ מושך...' : '🔄 משוך נתונים'}</button>
+          <button className="ghost" style={{ flex: '0 0 auto', opacity: busy ? .6 : 1 }} disabled={busy} onClick={async () => {
+            if (!confirm('לנתק את Fitbit? נפסיק למשוך נתונים ממנו.')) return;
+            setBusy(true);
+            await disconnectFitbit();
+            update(d => ({ ...d, fitbit: undefined }));
+            setBusy(false);
+          }}>נתק</button>
+        </div>
       </div>
     );
   }

@@ -75,3 +75,9 @@ export function exchangeFitbitCode(code: string) {
 export function disconnectFitbit() {
   return supabase.functions.invoke('fitbit-auth', { body: { action: 'disconnect' } });
 }
+
+// Pull sleep + steps for the last `days`. Returns { ok, steps, sleep, syncedAt } or
+// { needsReconnect } when the Google refresh token has expired (weekly, in Testing).
+export function syncFitbit(days = 14) {
+  return supabase.functions.invoke('fitbit-sync', { body: { days } });
+}

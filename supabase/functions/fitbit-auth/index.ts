@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
 // fitbit-auth — OAuth token exchange + connection status for Fitbit, via the
 // Google Health API (the successor to the legacy Fitbit Web API).
@@ -40,15 +41,19 @@ function jwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
-// user_id from the already-verified Supabase JWT (verify_jwt=true gates before we run)
-function userIdFromJwt(req: Request): string | null {
-  const auth = req.headers.get("Authorization") || "";
-  const p = jwtPayload(auth.replace(/^Bearer\s+/i, ""));
-  return (p?.sub as string) || null;
-}
-
 const SB_URL = Deno.env.get("SUPABASE_URL")!;
 const SB_SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SB_ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+// Verify the caller's JWT signature (don't just decode it) and return the user id.
+// verify_jwt=true already gates at the gateway; this is defense-in-depth for health data.
+async function verifiedUid(req: Request): Promise<string | null> {
+  const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+  if (!token) return null;
+  const { data, error } = await createClient(SB_URL, SB_ANON).auth.getUser(token);
+  if (error || !data?.user) return null;
+  return data.user.id;
+}
 
 function dbFetch(path: string, init: RequestInit) {
   return fetch(`${SB_URL}/rest/v1/${path}`, {
@@ -65,7 +70,7 @@ function dbFetch(path: string, init: RequestInit) {
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
-    const uid = userIdFromJwt(req);
+    const uid = await verifiedUid(req);
     if (!uid) return json({ error: "no_user" }, 401);
 
     const clientId = Deno.env.get("FITBIT_CLIENT_ID") || CLIENT_ID_FALLBACK;
