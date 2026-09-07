@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useRef, useState, ReactNod
 import { Loc } from '../data/program';
 import { supabase } from './cloud';
 import { FoodItem, mergeFoods } from './foodDB';
+import { readFitbitCallback, exchangeFitbitCode, clearFitbitCallbackUrl } from './fitbit';
 import type { Session } from '@supabase/supabase-js';
 
 export interface SetLog { reps: number; weight?: number; done: boolean; bw?: boolean }
@@ -35,6 +36,7 @@ export interface DB {
   waterGoal?: number; // מ"ל ליום — יעד אישי, ניתן לשינוי בדשבורד
   startDate?: string; // היום שבו אבי התחיל — כל הסטטיסטיקות נמדדות מכאן, לא לפני
   updatedAt?: string; // חותמת שינוי אחרון — לסנכרון ענן (המעודכן מנצח)
+  fitbit?: { connected: boolean; connectedAt?: string; scope?: string; fitbitUserId?: string }; // סטטוס חיבור Fitbit (הטוקן עצמו בשרת בלבד)
 }
 
 const EMPTY: DB = {
@@ -112,6 +114,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const pushTimer = useRef<ReturnType<typeof setTimeout>>();
   const dbRef = useRef(db);
   const pulledRef = useRef(false); // אסור לדחוף לענן לפני שמשכנו ממנו — מגן מדריסת ענן ע"י מכשיר ריק
+  const fitbitHandledRef = useRef(false); // callback של Fitbit מטופל פעם אחת בלבד
 
   useEffect(() => { dbRef.current = db; }, [db]);
 
@@ -189,6 +192,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     next.updatedAt = new Date().toISOString();
     return next;
   });
+
+  // חזרה מ-Fitbit: יש ?code בכתובת → ממירים לטוקן בשרת ומסמנים "מחובר".
+  // דורש session פעיל (ה-Edge Function מוגן ב-JWT).
+  useEffect(() => {
+    if (!session || fitbitHandledRef.current) return;
+    const cb = readFitbitCallback();
+    if (!cb) return;
+    fitbitHandledRef.current = true;
+    (async () => {
+      const { data, error } = await exchangeFitbitCode(cb.code);
+      clearFitbitCallbackUrl();
+      if (!error && data?.ok) {
+        update(d => ({ ...d, fitbit: { connected: true, connectedAt: new Date().toISOString(), scope: data.scope, fitbitUserId: data.fitbitUserId } }));
+      } else {
+        alert(`חיבור Fitbit נכשל: ${error?.message || data?.detail || data?.error || 'שגיאה לא ידועה'}`);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
 
   const syncNow = async (): Promise<string | null> => {
     if (!session) return 'לא מחובר — התחבר קודם';

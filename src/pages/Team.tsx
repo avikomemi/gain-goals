@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useStore, today, weekStartOf } from '../store/store';
 import { reviewDigest, amitDecision, weeklyAvgWeights } from '../store/adi';
 import { supabase } from '../store/cloud';
+import { beginFitbitConnect, disconnectFitbit, fitbitConfigured } from '../store/fitbit';
 
 function CloudCard() {
   const { session, lastSync, syncError, syncNow, recovery, clearRecovery } = useStore();
@@ -107,6 +108,48 @@ function CloudCard() {
   );
 }
 
+function FitbitCard() {
+  const { session, db, update } = useStore();
+  const [busy, setBusy] = useState(false);
+  const fb = db.fitbit;
+
+  if (!session) {
+    return (
+      <div className="card">
+        <div style={{ fontSize: 12.5, color: 'var(--dim)' }}>⌚ כדי לחבר Fitbit צריך קודם להתחבר לענן (למעלה) — הטוקן נשמר מאובטח בשרת.</div>
+      </div>
+    );
+  }
+
+  if (fb?.connected) {
+    return (
+      <div className="card">
+        <div style={{ fontSize: 13 }}>⌚ מחובר ל-<b>Fitbit</b> ✓</div>
+        <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 4 }}>
+          {fb.connectedAt ? `חובר: ${new Date(fb.connectedAt).toLocaleDateString('he-IL')}` : ''}
+          {' · '}שינה וצעדים יימשכו בכל פתיחה ופעם ביום.
+        </div>
+        <button className="ghost mt8" style={{ opacity: busy ? .6 : 1 }} disabled={busy} onClick={async () => {
+          if (!confirm('לנתק את Fitbit? נפסיק למשוך נתונים ממנו.')) return;
+          setBusy(true);
+          await disconnectFitbit();
+          update(d => ({ ...d, fitbit: undefined }));
+          setBusy(false);
+        }}>נתק Fitbit</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card">
+      <div style={{ fontSize: 12.5, color: 'var(--dim)', marginBottom: 10 }}>חבר את ה-Fitbit — שינה וצעדים ייכנסו לדשבורד אוטומטית, ועדי ינתח אותם מול האימונים.</div>
+      <button className="cta" style={{ width: '100%', opacity: fitbitConfigured() ? 1 : .5 }} disabled={!fitbitConfigured()} onClick={beginFitbitConnect}>
+        {fitbitConfigured() ? '⌚ חבר Fitbit' : '⌚ חיבור Fitbit — בקרוב'}
+      </button>
+    </div>
+  );
+}
+
 const TEAM = [
   { av: '🧠', name: 'עמית', role: 'המאמן הראשי — האינטגרטור, הסקירה השבועית, ההחלטות' },
   { av: '🥊', name: 'רז', role: 'קרב מגע — דאן 7, וינגייט, קמ"י/קפ"פ. יומן הקרב והחזרה מהפגרה' },
@@ -188,6 +231,9 @@ export default function Team() {
       <div className="h-sec">☁️ סנכרון ענן</div>
       <CloudCard />
       <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8, textAlign: 'center' }}>גיבוי ידני לקובץ — ביומן, בכרטיס "גיבוי ושחזור".</div>
+
+      <div className="h-sec">⌚ מכשירים · Fitbit</div>
+      <FitbitCard />
     </div>
   );
 }
