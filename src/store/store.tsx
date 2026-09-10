@@ -32,7 +32,8 @@ export interface DB {
   water: WaterDay[]; bp: BpEntry[]; calib: Calib;
   orders: { A?: string[]; B?: string[]; C?: string[] };
   foods?: FoodItem[]; // מסד תזונה אישי (ערכים פר-100-גרם) — נזרע מ-SEED_FOODS, גדל עם הזמן
-  restSec?: number; // זמן מנוחה בין סטים (שניות) — נבחר ע"י אבי, נזכר בין אימונים ומכשירים
+  restSec?: number; // ברירת-מחדל גלובלית לזמן מנוחה (שניות) — נפילה לתרגילים שלא הוגדרו פרטנית
+  restByEx?: Record<string, number>; // זמן מנוחה פר-תרגיל (exerciseId → שניות) — גובר על restSec
   waterGoal?: number; // מ"ל ליום — יעד אישי, ניתן לשינוי בדשבורד
   startDate?: string; // היום שבו אבי התחיל — כל הסטטיסטיקות נמדדות מכאן, לא לפני
   updatedAt?: string; // חותמת שינוי אחרון — לסנכרון ענן (המעודכן מנצח)

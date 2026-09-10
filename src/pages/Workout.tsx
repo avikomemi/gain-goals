@@ -114,7 +114,8 @@ export default function Workout() {
     } catch { /* אין אודיו — רטט/ויזואל בלבד */ }
   };
 
-  const startRest = () => { ensureAudio(); setRestDone(false); setNow(Date.now()); setRestEndAt(Date.now() + restSec * 1000); };
+  // מקבל את זמן המנוחה של התרגיל הנוכחי (פר-תרגיל); נפילה לברירת-המחדל הגלובלית
+  const startRest = (sec: number = restSec) => { ensureAudio(); setRestDone(false); setNow(Date.now()); setRestEndAt(Date.now() + sec * 1000); };
 
   // שעון מנוחה מבוסס-חותמת-זמן: מתקתק כל 250ms (מדויק, שורד רענון)
   useEffect(() => {
@@ -324,6 +325,7 @@ export default function Workout() {
 
     const setLogAt = (fn: (e: ExLog) => void) => setLog(ls => { const c = structuredClone(ls); fn(c[exIdx]); return c; });
     const restLeft = restEndAt ? Math.max(0, Math.ceil((restEndAt - now) / 1000)) : 0;
+    const exRest = db.restByEx?.[exDef.id] ?? restSec; // מנוחה של התרגיל הזה בלבד
 
     return (
       <div className="scr fade-in" key={exDef.id}>
@@ -422,7 +424,7 @@ export default function Workout() {
                   )}
                 </div>
               )}
-              <div className="ok" onClick={() => { const wasDone = s.done; setLogAt(e => { e.sets[si].done = !e.sets[si].done; }); if (!wasDone) startRest(); else { setRestEndAt(null); setRestDone(false); } }}>
+              <div className="ok" onClick={() => { const wasDone = s.done; setLogAt(e => { e.sets[si].done = !e.sets[si].done; }); if (!wasDone) startRest(exRest); else { setRestEndAt(null); setRestDone(false); } }}>
                 {s.done ? '✓' : ''}
               </div>
             </div>
@@ -436,17 +438,17 @@ export default function Workout() {
         </div>
 
         <div className="field" style={{ marginTop: 12 }}>
-          <label>זמן מנוחה בין סטים</label>
+          <label>זמן מנוחה בין סטים · לתרגיל הזה</label>
           <div className="seg">
             {REST_PRESETS.map(n => (
-              <b key={n} className={restSec === n ? 'on' : ''} onClick={() => update(d => { d.restSec = n; return d; })}>{n} שנ'</b>
+              <b key={n} className={exRest === n ? 'on' : ''} onClick={() => update(d => { d.restByEx = { ...d.restByEx, [exDef.id]: n }; return d; })}>{n} שנ'</b>
             ))}
-            <b className={!REST_PRESETS.includes(restSec) ? 'on' : ''} onClick={() => {
-              const v = prompt('זמן מנוחה בשניות:', String(restSec));
+            <b className={!REST_PRESETS.includes(exRest) ? 'on' : ''} onClick={() => {
+              const v = prompt(`זמן מנוחה ל${exName(exDef, loc)} (שניות):`, String(exRest));
               if (v == null) return;
               const n = Math.max(5, Math.min(600, parseInt(v, 10) || 0));
-              if (n) update(d => { d.restSec = n; return d; });
-            }}>{!REST_PRESETS.includes(restSec) ? `${restSec} שנ' ✎` : 'מותאם'}</b>
+              if (n) update(d => { d.restByEx = { ...d.restByEx, [exDef.id]: n }; return d; });
+            }}>{!REST_PRESETS.includes(exRest) ? `${exRest} שנ' ✎` : 'מותאם'}</b>
           </div>
         </div>
 
