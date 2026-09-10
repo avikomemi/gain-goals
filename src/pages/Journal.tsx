@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { useStore, today, hydrate, WorkoutLog, ExLog } from '../store/store';
 import { hilaReview } from '../store/hila';
 import { estimateFood } from '../store/foodDB';
+import { stepsKcal } from '../store/adi';
 import { supabase } from '../store/cloud';
 
 // דוחס תמונת מנה לתמונה קטנה שנשמרת ביומן (מקומי, עד הסנכרון)
@@ -276,7 +277,7 @@ export default function Journal() {
 
         {(foodToday?.text || foodToday?.photos?.length) ? (
           <HilaResponse text={foodToday?.text || ''} photoCount={foodToday?.photos?.length || 0}
-            waterMl={db.water.find(w => w.date === today())?.ml ?? 0} waterGoal={db.waterGoal ?? 1500} title="תגובה להיום" />
+            waterMl={db.water.find(w => w.date === today())?.ml ?? 0} waterGoal={db.waterGoal ?? 1500} title="תגובה להיום" date={today()} />
         ) : null}
 
         <div className="h-sec">✅ משימות כיול</div>
@@ -428,11 +429,12 @@ function WorkoutEditor({ w, onSave, onDelete, onCancel }: { w: WorkoutLog; onSav
 }
 
 /* ============ תגובת הילה (משותף: יומן היום + עריכת יום קודם) ============ */
-function HilaResponse({ text, photoCount, waterMl, waterGoal, title }: { text: string; photoCount: number; waterMl: number; waterGoal: number; title: string }) {
+function HilaResponse({ text, photoCount, waterMl, waterGoal, title, date }: { text: string; photoCount: number; waterMl: number; waterGoal: number; title: string; date: string }) {
   const { db } = useStore();
   const rev = hilaReview(text, photoCount, waterMl, waterGoal);
   const est = estimateFood(text, db.foods || []);
   const hasNums = est.lines.length > 0;
+  const act = db.fitbit?.connected ? stepsKcal(db, date) : null; // צעדים→קלוריות מ-Fitbit לאותו יום
   return (
     <div className="decision">
       <span className="who">הילה · {title}</span>
@@ -448,6 +450,12 @@ function HilaResponse({ text, photoCount, waterMl, waterGoal, title }: { text: s
           <span className="pill">חלבון ~<b className="num">{est.total.p}</b>/135 גר'</span>
           <span className="pill">פחמ' ~<b className="num">{est.total.c}</b> גר'</span>
           <span className="pill">שומן ~<b className="num">{est.total.f}</b> גר'</span>
+        </div>
+      )}
+      {hasNums && act && (
+        <div style={{ fontSize: 12.5, marginTop: 8, lineHeight: 1.5 }}>
+          🚶 פעילות מהצעדים (~{act.steps.toLocaleString('he-IL')}): ~<b className="num">{act.kcal}</b> קק"ל · מאזן נטו: ~<b className="num">{est.total.kcal - act.kcal}</b> קק"ל
+          <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 3 }}>ד"ר ארז: הערכה מהצעדים בלבד (לא TDEE מלא) — מידע, לא "תקציב לאכול עוד". הגירעון נשאר מתון, בגלל הגאוט.</div>
         </div>
       )}
       {hasNums && (
@@ -520,7 +528,7 @@ function FoodDayEditor({ date, onClose }: { date: string; onClose: () => void })
       </div>
 
       {(text.trim() || photos.length) ? (
-        <HilaResponse text={text} photoCount={photos.length} waterMl={waterMl} waterGoal={db.waterGoal ?? 1500} title={dateLabel(date)} />
+        <HilaResponse text={text} photoCount={photos.length} waterMl={waterMl} waterGoal={db.waterGoal ?? 1500} title={dateLabel(date)} date={date} />
       ) : null}
 
       <button className="ghost mt16" style={{ width: '100%' }} onClick={onClose}>← חזרה להיסטוריה</button>

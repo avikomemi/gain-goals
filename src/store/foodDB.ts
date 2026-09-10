@@ -16,7 +16,7 @@ export interface FoodItem {
 // ~35 הקבועים של אבי. ערכים ממותגים ששלפנו מ-OFF מסומנים; השאר USDA/תווית מבוססים.
 export const SEED_FOODS: FoodItem[] = [
   // ---- חלבון / חלב ----
-  { id: 'pro', names: ['יוגורט פרו', 'פרו'], per100: [59, 9, 4, 1], unit: 'g', def: 200, gout: 'ok', src: 'תווית' },
+  { id: 'pro', names: ['יוגורט פרו'], per100: [59, 9, 4, 1], unit: 'g', def: 200, gout: 'ok', src: 'תווית' }, // לא 'פרו' בודד — מתנגש עם "פרוסות"
   { id: 'ski', names: ['גבינת סקי', 'סקי'], per100: [100, 6, 5, 5], unit: 'g', def: 150, gout: 'ok', src: 'הערכה' },
   { id: 'cottage', names: ['קוטג'], per100: [95, 11, 1.5, 5], unit: 'g', def: 125, gout: 'ok', src: 'OFF' },
   { id: 'white5', names: ['גבינה לבנה', 'לבנה 5', 'לבנה 3', 'לבנה 9'], per100: [98, 9, 4.3, 5], unit: 'g', def: 100, gout: 'ok', src: 'OFF' },
@@ -33,6 +33,7 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'pita', names: ['פיתה', 'פיתת'], per100: [275, 9, 55, 1.2], unit: 'unit', unitGrams: 60, unitLabel: 'פיתה', def: 1, src: 'USDA' },
   { id: 'bread', names: ['פרוסת לחם', 'לחם מלא', 'לחם', 'מחמצת', 'פרוסה'], per100: [247, 13, 41, 3.4], unit: 'unit', unitGrams: 30, unitLabel: 'פרוסה', def: 2, src: 'USDA' },
   { id: 'homebread', names: ['לחם ביתי'], per100: [265, 8, 49, 3.5], unit: 'unit', unitGrams: 85, unitLabel: 'פרוסה', def: 2, src: 'תווית' },
+  { id: 'challah', names: ['חלה', 'בריוש'], per100: [290, 9, 50, 5.5], unit: 'unit', unitGrams: 40, unitLabel: 'פרוסה', def: 2, src: 'USDA' },
   { id: 'rice', names: ['אורז'], per100: [130, 2.7, 28, 0.3], unit: 'g', def: 150, src: 'USDA' },
   { id: 'pasta', names: ['פסטה', 'אטריות', 'נודל'], per100: [157, 5.8, 31, 0.9], unit: 'g', def: 150, src: 'USDA' },
   { id: 'potato', names: ['תפוח אדמה', 'תפו"א', 'תפוא'], per100: [87, 1.9, 20, 0.1], unit: 'g', def: 150, src: 'USDA' },

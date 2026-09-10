@@ -52,6 +52,29 @@ export function nextRoutine(db: DB): 'A' | 'B' | 'C' {
   return order[(order.indexOf(last.routine) + 1) % 3];
 }
 
+/* ---------- שינה → עומס אימון (מנתוני Fitbit) ---------- */
+// מחזיר עצה רק כשהלילה האחרון קצר אפילו ביחס ל-4-5 השעות הרגילות של אבי, ורק כשהנתון טרי — כדי לא לנדנד.
+export function sleepAdvice(db: DB): { minutes: number; date: string; label: string; msg: string } | null {
+  if (!db.sleep?.length) return null;
+  const last = db.sleep.reduce((a, b) => (a.date >= b.date ? a : b));
+  if (!last || last.date < daysAgo(1)) return null; // רלוונטי רק להיום/אתמול
+  const label = `${Math.floor(last.minutes / 60)}:${String(last.minutes % 60).padStart(2, '0')}`;
+  if (last.minutes >= 240) return null; // מעל 4 שעות — לא מתריעים
+  return {
+    minutes: last.minutes, date: last.date, label,
+    msg: `ישנת ${label} הלילה — קצר אפילו בשבילך. מאיה: עייפות + הגב הרגיש + עומס כבד = שילוב מסוכן. היום מורידים סט או משקל, מאריכים חימום, ולא רודפים מספרים. אימון קל שנעשה שווה יותר מכבד שמפיל.`,
+  };
+}
+
+/* ---------- צעדים → קלוריות (מנתוני Fitbit) ---------- */
+// הערכה גסה: ~0.045 קק"ל לצעד למשקל ~90 ק"ג. לא מדויק כמו מה ש-Fitbit מחשב — הערכה לתצוגה בלבד.
+const KCAL_PER_STEP = 0.045;
+export function stepsKcal(db: DB, date: string): { steps: number; kcal: number } | null {
+  const rec = db.steps?.find(s => s.date === date);
+  if (!rec || !rec.count) return null;
+  return { steps: rec.count, kcal: Math.round(rec.count * KCAL_PER_STEP) };
+}
+
 /* ---------- direction chip ---------- */
 export type Direction = 'add' | 'keep' | 'ease';
 export function direction(db: DB, exId: string, area?: string): { dir: Direction; why: string } {

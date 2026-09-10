@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore, today, daysAgo } from '../store/store';
-import { alerts, nextSteps, nextRoutine, weeklyAvgWeights, lastWaist, streakWeeksNoInjuryStop, currentWeekWorkouts } from '../store/adi';
+import { alerts, nextSteps, nextRoutine, weeklyAvgWeights, lastWaist, streakWeeksNoInjuryStop, currentWeekWorkouts, sleepAdvice } from '../store/adi';
 import { PROGRAM } from '../data/program';
 import { PulseRing, Alerts, heDate } from '../components/bits';
 
@@ -38,6 +38,7 @@ export default function Dashboard() {
 
   const lastSleep = db.sleep && db.sleep.length ? db.sleep[db.sleep.length - 1] : undefined;
   const lastSteps = db.steps && db.steps.length ? db.steps[db.steps.length - 1] : undefined;
+  const sleepNote = sleepAdvice(db);
   const dayLabel = (d: string) => d === today() ? 'היום' : d === daysAgo(1) ? 'אתמול' : d.slice(5).replace('-', '/');
 
   return (
@@ -80,6 +81,7 @@ export default function Dashboard() {
               <span>צעדים{lastSteps ? ` · ${dayLabel(lastSteps.date)}` : ''}</span>
             </div>
           </div>
+          {sleepNote && <div style={{ fontSize: 12, marginTop: 10, lineHeight: 1.5, color: 'var(--acc2)' }}>😴 {sleepNote.msg}</div>}
         </div>
       </>)}
 

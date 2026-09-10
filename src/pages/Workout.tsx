@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PROGRAM, RoutineDef, Loc, exName, exNote, BODY_AREAS, KRAV_TAGS, SENSITIVE_BACK_DAY } from '../data/program';
 import { useStore, today, WorkoutLog, ExLog } from '../store/store';
-import { nextRoutine, direction } from '../store/adi';
+import { nextRoutine, direction, sleepAdvice } from '../store/adi';
 import { heDate } from '../components/bits';
 
 type Phase = 'pick' | 'warmup' | 'live' | 'injury' | 'flex' | 'done' | 'krav' | 'backday' | 'order';
@@ -225,6 +225,9 @@ export default function Workout() {
       <div className="scr fade-in">
         <div className="micro">{heDate()} · בחר פעילות</div>
         <div className="h-huge mt8">מה עושים <em>היום?</em></div>
+        {(() => { const s = sleepAdvice(db); return s ? (
+          <div className="alert mt12" style={{ borderColor: 'var(--acc2)', background: 'rgba(217,119,6,.10)' }}>😴 <span><b>עמית:</b> {s.msg}</span></div>
+        ) : null; })()}
         <div className="h-sec">אימוני ABC · הבא בתור: {nr}</div>
         {PROGRAM.map(r => (
           <div className="card mt8" key={r.key} style={r.key === nr ? { borderColor: 'var(--acc)' } : {}}>
