@@ -24,7 +24,7 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'yellow', names: ['גבינה צהובה', 'צהובה', 'עמק', 'גאודה', 'מוצרלה', 'קשקבל'], per100: [350, 25, 1, 27], unit: 'g', def: 30, gout: 'ok', src: 'USDA' },
   { id: 'egg', names: ['ביצה', 'ביצים', 'חביתה', 'אומלט'], per100: [143, 13, 0.7, 10], unit: 'unit', unitGrams: 50, unitLabel: 'ביצה', def: 2, gout: 'ok', src: 'USDA' },
   { id: 'tuna', names: ['טונה'], per100: [116, 26, 0, 1], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
-  { id: 'chicken', names: ['חזה עוף', 'עוף', 'פרגית', 'שניצל'], per100: [165, 31, 0, 3.6], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
+  { id: 'chicken', names: ['חזה עוף', 'עוף', 'פרגיות', 'פרגית', 'פרגי', 'שניצל'], per100: [165, 31, 0, 3.6], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
   { id: 'whey', names: ['אבקת חלבון', 'שייק חלבון', 'וויי', 'פרוטאין', 'סקופ'], per100: [380, 75, 8, 6], unit: 'unit', unitGrams: 30, unitLabel: 'מנה', def: 1, gout: 'ok', src: 'תווית' },
   { id: 'steak', names: ['סטייק', 'סטיק', 'אנטריקוט', 'בשר בקר', 'בקר'], per100: [271, 25, 0, 19], unit: 'g', def: 150, gout: 'high', src: 'USDA' },
   { id: 'multiyog', names: ['יוגורט מולטי', 'מולטי'], per100: [71, 6.5, 4.6, 3], unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
@@ -56,6 +56,67 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'date', names: ['תמר', 'תמרים'], per100: [282, 2.5, 75, 0.4], unit: 'unit', unitGrams: 8, unitLabel: 'יח', def: 3, src: 'USDA' },
   { id: 'blueberry', names: ['אוכמניות', 'אוכמנית', 'בלוברי'], per100: [57, 0.7, 14, 0.3], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
 
+  // ---- פירות (מדף מלא) ----
+  { id: 'nectarine', names: ['נקטרינה', 'נקטרינ'], per100: [44, 1.1, 11, 0.3], unit: 'unit', unitGrams: 150, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'peach', names: ['אפרסק'], per100: [39, 0.9, 10, 0.3], unit: 'unit', unitGrams: 150, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'plum', names: ['שזיף'], per100: [46, 0.7, 11, 0.3], unit: 'unit', unitGrams: 65, unitLabel: 'יח', def: 2, src: 'USDA' },
+  { id: 'apricot', names: ['משמש'], per100: [48, 1.4, 11, 0.4], unit: 'unit', unitGrams: 35, unitLabel: 'יח', def: 3, src: 'USDA' },
+  { id: 'pear', names: ['אגס'], per100: [57, 0.4, 15, 0.1], unit: 'unit', unitGrams: 180, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'orange', names: ['תפוז'], per100: [47, 0.9, 12, 0.1], unit: 'unit', unitGrams: 140, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'clementine', names: ['קלמנטינה', 'מנדרינה', 'קלמנטינ', 'מנדרינ'], per100: [53, 0.8, 13, 0.3], unit: 'unit', unitGrams: 75, unitLabel: 'יח', def: 2, src: 'USDA' },
+  { id: 'grapefruit', names: ['אשכולית', 'אשכולי'], per100: [42, 0.8, 11, 0.1], unit: 'unit', unitGrams: 230, unitLabel: 'יח', def: 0.5, src: 'USDA' },
+  { id: 'mango', names: ['מנגו'], per100: [60, 0.8, 15, 0.4], unit: 'g', def: 200, src: 'USDA' },
+  { id: 'pineapple', names: ['אננס'], per100: [50, 0.5, 13, 0.1], unit: 'g', def: 150, src: 'USDA' },
+  { id: 'kiwi', names: ['קיווי'], per100: [61, 1.1, 15, 0.5], unit: 'unit', unitGrams: 75, unitLabel: 'יח', def: 2, src: 'USDA' },
+  { id: 'pomegranate', names: ['רימון'], per100: [83, 1.7, 19, 1.2], unit: 'unit', unitGrams: 180, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'grapes', names: ['ענבים', 'ענב'], per100: [69, 0.7, 18, 0.2], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'watermelon', names: ['אבטיח'], per100: [30, 0.6, 8, 0.2], unit: 'g', def: 200, src: 'USDA' },
+  { id: 'melon', names: ['מלון'], per100: [34, 0.8, 8, 0.2], unit: 'g', def: 200, src: 'USDA' },
+  { id: 'strawberry', names: ['תות שדה', 'תות'], per100: [32, 0.7, 8, 0.3], unit: 'g', def: 150, src: 'USDA' },
+  { id: 'raspberry', names: ['פטל'], per100: [52, 1.2, 12, 0.7], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'cherry', names: ['דובדבן'], per100: [63, 1, 16, 0.2], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'persimmon', names: ['אפרסמון'], per100: [70, 0.6, 18, 0.2], unit: 'unit', unitGrams: 170, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'fig', names: ['תאנה', 'תאנ'], per100: [74, 0.8, 19, 0.3], unit: 'unit', unitGrams: 50, unitLabel: 'יח', def: 3, src: 'USDA' },
+  { id: 'papaya', names: ['פפאיה'], per100: [43, 0.5, 11, 0.3], unit: 'g', def: 150, src: 'USDA' },
+  { id: 'guava', names: ['גויאבה'], per100: [68, 2.6, 14, 1], unit: 'unit', unitGrams: 55, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'lychee', names: ["ליצ'י", 'ליצי'], per100: [66, 0.8, 17, 0.4], unit: 'unit', unitGrams: 10, unitLabel: 'יח', def: 6, src: 'USDA' },
+  { id: 'loquat', names: ['שסק'], per100: [47, 0.4, 12, 0.2], unit: 'unit', unitGrams: 15, unitLabel: 'יח', def: 4, src: 'USDA' },
+
+  // ---- ירקות (מדף מלא) ----
+  { id: 'cucumber', names: ['מלפפון'], per100: [15, 0.7, 3.6, 0.1], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'carrot', names: ['גזר'], per100: [41, 0.9, 10, 0.2], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'pepper', names: ['פלפל'], per100: [31, 1, 6, 0.3], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'lettuce', names: ['חסה'], per100: [15, 1.4, 2.9, 0.2], unit: 'g', def: 50, src: 'USDA' },
+  { id: 'cabbage', names: ['כרוב'], per100: [25, 1.3, 6, 0.1], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'cauliflower', names: ['כרובית'], per100: [25, 1.9, 5, 0.3], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'broccoli', names: ['ברוקולי'], per100: [34, 2.8, 7, 0.4], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'zucchini', names: ['קישוא'], per100: [17, 1.2, 3.1, 0.3], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'eggplant', names: ['חציל'], per100: [25, 1, 6, 0.2], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'spinach', names: ['תרד'], per100: [23, 2.9, 3.6, 0.4], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'beet', names: ['סלק'], per100: [43, 1.6, 10, 0.2], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'radish', names: ['צנונית', 'צנון'], per100: [16, 0.7, 3.4, 0.1], unit: 'g', def: 50, src: 'USDA' },
+  { id: 'pumpkin', names: ['דלעת'], per100: [26, 1, 6.5, 0.1], unit: 'g', def: 150, src: 'USDA' },
+  { id: 'butternut', names: ['דלורית'], per100: [45, 1, 12, 0.1], unit: 'g', def: 150, src: 'USDA' },
+  { id: 'kohlrabi', names: ['קולורבי'], per100: [27, 1.7, 6, 0.1], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'greenbeans', names: ['שעועית ירוקה', 'שעועית ירוק'], per100: [31, 1.8, 7, 0.2], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'peas', names: ['אפונה'], per100: [81, 5, 14, 0.4], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'okra', names: ['במיה'], per100: [33, 1.9, 7, 0.2], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'mushroom', names: ['פטריות', 'פטרייה', 'פטרי'], per100: [22, 3.1, 3.3, 0.3], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'artichoke', names: ['ארטישוק'], per100: [47, 3.3, 11, 0.2], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'asparagus', names: ['אספרגוס'], per100: [20, 2.2, 3.9, 0.1], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'celery', names: ['סלרי'], per100: [16, 0.7, 3, 0.2], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'fennel', names: ['שומר'], per100: [31, 1.2, 7, 0.2], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'arugula', names: ['רוקט'], per100: [25, 2.6, 3.7, 0.7], unit: 'g', def: 50, src: 'USDA' },
+  { id: 'brussels', names: ['כרוב ניצנים', 'ניצנים'], per100: [43, 3.4, 9, 0.3], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'sprouts', names: ['נבטים', 'נבט'], per100: [30, 3, 6, 0.2], unit: 'g', def: 50, src: 'USDA' },
+
+  // ---- מנות אתניות / מוכנות ----
+  { id: 'laffa', names: ['פיתת לאפה', 'לאפה'], per100: [270, 8, 53, 2.5], unit: 'unit', unitGrams: 100, unitLabel: 'לאפה', def: 1, src: 'הערכה' },
+  { id: 'fries', names: ["צ'יפס", 'צ׳יפס', 'ציפס'], per100: [312, 3.4, 41, 15], unit: 'unit', unitGrams: 7, unitLabel: 'יח', def: 10, src: 'USDA' },
+  { id: 'plov', names: ['פלאוו', 'פלאו', 'פלוב', 'פילאף'], per100: [200, 6, 26, 8], unit: 'g', def: 200, gout: 'high', src: 'הערכה' },
+  { id: 'dushpara', names: ['דושפרה', 'דושפרא', 'דושברה', 'דושפארה'], per100: [250, 10, 22, 14], unit: 'unit', unitGrams: 60, unitLabel: 'יח', def: 1, gout: 'high', src: 'הערכה' },
+  { id: 'khachapuri', names: ["חצ'פורי", 'חצ׳פורי', 'חצפורי', 'קובדארי'], per100: [275, 11, 28, 13], unit: 'unit', unitGrams: 180, unitLabel: 'יח', def: 1, src: 'הערכה' },
+
   // ---- חטיפים / שתייה ----
   { id: 'bamba', names: ['במבה'], per100: [530, 13, 49, 33], unit: 'g', def: 50, src: 'תווית' },
   { id: 'coffee', names: ['קפה שחור', 'קפה', 'אספרסו', 'נס '], per100: [2, 0.1, 0, 0], unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, src: 'USDA' },
@@ -77,15 +138,17 @@ export interface FoodEstimate { lines: FoodLine[]; total: { kcal: number; p: num
 
 const FILLER = ['עם', 'של', 'ללא', 'בלי', 'סוכר', 'מלח', 'שמן', 'בבוקר', 'בערב', 'בצהריים', 'קופסא', 'קופסה', 'גרם', 'גר', "ג'", 'כוס', 'בקבוק', 'מים', 'קצת', 'הרבה', 'ועוד', 'גדול', 'קטן'];
 
-// כמה מהפריט הזה — מספר צמוד, "x2", או "חצי"; אחרת ברירת-המחדל
-function parseQty(seg: string, food: FoodItem): number {
+// כמה מהפריט הזה — מספר צמוד, "x2", או "חצי"; אחרת ברירת-המחדל.
+// grams=true כשנכתב "גרם"/"גר'" במפורש → המספר הוא גרמים, גם לפריטי-יחידה (חומוס ממרח, פרוסה שקולה וכו').
+function parseQty(seg: string, food: FoodItem): { qty: number; grams: boolean } {
   const s = seg.replace(/\d+(\.\d+)?\s*%/g, ''); // מנקה אחוזי שומן ("5%") שלא ייחשבו ככמות
+  const gramsMode = /גרם|גר['׳]/.test(s);
   const mult = s.match(/[x×X]\s*(\d+(\.\d+)?)/);
-  if (mult) return parseFloat(mult[1]);
+  if (mult) return { qty: parseFloat(mult[1]), grams: false };
   const num = s.match(/(\d+(\.\d+)?)/);
-  if (num) return parseFloat(num[1]);
-  if (/חצי/.test(seg)) return food.def * 0.5;
-  return food.def;
+  if (num) return { qty: parseFloat(num[1]), grams: gramsMode };
+  if (/חצי/.test(seg)) return { qty: food.def * 0.5, grams: false };
+  return { qty: food.def, grams: false };
 }
 
 const PLURAL: Record<string, string> = { 'כף': 'כפות', 'כוס': 'כוסות', 'פרוסה': 'פרוסות', 'מנה': 'מנות' };
@@ -103,7 +166,9 @@ export function estimateFood(text: string, foods: FoodItem[]): FoodEstimate {
   const lines: FoodLine[] = [];
   const notInDB: string[] = [];
   const total = { kcal: 0, p: 0, c: 0, f: 0 };
-  const segments = (text || '').split(/[\n,.·;]+/).map(s => s.trim()).filter(s => s.length > 1);
+  // מפריד: פסיק/נקודה/שורה, וגם מילת החיבור "ו" (הו' תמיד תחילית — נבלעת עם המפריד).
+  // "או" לא מפריד — הוא "או" (אותה מנה בשני שמות), כדי לא לספור כפול.
+  const segments = (text || '').split(/[\n,.·;]+|\s+ו/).map(s => s.trim()).filter(s => s.length > 1);
 
   for (const seg of segments) {
     let best: FoodItem | null = null, bestLen = 0;
@@ -115,10 +180,10 @@ export function estimateFood(text: string, foods: FoodItem[]): FoodEstimate {
       if (stripped.replace(/[^֐-׿]/g, '').length > 2) notInDB.push(seg.length > 24 ? seg.slice(0, 24) + '…' : seg);
       continue;
     }
-    const qty = parseQty(seg, best);
-    const gramsEq = best.unit === 'g' ? qty : qty * (best.unitGrams || 100);
+    const { qty, grams } = parseQty(seg, best);
+    const gramsEq = grams ? qty : (best.unit === 'g' ? qty : qty * (best.unitGrams || 100));
     const macro = best.per100.map(v => Math.round(v * gramsEq / 100)) as [number, number, number, number];
-    lines.push({ name: best.names[0], qty, qtyLabel: qtyLabel(best, qty), macro });
+    lines.push({ name: best.names[0], qty, qtyLabel: grams ? `${qty}ג'` : qtyLabel(best, qty), macro });
     total.kcal += macro[0]; total.p += macro[1]; total.c += macro[2]; total.f += macro[3];
   }
 
