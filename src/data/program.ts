@@ -12,6 +12,9 @@ export interface ExParam {
   def?: number;            // ערך התחלתי אם אין היסטוריה
 }
 
+// גרסת מיקום — יכולה לשנות גם מבנה (לא רק שם/הערה), כדי שחדר ובית יהיו תרגילים שונים באמת
+export interface ExVariant { name?: string; note?: string; target?: string; setsDefault?: number; repsDefault?: number; timeBased?: boolean; weighted?: boolean; restDefault?: number }
+
 export interface ExerciseDef {
   id: string;
   name: string;            // base Hebrew name
@@ -20,8 +23,9 @@ export interface ExerciseDef {
   repsDefault: number;
   weighted?: boolean;      // show weight field
   timeBased?: boolean;
-  gym?: { name?: string; note?: string };
-  home?: { name?: string; note?: string };
+  restDefault?: number;    // ברירת-מחדל זמן מנוחה לתרגיל (שניות) — נפילה כשאין הגדרה פר-תרגיל של אבי
+  gym?: ExVariant;
+  home?: ExVariant;
   note?: string;           // shared note
   area?: string;           // body area for pain correlation
   params?: ExParam[];      // פרמטרים מותאמים (גובה קופסה/מדרגה וכו') — סעיף 5
@@ -70,8 +74,10 @@ export const PROGRAM: RoutineDef[] = [
         tips: ['נעה: זה ציר ירכיים, לא סקוואט. הישבן אחורה, הגב ישר כמו סרגל.', 'מאיה: בלי קשת בסוף! הכוח מהישבן, נועלים בטן — הגב נשאר ניטרלי.', 'רז: הקטלבל צף מתנופת הירכיים, לא מהידיים. גיוס תנע נקי.', 'עמית: חם ורחוק מהמזגן. תנועת גב מתפרצת על גוף קר = השבתה.'] },
       { id: 'a-squat', name: 'Tempo Squat', target: '3×5', setsDefault: 3, repsDefault: 5, weighted: true, area: 'ברך', gym: { name: 'Tempo Goblet Squat' }, home: { note: 'איטי, גו זקוף, תיק אם קל' },
         tips: ['עמית: איטי בירידה, 3 שניות, שליטה מלאה. הטמפו הוא האימון, לא המשקל.', 'נעה: עקבים דבוקים לרצפה, גו זקוף. עומק עד כמה שהברך שקטה.', 'מאיה: ברך מעל האצבעות, לא פנימה. עצירה לפני כל כאב.', 'טל: נשיפה בדחיפה למעלה — דוחפים את הרצפה, לא רק קמים.'] },
-      { id: 'a-energy', name: 'Energy Burst', target: '4×30 שנ\'', setsDefault: 4, repsDefault: 30, timeBased: true, gym: { name: 'Intervals (Row/Bike)', note: '30 שנ\' חזק / 30 קל — מחליף ברפי' }, home: { name: 'Shadow Boxing Rounds', note: 'קומבינציות מהירות — מחליף ברפי' },
-        tips: ['טל: 30 שניות חזק זה חזק — אם יכולת לדבר, לא נתת הכל.', 'רז: אגרוף צללים — קומבינציות, לא סתם תנועה. רגליים כל הזמן.', 'ד"ר ארז: עין על הדופק. חזק זה טוב, סחרחורת זה עצירה.', 'עמית: זה מחליף את הברפי — כל האנרגיה, אפס עומס על גב וברכיים.'] },
+      { id: 'a-pyramid', name: 'Energy Burst', target: '4×30 שנ\'', setsDefault: 4, repsDefault: 30, timeBased: true,
+        gym: { name: 'Push-Up Pyramid', target: '8 פירמידות · 1→8', note: 'פירמידה עולה: שכיבה אחת → ג\'אמפינג ג\'ק → 2 שכיבות → ג\'אמפינג ג\'ק → ... עד 8. ג\'אמפינג ג\'ק אחד בין כל מדרגה. 8 פירמידות, 3 דק\' מנוחה ביניהן.', setsDefault: 8, repsDefault: 36, timeBased: false, restDefault: 180 },
+        home: { name: 'Shadow Boxing Rounds', note: 'קומבינציות מהירות — מחליף ברפי' },
+        tips: ['טל: זה פיניישר — קצב רציף בתוך הפירמידה, הג\'אמפינג ג\'ק שומר דופק. 3 דקות מנוחה בין פירמידה לפירמידה, ואז שוב.', 'רז: שכיבות נקיות, גוף ישר כמו קרש — גם בשלב 8. איכות לפני מספר.', 'מאיה: ג\'אמפינג ג\'ק בנחיתה רכה על כריות כף הרגל, ברכיים רכות. כואב ברך/גב? מהלך צד נמוך במקום קפיצה.', 'עמית: מחליף את האינטרוולים — כל האנרגיה, בלי מכונה. 8 פירמידות זה הרבה; אם נגמר הדלק, עוצרים ביושר.'] },
       { id: 'a-flow', name: 'FLOW', target: '3 סבבים', setsDefault: 3, repsDefault: 1, note: 'משחק תנועה על הקרקע — מעברים, גלגולים, קימות',
         tips: ['נעה: זה משחק, לא מבחן. מעברים רכים בין תנוחות — הגוף לומד לזרום.', 'רז: קימות וגלגולים — בדיוק היכולת שמצילה בקרקע. איכות מעל מהירות.', 'עמית: אין "נכון" אחד. תקשיב לגוף, תמצא את המעברים שלך.'] },
     ],
@@ -165,4 +171,17 @@ export function exName(ex: ExerciseDef, loc: Loc): string {
 export function exNote(ex: ExerciseDef, loc: Loc): string | undefined {
   const locNote = loc === 'home' ? ex.home?.note : ex.gym?.note;
   return [ex.note, locNote].filter(Boolean).join(' · ') || undefined;
+}
+
+// מבנה אפקטיבי פר-מיקום: הגרסה (חדר/בית) גוברת על הבסיס. מאפשר תרגיל שונה בחדר ובבית.
+export function exStruct(ex: ExerciseDef, loc: Loc): { setsDefault: number; repsDefault: number; timeBased?: boolean; weighted?: boolean; restDefault?: number; target: string } {
+  const v = loc === 'home' ? ex.home : ex.gym;
+  return {
+    setsDefault: v?.setsDefault ?? ex.setsDefault,
+    repsDefault: v?.repsDefault ?? ex.repsDefault,
+    timeBased: v?.timeBased ?? ex.timeBased,
+    weighted: v?.weighted ?? ex.weighted,
+    restDefault: v?.restDefault ?? ex.restDefault,
+    target: v?.target ?? ex.target,
+  };
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PROGRAM, RoutineDef, Loc, exName, exNote, BODY_AREAS, KRAV_TAGS, SENSITIVE_BACK_DAY } from '../data/program';
+import { PROGRAM, RoutineDef, Loc, exName, exNote, exStruct, BODY_AREAS, KRAV_TAGS, SENSITIVE_BACK_DAY } from '../data/program';
 import { useStore, today, WorkoutLog, ExLog } from '../store/store';
 import { nextRoutine, direction, sleepAdvice } from '../store/adi';
 import { heDate } from '../components/bits';
@@ -185,13 +185,14 @@ export default function Workout() {
     setRoutine(r); setLoc(l);
     setLog(orderedExercises(r, db.orders[r.key]).map(ex => {
       const prev = db.workouts.flatMap(w => w.exercises).filter(e => e.id === ex.id && !e.skipped).pop();
+      const st = exStruct(ex, l); // מבנה אפקטיבי לפי המיקום (חדר/בית)
       // ברירת מחדל: תרגיל שהמאמן כתב עם משקל → מתחיל בק"ג; שאר התרגילים (לא-זמן) → משקל גוף עם אפשרות להוסיף משקל חיצוני
       const sets = prev?.sets?.length
         ? prev.sets.map(s => ({ ...s, done: false }))
-        : Array.from({ length: ex.setsDefault }, () => ({
-            reps: ex.repsDefault,
-            weight: ex.weighted ? 0 : undefined,
-            bw: (!ex.weighted && !ex.timeBased) ? true : undefined,
+        : Array.from({ length: st.setsDefault }, () => ({
+            reps: st.repsDefault,
+            weight: st.weighted ? 0 : undefined,
+            bw: (!st.weighted && !st.timeBased) ? true : undefined,
             done: false,
           }));
       // סעיף 5 — פרמטרים מותאמים: נזכרים מהפעם הקודמת, אחרת ברירת המחדל של התרגיל
@@ -328,7 +329,8 @@ export default function Workout() {
 
     const setLogAt = (fn: (e: ExLog) => void) => setLog(ls => { const c = structuredClone(ls); fn(c[exIdx]); return c; });
     const restLeft = restEndAt ? Math.max(0, Math.ceil((restEndAt - now) / 1000)) : 0;
-    const exRest = db.restByEx?.[exDef.id] ?? restSec; // מנוחה של התרגיל הזה בלבד
+    const st = exStruct(exDef, loc); // מבנה אפקטיבי לפי המיקום
+    const exRest = db.restByEx?.[exDef.id] ?? st.restDefault ?? restSec; // פר-תרגיל → ברירת-מחדל של התרגיל → גלובלי
 
     return (
       <div className="scr fade-in" key={exDef.id}>
@@ -345,7 +347,7 @@ export default function Workout() {
         )}
         <div className="w-name">{exLog.name}</div>
         <div className="w-meta">
-          <span>יעד: <b>{exDef.target}</b></span>
+          <span>יעד: <b>{st.target}</b></span>
           {exNote(exDef, loc) && <span style={{ color: 'var(--acc2)' }}>{exNote(exDef, loc)}</span>}
         </div>
         {/* סעיף 14 — כרטיס מאמן בולט: מה עשית קודם, היעד עכשיו, והנחיית עמית */}
@@ -396,7 +398,7 @@ export default function Workout() {
             <div className={`set ${s.done ? 'done' : ''}`} key={si}>
               <span className="sn">סט {si + 1}</span>
               <div className="stp">
-                <span>{exDef.timeBased ? 'שניות' : 'חזרות'}</span>
+                <span>{st.timeBased ? 'שניות' : 'חזרות'}</span>
                 <span style={{ display: 'flex', alignItems: 'center' }}>
                   <button onClick={() => setLogAt(e => { e.sets[si].reps = Math.max(0, e.sets[si].reps - 1); })}>−</button>
                   <input className="num" inputMode="numeric" value={s.reps} aria-label="חזרות"
@@ -406,7 +408,7 @@ export default function Workout() {
                   <button onClick={() => setLogAt(e => { e.sets[si].reps += 1; })}>+</button>
                 </span>
               </div>
-              {!exDef.timeBased && (
+              {!st.timeBased && (
                 <div className="stp">
                   <span>{(s.bw || s.weight === undefined) ? 'משקל גוף' : 'ק"ג'}</span>
                   {(s.bw || s.weight === undefined) ? (
