@@ -118,6 +118,9 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'plov', names: ['פלאוו', 'פלאו', 'פלוב', 'פילאף'], per100: [200, 6, 26, 8], unit: 'g', def: 200, gout: 'high', src: 'הערכה' },
   { id: 'dushpara', names: ['דושפרה', 'דושפרא', 'דושברה', 'דושפארה'], per100: [250, 10, 22, 14], unit: 'unit', unitGrams: 60, unitLabel: 'יח', def: 1, gout: 'high', src: 'הערכה' },
   { id: 'khachapuri', names: ["חצ'פורי", 'חצ׳פורי', 'חצפורי', 'קובדארי'], per100: [275, 11, 28, 13], unit: 'unit', unitGrams: 180, unitLabel: 'יח', def: 1, src: 'הערכה' },
+  { id: 'shawarma', names: ['שווארמה', 'שוורמה', 'שווארמא', 'שווארמ'], per100: [230, 24, 1, 15], unit: 'g', def: 130, gout: 'high', src: 'USDA' }, // אנטריקוט עגל
+  { id: 'shawarma_pita', names: ['פיתה שווארמה', 'פיתת שווארמה', 'פיתה שוורמה', 'פיתת שוורמה'], per100: [235, 16, 20, 11], unit: 'unit', unitGrams: 260, unitLabel: 'פיתה', def: 1, gout: 'high', src: 'הערכה' }, // פיתה+~130ג' בשר+טחינה+סלט
+  { id: 'knafeh', names: ['כנאפה', 'קנאפה', 'כנאפ'], per100: [370, 6, 47, 18], unit: 'g', def: 150, gout: 'ok', src: 'הערכה' },
 
   // ---- חטיפים / שתייה ----
   { id: 'bamba', names: ['במבה'], per100: [530, 13, 49, 33], unit: 'g', def: 50, src: 'תווית' },
