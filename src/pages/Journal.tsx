@@ -282,7 +282,7 @@ export default function Journal() {
 
         <div className="h-sec">✅ משימות כיול</div>
         <div className="card">
-          {([['firstWeight', 'שקילת בוקר ראשונה'], ['waist', 'מדידת מותן ראשונה'], ['bp', 'מדידת לחץ דם'], ['flexTests', 'מבחני גמישות בסיס']] as const).map(([key, label]) => (
+          {([['firstWeight', 'שקילת בוקר ראשונה'], ['waist', 'מדידת מותן ראשונה'], ['bp', 'מדידת לחץ דם']] as const).map(([key, label]) => (
             <div className="step-i" key={key} style={{ alignItems: 'center', cursor: 'pointer' }} onClick={() => update(d => { (d.calib as any)[key] = !(d.calib as any)[key]; return d; })}>
               <span className={`check ${(db.calib as any)[key] ? 'on' : ''}`}>{(db.calib as any)[key] ? '✓' : ''}</span>
               <span className={(db.calib as any)[key] ? 'done-line' : ''}>{label}</span>
@@ -290,6 +290,9 @@ export default function Journal() {
           ))}
           <div className="step-i"><b>·</b><span>אימוני כיול: A {db.calib.runs.A}/2 · B {db.calib.runs.B}/2 · C {db.calib.runs.C}/2</span></div>
         </div>
+
+        <div className="h-sec">🤸 מבחני גמישות · נעה</div>
+        <FlexTestCard />
 
         <div className="h-sec">💾 גיבוי ושחזור</div>
         <div className="card">
@@ -469,6 +472,51 @@ function HilaResponse({ text, photoCount, waterMl, waterGoal, title, date }: { t
         </div>
       )}
       <div style={{ fontSize: 10.5, color: 'var(--dim)', marginTop: 8 }}>תגובה מיידית לפי כללי התזונה שלך · לתמונות — כפתור 🔍 · לניתוח מעמיק — הסקירה השבועית או צ'אט</div>
+    </div>
+  );
+}
+
+/* ============ מבחני גמישות (נעה) — רישום המספרים, לא רק צ'קבוקס ============ */
+const FLEX_FIELDS = [
+  { key: 'fingerFloor', label: 'אצבעות–רצפה', short: 'אצבעות', unit: 'ס"מ', hint: 'שלילי = מתחת לרצפה' },
+  { key: 'squatSec', label: 'סקוואט עמוק', short: 'סקוואט', unit: 'שנ׳', hint: 'החזקה' },
+  { key: 'shoulderR', label: 'כתף · ימין למעלה', short: 'כתף ימ׳', unit: 'ס"מ', hint: 'שלילי = חפיפה' },
+  { key: 'shoulderL', label: 'כתף · שמאל למעלה', short: 'כתף שמ׳', unit: 'ס"מ', hint: 'שלילי = חפיפה' },
+] as const;
+
+function FlexTestCard() {
+  const { db, update } = useStore();
+  const [vals, setVals] = useState<Record<string, string>>({});
+  const [saved, setSaved] = useState(false);
+  const last = [...(db.flex || [])].sort((a, b) => (a.date < b.date ? 1 : -1))[0];
+
+  const save = () => {
+    const num = (s?: string) => { const t = (s ?? '').trim(); if (t === '') return undefined; const n = parseFloat(t); return isNaN(n) ? undefined : n; };
+    const entry = { date: today(), fingerFloor: num(vals.fingerFloor), squatSec: num(vals.squatSec), shoulderR: num(vals.shoulderR), shoulderL: num(vals.shoulderL) };
+    if ([entry.fingerFloor, entry.squatSec, entry.shoulderR, entry.shoulderL].every(v => v === undefined)) { alert('הכנס לפחות מדד אחד לפני שמירה.'); return; }
+    update(d => { d.flex = [...(d.flex || []).filter(f => f.date !== entry.date), entry]; d.calib.flexTests = true; return d; });
+    setVals({}); setSaved(true); setTimeout(() => setSaved(false), 2500);
+  };
+
+  return (
+    <div className="card">
+      {FLEX_FIELDS.map(f => (
+        <div key={f.key} className="spread" style={{ alignItems: 'center', marginTop: 8 }}>
+          <span style={{ fontSize: 13, minWidth: 0 }}>{f.label} <small style={{ color: 'var(--dim)' }}>({f.unit} · {f.hint})</small></span>
+          <input inputMode="numeric" value={vals[f.key] ?? ''} aria-label={f.label}
+            placeholder={last?.[f.key] != null ? String(last[f.key]) : '—'}
+            onChange={e => { const v = e.target.value.replace(/[^0-9.-]/g, ''); setVals(s => ({ ...s, [f.key]: v })); }}
+            style={{ width: 64, minWidth: 0, textAlign: 'center', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 4px', fontSize: 16, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }} />
+        </div>
+      ))}
+      <button className="cta mt12" style={{ width: '100%' }} onClick={save}>💾 שמור מדידה</button>
+      {saved && <div style={{ fontSize: 12, marginTop: 8, color: 'var(--good)' }}>✓ נשמר. נעה: יופי — עכשיו יש ממה למדוד את ההתקדמות.</div>}
+      {last && (
+        <div style={{ fontSize: 12, color: 'var(--dim)', marginTop: 10, lineHeight: 1.6 }}>
+          מדידה אחרונה · {last.date}: {FLEX_FIELDS.map(f => last[f.key] != null ? `${f.short} ${last[f.key]}` : null).filter(Boolean).join(' · ') || '—'}
+        </div>
+      )}
+      <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8 }}>מדוד פעם בחודש. ההתקדמות מול הבסיס בטאב המגמות.</div>
     </div>
   );
 }

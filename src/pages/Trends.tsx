@@ -98,6 +98,49 @@ export default function Trends() {
           </>}
       </div>
 
+      {(() => {
+        if (!db.flex?.length) return (
+          <>
+            <div className="h-sec">🤸 גמישות</div>
+            <div className="card" style={{ fontSize: 13, color: 'var(--dim)' }}>אין מדידות עדיין. רשום מבחן גמישות ראשון ביומן — זו נקודת הבסיס שממנה מודדים התקדמות.</div>
+          </>
+        );
+        const sorted = [...db.flex].sort((a, b) => (a.date < b.date ? -1 : 1));
+        const base = sorted[0], latest = sorted[sorted.length - 1];
+        const rows = [
+          { key: 'fingerFloor', label: 'אצבעות–רצפה', unit: 'ס"מ', lowerBetter: true },
+          { key: 'squatSec', label: 'סקוואט עמוק', unit: 'שנ׳', lowerBetter: false },
+          { key: 'shoulderR', label: 'כתף · ימין למעלה', unit: 'ס"מ', lowerBetter: true },
+          { key: 'shoulderL', label: 'כתף · שמאל למעלה', unit: 'ס"מ', lowerBetter: true },
+        ] as const;
+        return (
+          <>
+            <div className="h-sec">🤸 גמישות · בסיס → אחרון</div>
+            <div className="card">
+              {rows.map(r => {
+                const b = base[r.key], l = latest[r.key];
+                if (b == null && l == null) return null;
+                const delta = (b != null && l != null) ? +(l - b).toFixed(1) : null;
+                const improved = delta == null ? null : (r.lowerBetter ? delta < 0 : delta > 0);
+                return (
+                  <div className="row" key={r.key}>
+                    <span className="k">{r.label}</span>
+                    <span className="v num">{b ?? '—'} → {l ?? '—'} <small>{r.unit}</small>{' '}
+                      {delta != null && delta !== 0 && <span className={improved ? 'up' : 'down'}>{improved ? '▲' : '▼'}{Math.abs(delta)}</span>}
+                    </span>
+                  </div>
+                );
+              })}
+              <div style={{ fontSize: 10.5, color: 'var(--dim)', marginTop: 8 }}>
+                {base.date === latest.date
+                  ? `מדידה אחת (${latest.date}) — עוד חודש נראה תנועה.`
+                  : `בסיס ${base.date} → אחרון ${latest.date} · ${db.flex.length} מדידות · ▲ = שיפור. נעה: מודדים פעם בחודש.`}
+              </div>
+            </div>
+          </>
+        );
+      })()}
+
       <div className="h-sec">מפת חום · עקביות 8 שבועות</div>
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, color: 'var(--dim)', fontWeight: 700, marginBottom: 4 }}>
