@@ -67,7 +67,10 @@ Deno.serve(async (req: Request) => {
     // load stored tokens
     const rowRes = await dbFetch(`fitbit_tokens?user_id=eq.${uid}&select=access_token,refresh_token,expires_at`, { method: "GET" });
     const row = (await rowRes.json())?.[0];
-    if (!row) return json({ error: "not_connected", needsReconnect: true }, 409);
+    // NOTE: needsReconnect must be status 200 — supabase-js `functions.invoke` nulls out
+    // `data` on any non-2xx response, so the client never sees the flag and shows a generic
+    // "network error" while stale data lingers. 200 lets the client read data.needsReconnect.
+    if (!row) return json({ error: "not_connected", needsReconnect: true }, 200);
 
     // refresh access token if it expires within 2 minutes
     let accessToken = row.access_token as string;
@@ -85,7 +88,7 @@ Deno.serve(async (req: Request) => {
       const rj = await rr.json();
       if (!rr.ok || !rj.access_token) {
         // refresh token expired/revoked (7-day Testing limit) → user must reconnect
-        if (rj?.error === "invalid_grant") return json({ error: "invalid_grant", needsReconnect: true }, 401);
+        if (rj?.error === "invalid_grant") return json({ error: "invalid_grant", needsReconnect: true }, 200); // 200 so client reads needsReconnect (see note above)
         return json({ error: "refresh_failed", detail: rj?.error_description || rj?.error || String(rr.status) }, 502);
       }
       accessToken = rj.access_token;

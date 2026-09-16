@@ -26,6 +26,8 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'tuna', names: ['טונה'], per100: [116, 26, 0, 1], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
   { id: 'chicken', names: ['חזה עוף', 'עוף', 'פרגיות', 'פרגית', 'פרגי', 'שניצל'], per100: [165, 31, 0, 3.6], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
   { id: 'whey', names: ['אבקת חלבון', 'שייק חלבון', 'וויי', 'פרוטאין', 'סקופ'], per100: [380, 75, 8, 6], unit: 'unit', unitGrams: 30, unitLabel: 'מנה', def: 1, gout: 'ok', src: 'תווית' },
+  // Müller Protein 25 (וניל, 0% שומן, ללא תוספת סוכר): 400 מ"ל = 25 גר' חלבון. per100 = פר 100 מ"ל, הערכה מהחזית עד שתגיע הטבלה האחורית.
+  { id: 'proteindrink', names: ['משקה חלבון', 'מולר פרוטאין', 'müller protein'], per100: [37, 6.3, 3, 0], unit: 'unit', unitGrams: 400, unitLabel: 'בקבוק', def: 1, gout: 'ok', src: 'הערכה' },
   { id: 'steak', names: ['סטייק', 'סטיק', 'אנטריקוט', 'בשר בקר', 'בקר'], per100: [271, 25, 0, 19], unit: 'g', def: 150, gout: 'high', src: 'USDA' },
   { id: 'multiyog', names: ['יוגורט מולטי', 'מולטי'], per100: [71, 6.5, 4.6, 3], unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
 
