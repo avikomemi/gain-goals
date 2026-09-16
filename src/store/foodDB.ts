@@ -19,7 +19,7 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'pro', names: ['יוגורט פרו'], per100: [59, 9, 4, 1], unit: 'g', def: 200, gout: 'ok', src: 'תווית' }, // לא 'פרו' בודד — מתנגש עם "פרוסות"
   { id: 'ski', names: ['גבינת סקי', 'סקי'], per100: [100, 6, 5, 5], unit: 'g', def: 150, gout: 'ok', src: 'הערכה' },
   { id: 'cottage', names: ['קוטג'], per100: [95, 11, 1.5, 5], unit: 'g', def: 125, gout: 'ok', src: 'OFF' },
-  { id: 'white5', names: ['גבינה לבנה', 'לבנה 5', 'לבנה 3', 'לבנה 9'], per100: [98, 9, 4.3, 5], unit: 'g', def: 100, gout: 'ok', src: 'OFF' },
+  { id: 'white5', names: ['גבינה לבנה', 'לבנה 5', 'לבנה 3', 'לבנה 9', 'גבינה רזה', 'גבינה 5', 'גבינה 3', 'גבינה 9'], per100: [98, 9, 4.3, 5], unit: 'g', def: 100, gout: 'ok', src: 'OFF' },
   { id: 'bulgarit', names: ['בולגרית', 'פטה', 'צפתית', 'פטא'], per100: [130, 11, 2, 9], unit: 'g', def: 50, gout: 'ok', src: 'תווית' },
   { id: 'yellow', names: ['גבינה צהובה', 'צהובה', 'עמק', 'גאודה', 'מוצרלה', 'קשקבל'], per100: [350, 25, 1, 27], unit: 'g', def: 30, gout: 'ok', src: 'USDA' },
   { id: 'egg', names: ['ביצה', 'ביצים', 'חביתה', 'אומלט'], per100: [143, 13, 0.7, 10], unit: 'unit', unitGrams: 50, unitLabel: 'ביצה', def: 2, gout: 'ok', src: 'USDA' },
@@ -152,7 +152,7 @@ const FILLER = ['עם', 'של', 'ללא', 'בלי', 'סוכר', 'מלח', 'שמ�
 // כמה מהפריט הזה — מספר צמוד, "x2", או "חצי"; אחרת ברירת-המחדל.
 // grams=true כשנכתב "גרם"/"גר'" במפורש → המספר הוא גרמים, גם לפריטי-יחידה (חומוס ממרח, פרוסה שקולה וכו').
 function parseQty(seg: string, food: FoodItem): { qty: number; grams: boolean } {
-  const s = seg.replace(/\d+(\.\d+)?\s*%/g, ''); // מנקה אחוזי שומן ("5%") שלא ייחשבו ככמות
+  const s = seg.replace(/\d+(\.\d+)?\s*(?:%|אחוז)/g, ''); // מנקה אחוזי שומן ("5%", "5 אחוז") שלא ייחשבו ככמות
   const mult = s.match(/[x×X]\s*(\d+(\.\d+)?)/);
   const portions = s.match(/(\d+(\.\d+)?)\s*מנ(?:ה|ות)/); // "2 מנות" — מכפיל
   const times = mult ? parseFloat(mult[1]) : (portions ? parseFloat(portions[1]) : 1);
