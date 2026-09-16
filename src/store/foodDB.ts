@@ -177,6 +177,47 @@ function qtyLabel(food: FoodItem, qty: number): string {
   return `${n} ${n === 1 ? lab : (PLURAL[lab] || lab)}`;
 }
 
+interface Hit { food: FoodItem; start: number; end: number }
+
+// כל המאכלים שמופיעים בסגמנט אחד — לא רק אחד. "חזה עוף 200 גרם שעועית ירוקה 100 גרם"
+// זה שני מאכלים גם בלי פסיק ביניהם. חפיפה → השם הספציפי מנצח ("שעועית ירוקה" לא "שעועית").
+function findHits(seg: string, foods: FoodItem[]): Hit[] {
+  const all: Hit[] = [];
+  for (const f of foods) for (const a of f.names) {
+    const i = seg.indexOf(a);
+    if (i !== -1) all.push({ food: f, start: i, end: i + a.length });
+  }
+  all.sort((x, y) => (y.end - y.start) - (x.end - x.start)); // הארוך (הספציפי) ראשון
+  const kept: Hit[] = [];
+  for (const h of all) {
+    if (kept.some(k => h.start < k.end && k.start < h.end)) continue; // חופף לשם ספציפי יותר
+    if (kept.some(k => k.food.id === h.food.id)) continue;            // אותו מאכל בשני כינויים
+    kept.push(h);
+  }
+  return kept.sort((a, b) => a.start - b.start);
+}
+
+// מספר "יתום" שצמוד לשם הבא ("...100 גרם **חצי** תפוח אדמה") שייך למאכל הבא, לא לקודם.
+// כמות עם יחידה מפורשת ("200 גרם") נשארת אצל המאכל שלפניה — ככה כותבים בעברית.
+const QTY_TAIL = /(?:^|\s)(\d+(?:\.\d+)?|חצי|רבע|שליש|שתי|שני|שלוש|שלושה|ארבע|ארבעה)\s*$/;
+
+// חיתוך הסגמנט לפי המאכלים שנמצאו: כל מאכל מקבל את השם שלו ואת מה שנכתב אחריו
+// (והראשון גם את מה שלפניו), כדי שכל אחד יקבל את הכמות שלו ולא של השכן.
+function sliceBy(seg: string, hits: Hit[]): string[] {
+  let carry = '';
+  return hits.map((h, i) => {
+    const from = i === 0 ? 0 : h.start;
+    const to = i + 1 < hits.length ? hits[i + 1].start : seg.length;
+    let part = carry + seg.slice(from, to);
+    carry = '';
+    if (i + 1 < hits.length) {
+      const m = part.match(QTY_TAIL);
+      if (m) { carry = m[1] + ' '; part = part.slice(0, part.length - m[0].length); }
+    }
+    return part;
+  });
+}
+
 // תחשיב מלא: מפרק לטקסט → פריטים עם כמות → קלוריות/מאקרו אמיתיים
 export function estimateFood(text: string, foods: FoodItem[]): FoodEstimate {
   const lines: FoodLine[] = [];
@@ -187,20 +228,21 @@ export function estimateFood(text: string, foods: FoodItem[]): FoodEstimate {
   const segments = (text || '').split(/[\n,.·;]+|\s+ו|\s+עם\s+/).map(s => s.trim()).filter(s => s.length > 1);
 
   for (const seg of segments) {
-    let best: FoodItem | null = null, bestLen = 0;
-    for (const f of foods) for (const a of f.names) {
-      if (a.length > bestLen && seg.includes(a)) { best = f; bestLen = a.length; }
-    }
-    if (!best) {
+    const hits = findHits(seg, foods);
+    if (!hits.length) {
       const stripped = seg.split(/\s+/).filter(w => !FILLER.some(g => w.includes(g)) && !/^\d+['"%]?$/.test(w)).join(' ');
       if (stripped.replace(/[^֐-׿]/g, '').length > 2) notInDB.push(seg.length > 24 ? seg.slice(0, 24) + '…' : seg);
       continue;
     }
-    const { qty, grams } = parseQty(seg, best);
-    const gramsEq = grams ? qty : (best.unit === 'g' ? qty : qty * (best.unitGrams || 100));
-    const macro = best.per100.map(v => Math.round(v * gramsEq / 100)) as [number, number, number, number];
-    lines.push({ name: best.names[0], qty, qtyLabel: grams ? `${qty}ג'` : qtyLabel(best, qty), macro });
-    total.kcal += macro[0]; total.p += macro[1]; total.c += macro[2]; total.f += macro[3];
+    const parts = sliceBy(seg, hits);
+    hits.forEach((h, i) => {
+      const food = h.food;
+      const { qty, grams } = parseQty(parts[i], food);
+      const gramsEq = grams ? qty : (food.unit === 'g' ? qty : qty * (food.unitGrams || 100));
+      const macro = food.per100.map(v => Math.round(v * gramsEq / 100)) as [number, number, number, number];
+      lines.push({ name: food.names[0], qty, qtyLabel: grams ? `${qty}ג'` : qtyLabel(food, qty), macro });
+      total.kcal += macro[0]; total.p += macro[1]; total.c += macro[2]; total.f += macro[3];
+    });
   }
 
   return { lines, total, notInDB: notInDB.slice(0, 4) };

@@ -2,7 +2,13 @@
 // מזהה קטגוריות מזון ומגיב לפי הפרופיל של אבי: חיטוב, גאוט (אלופורינול), יעד חלבון ~130-140 גר'.
 // תמונות: אין ניתוח תמונה מקומי — הילה מבקשת מילת הקשר; ניתוח אמיתי בצ'אט / עם הסנכרון.
 
-interface Cat { label: string; keys: string[]; note?: string; protein?: boolean; macro?: [number, number, number, number] } // macro: קק"ל, חלבון, פחמ', שומן — מנה טיפוסית
+interface Cat { label: string; keys: string[]; note?: string; protein?: boolean; avoid?: string[]; macro?: [number, number, number, number] } // macro: קק"ל, חלבון, פחמ', שומן — מנה טיפוסית
+
+// התאמת קטגוריה: avoid מנטרל ביטוי שרק נראה כמו המילה ('שעועית ירוקה' היא ירק, לא קטנייה)
+const hasCat = (s: string, c: Cat) => {
+  const clean = (c.avoid || []).reduce((acc, a) => acc.split(a).join(' '), s);
+  return c.keys.some(k => clean.includes(k));
+};
 
 const CATS: Cat[] = [
   // ---- חלבון מן החי ----
@@ -22,7 +28,7 @@ const CATS: Cat[] = [
   { label: 'גבינה צהובה', keys: ['צהוב', 'מוצרלה', 'קשקבל', 'גאודה', 'עמק', "צ'דר", 'פרמז'], protein: true, macro: [340, 25, 2, 27], note: 'צהובה — חלבון גבוה אבל שומן ומלח גבוהים. פרוסה-שתיים, לא חופן.' },
 
   // ---- קטניות ----
-  { label: 'קטניות', keys: ['עדשים', 'שעועית', 'חומוס גרגר', 'גרגרי חומוס', 'טופו', 'אדממה', 'מש ', 'פול '], protein: true, macro: [160, 10, 22, 3], note: 'קטניות — חלבון צמחי וסיבים. הפורינים הצמחיים כמעט לא מסכנים גאוט, אז חופשי.' },
+  { label: 'קטניות', keys: ['עדשים', 'שעועית', 'חומוס גרגר', 'גרגרי חומוס', 'טופו', 'אדממה', 'מש ', 'פול '], protein: true, avoid: ['שעועית ירוק'], macro: [160, 10, 22, 3], note: 'קטניות — חלבון צמחי וסיבים. הפורינים הצמחיים כמעט לא מסכנים גאוט, אז חופשי.' },
 
   // ---- פחמימות ----
   { label: 'פחמימה', keys: ['פיתה', 'פיתת', 'לאפה', 'לחם', 'מחמצת', 'אורז', 'פסטה', 'תפוח אדמה', 'תפו"א', 'בטטה', 'קוסקוס', 'פתית', 'טורטיה', 'לחמני', 'באגט', 'קרקר', 'מצה', 'נודל', 'אטריות'], macro: [280, 9, 55, 2], note: 'פחמימה במידה — מחמצת/מלא עדיף. הכי טוב סביב אימון.' },
@@ -83,14 +89,14 @@ export function hilaReview(text: string, photoCount = 0, waterMl = 0, waterGoal 
   // פירוק לשורות/פריטים — מה שלא מזוהה נאמר בפירוש
   const segments = t.split(/[\n,.·;]+|\s+ו/).map(s => s.trim()).filter(s => s.length > 1);
   for (const seg of segments) {
-    const matched = CATS.some(c => c.keys.some(k => seg.includes(k)));
+    const matched = CATS.some(c => hasCat(seg, c));
     if (!matched) {
       const stripped = seg.split(/\s+/).filter(w => !IGNORE.some(ig => w.includes(ig)) && !/^\d+['"]?$/.test(w)).join(' ');
       if (stripped.length > 2) unknown.push(seg.length > 28 ? seg.slice(0, 28) + '…' : seg);
     }
   }
 
-  const hits = CATS.filter(c => c.keys.some(k => t.includes(k)));
+  const hits = CATS.filter(c => hasCat(t, c));
   hits.forEach(c => found.push(c.label));
 
   // חלבון — התמונה הגדולה קודם
