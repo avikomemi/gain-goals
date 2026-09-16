@@ -4,6 +4,8 @@ import { PROGRAM, RoutineDef, Loc, exName, exNote, exStruct, BODY_AREAS, KRAV_TA
 import { useStore, today, WorkoutLog, ExLog } from '../store/store';
 import { nextRoutine, direction, sleepAdvice } from '../store/adi';
 import { heDate } from '../components/bits';
+import { ringBell, primeBell } from '../lib/bell';
+import { keepAwake } from '../lib/wakeLock';
 
 type Phase = 'pick' | 'warmup' | 'live' | 'injury' | 'flex' | 'done' | 'krav' | 'backday' | 'order';
 
@@ -24,33 +26,6 @@ const clampNum = (raw: string, max = 999) => Math.min(max, Math.max(0, parseInt(
 // סולם צבע למאמץ (RPE): ירוק=קל → אדום בוהק=כואב מאוד (סעיף 3)
 const RPE_COLOR: Record<number, string> = { 6: '#16a34a', 7: '#65a30d', 8: '#d97706', 9: '#ea580c', 10: '#d81f2a' };
 const PHASES_PERSIST: Phase[] = ['warmup', 'live', 'flex', 'injury'];
-
-// צלצול סוף-מנוחה: Web Audio (שני צלילים חדים שנשמעים גם מעל מוזיקה) + רטט אם יש
-function ringBell(ac: AudioContext | null) {
-  try {
-    if (ac) {
-      const play = () => {
-        const beep = (at: number, freq: number) => {
-          const osc = ac.createOscillator();
-          const g = ac.createGain();
-          osc.type = 'square';
-          osc.frequency.value = freq;
-          const t0 = ac.currentTime + at;
-          g.gain.setValueAtTime(0.0001, t0);
-          g.gain.exponentialRampToValueAtTime(0.6, t0 + 0.02);
-          g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.34);
-          osc.connect(g); g.connect(ac.destination);
-          osc.start(t0); osc.stop(t0 + 0.36);
-        };
-        beep(0, 880); beep(0.3, 1245); beep(0.6, 880);
-      };
-      // iOS: הקונטקסט עלול להיות מושהה — קודם resume, ורק כשחזר לפעול מנגנים
-      if (ac.state === 'suspended') ac.resume().then(play).catch(() => { /* אין אודיו — ויזואל */ });
-      else play();
-    }
-  } catch { /* אין אודיו — נסתמך על רטט/ויזואל */ }
-  try { navigator.vibrate?.([220, 120, 260]); } catch { /* לא נתמך (iOS) */ }
-}
 
 // שחזור אימון פעיל שנשמר (סעיף 12) — מחזיר null אם אין/פגום/ישן/לא-אימון-פעיל
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -99,23 +74,27 @@ export default function Workout() {
   const [painArea, setPainArea] = useState<string>('');
   const [painLevel, setPainLevel] = useState<number | null>(null);
 
-  const audioRef = useRef<AudioContext | null>(null);
   const restSec = db.restSec ?? 90;
+  const [soundBlocked, setSoundBlocked] = useState(false); // הצלצול לא הצליח לנגן — מציגים הסבר במקום להשתתק
 
-  // יצירת/העָרַת AudioContext — חייב לקרות בתוך מחוות משתמש (דרישת iOS)
-  const ensureAudio = () => {
-    try {
-      if (!audioRef.current) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const AC = window.AudioContext || (window as any).webkitAudioContext;
-        if (AC) audioRef.current = new AC();
-      }
-      if (audioRef.current?.state === 'suspended') audioRef.current.resume();
-    } catch { /* אין אודיו — רטט/ויזואל בלבד */ }
-  };
+  // צלצול + עדכון מצב הצליל (כדי שנדע להגיד לאבי "הצליל חסום" ולא סתם לשתוק)
+  const ring = () => { void ringBell().then(ok => setSoundBlocked(!ok)); };
+
+  // שורת בדיקת צליל — לחיצה אחת מחממת את האודיו ומשמיעה בדיוק את צליל סוף הטיימר,
+  // כך שאפשר לוודא לפני האימון שהוא נשמע (ולא לגלות את זה באמצע המנוחה)
+  const soundRow = (
+    <div className="spread" style={{ alignItems: 'center', marginTop: 8, fontSize: 11.5, color: soundBlocked ? 'var(--danger)' : 'var(--dim)' }}>
+      <span style={{ flex: 1, minWidth: 0, lineHeight: 1.45 }}>
+        {soundBlocked
+          ? '🔇 הצליל נחסם. באייפון: מתג ההשתקה בצד — למטה, ובקרת עוצמה למעלה. אחר כך לחץ בדיקה.'
+          : '🔔 צליל סוף טיימר'}
+      </span>
+      <button className="pill" style={{ flex: '0 0 auto' }} onClick={() => { void primeBell().then(ring); }}>בדיקת צליל</button>
+    </div>
+  );
 
   // מקבל את זמן המנוחה של התרגיל הנוכחי (פר-תרגיל); נפילה לברירת-המחדל הגלובלית
-  const startRest = (sec: number = restSec) => { ensureAudio(); setRestDone(false); setNow(Date.now()); setRestEndAt(Date.now() + sec * 1000); };
+  const startRest = (sec: number = restSec) => { void primeBell(); setRestDone(false); setNow(Date.now()); setRestEndAt(Date.now() + sec * 1000); };
 
   // שעון מנוחה מבוסס-חותמת-זמן: מתקתק כל 250ms (מדויק, שורד רענון)
   useEffect(() => {
@@ -124,9 +103,20 @@ export default function Workout() {
     return () => clearInterval(iv);
   }, [restEndAt]);
 
+  // כל עוד טיימר רץ — מסך דלוק (אחרת הדפדפן מקפיא את הטיימר ואין צלצול)
+  // וגם: חזרה למסך אחרי הקפאה מעדכנת מיד את השעון, כדי שהצלצול לא יחכה לתיקתוק הבא
+  useEffect(() => {
+    const active = !!restEndAt || !!flexTimer;
+    keepAwake(active);
+    if (!active) return;
+    const wake = () => { if (document.visibilityState === 'visible') setNow(Date.now()); };
+    document.addEventListener('visibilitychange', wake);
+    return () => { document.removeEventListener('visibilitychange', wake); keepAwake(false); };
+  }, [restEndAt, flexTimer]);
+
   // צלצול כשהמנוחה נגמרה (סעיף 2) — כולל צלצול מיידי בחזרה אם הזמן כבר עבר (סעיף 7ב)
   useEffect(() => {
-    if (restEndAt && now >= restEndAt) { ringBell(audioRef.current); setRestEndAt(null); setRestDone(true); }
+    if (restEndAt && now >= restEndAt) { ring(); setRestEndAt(null); setRestDone(true); }
   }, [now, restEndAt]);
 
   // סעיף 6 — טיימר מתיחה: תיקתוק + צלצול בסיום, ומסמן את המתיחה כבוצעה
@@ -137,7 +127,7 @@ export default function Workout() {
   }, [flexTimer]);
   useEffect(() => {
     if (flexTimer && now >= flexTimer.endAt) {
-      ringBell(audioRef.current);
+      ring();
       setFlexChecked(c => ({ ...c, [flexTimer.i]: true }));
       setFlexTimer(null);
     }
@@ -457,6 +447,7 @@ export default function Workout() {
           </div>
         </div>
 
+        {soundRow}
         {restLeft > 0 && (
           <div className="alert mt12" style={{ borderColor: 'var(--acc)' }}>⏱️ <span>מנוחה: <b className="num">{Math.floor(restLeft / 60)}:{String(restLeft % 60).padStart(2, '0')}</b> <button className="pill" style={{ marginInlineStart: 10 }} onClick={() => { setRestEndAt(null); setRestDone(false); }}>דלג</button></span></div>
         )}
@@ -557,7 +548,7 @@ export default function Workout() {
                 </span>
                 {timed && (
                   <button className="pill" style={{ flex: '0 0 auto' }}
-                    onClick={() => { ensureAudio(); if (running) { setFlexTimer(null); } else { setNow(Date.now()); setFlexTimer({ i, endAt: Date.now() + parseInt(secs) * 1000 }); } }}>
+                    onClick={() => { void primeBell(); if (running) { setFlexTimer(null); } else { setNow(Date.now()); setFlexTimer({ i, endAt: Date.now() + parseInt(secs) * 1000 }); } }}>
                     {running ? `⏱️ ${left}` : `▶ ${secs}שנ'`}
                   </button>
                 )}
@@ -567,6 +558,7 @@ export default function Workout() {
             );
           })}
         </div>
+        {soundRow}
         {routine.finisher && (
           <div className="card mt12" style={{ borderColor: 'rgba(15,118,110,.35)' }}>
             <b style={{ fontWeight: 900, fontSize: 14 }}>{routine.finisher.name}</b>
