@@ -26,8 +26,8 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'tuna', names: ['טונה'], per100: [116, 26, 0, 1], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
   { id: 'chicken', names: ['חזה עוף', 'עוף', 'פרגיות', 'פרגית', 'פרגי', 'שניצל'], per100: [165, 31, 0, 3.6], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
   { id: 'whey', names: ['אבקת חלבון', 'שייק חלבון', 'וויי', 'פרוטאין', 'סקופ'], per100: [380, 75, 8, 6], unit: 'unit', unitGrams: 30, unitLabel: 'מנה', def: 1, gout: 'ok', src: 'תווית' },
-  // Müller Protein 25 (וניל, 0% שומן, ללא תוספת סוכר): 400 מ"ל = 25 גר' חלבון. per100 = פר 100 מ"ל, הערכה מהחזית עד שתגיע הטבלה האחורית.
-  { id: 'proteindrink', names: ['משקה חלבון', 'מולר פרוטאין', 'müller protein'], per100: [37, 6.3, 3, 0], unit: 'unit', unitGrams: 400, unitLabel: 'בקבוק', def: 1, gout: 'ok', src: 'הערכה' },
+  // משקה חלבון מוכן (מולר פרוטאין וכו', 1.5% שומן): בקבוק 400 מ"ל = 25 גר' חלבון. per100 = פר 100 מ"ל, הערכה.
+  { id: 'proteindrink', names: ['משקה חלבון', 'מולר פרוטאין', 'müller protein'], per100: [51, 6.3, 3, 1.5], unit: 'unit', unitGrams: 400, unitLabel: 'בקבוק', def: 1, gout: 'ok', src: 'הערכה' },
   { id: 'steak', names: ['סטייק', 'סטיק', 'אנטריקוט', 'בשר בקר', 'בקר'], per100: [271, 25, 0, 19], unit: 'g', def: 150, gout: 'high', src: 'USDA' },
   { id: 'multiyog', names: ['יוגורט מולטי', 'מולטי'], per100: [71, 6.5, 4.6, 3], unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
 
@@ -38,8 +38,9 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'challah', names: ['חלה', 'בריוש'], per100: [290, 9, 50, 5.5], unit: 'unit', unitGrams: 40, unitLabel: 'פרוסה', def: 2, src: 'USDA' },
   { id: 'rice', names: ['אורז'], per100: [130, 2.7, 28, 0.3], unit: 'g', def: 150, src: 'USDA' },
   { id: 'pasta', names: ['פסטה', 'אטריות', 'נודל'], per100: [157, 5.8, 31, 0.9], unit: 'g', def: 150, src: 'USDA' },
-  { id: 'potato', names: ['תפוח אדמה', 'תפו"א', 'תפוא'], per100: [87, 1.9, 20, 0.1], unit: 'g', def: 150, src: 'USDA' },
-  { id: 'sweetpotato', names: ['בטטה'], per100: [90, 2, 21, 0.1], unit: 'g', def: 150, src: 'USDA' },
+  // unit (לא g): כותבים "2 תפוחי אדמה" = 2 יחידות. משקל מפורש ("200 גרם") עדיין גובר דרך parseQty.
+  { id: 'potato', names: ['תפוח אדמה', 'תפוחי אדמה', 'תפו"א', 'תפוא'], per100: [87, 1.9, 20, 0.1], unit: 'unit', unitGrams: 150, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'sweetpotato', names: ['בטטה'], per100: [90, 2, 21, 0.1], unit: 'unit', unitGrams: 130, unitLabel: 'יח', def: 1, src: 'USDA' },
   { id: 'couscous', names: ['קוסקוס', 'פתיתים', 'פתית'], per100: [112, 3.8, 23, 0.2], unit: 'g', def: 150, src: 'USDA' },
   { id: 'oats', names: ['שיבולת שועל', 'קוואקר', 'דייסה'], per100: [389, 17, 66, 7], unit: 'g', def: 40, src: 'USDA' },
 
@@ -126,6 +127,9 @@ export const SEED_FOODS: FoodItem[] = [
 
   // ---- חטיפים / שתייה ----
   { id: 'bamba', names: ['במבה'], per100: [530, 13, 49, 33], unit: 'g', def: 50, src: 'תווית' },
+  { id: 'bisli', names: ['ביסלי'], per100: [483, 9, 63, 22], unit: 'unit', unitGrams: 55, unitLabel: 'שקית', def: 1, src: 'הערכה' },
+  // מאפה מתוק (רוגלך/עוגה/בורקס מתוק): שם ספציפי יותר מ"לחם" → גובר במטצ'ר. הערכה לחתיכה ~80 גר'.
+  { id: 'pastry', names: ['מאפה מתוק', 'מאפה', 'רוגלך', 'עוגה'], per100: [380, 6, 52, 16], unit: 'unit', unitGrams: 80, unitLabel: 'יח', def: 1, src: 'הערכה' },
   { id: 'coffee', names: ['קפה שחור', 'קפה', 'אספרסו', 'נס '], per100: [2, 0.1, 0, 0], unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, src: 'USDA' },
   { id: 'coffeemilk', names: ['קפה הפוך', 'הפוך', 'קפוצ\'ינו', 'לאטה'], per100: [45, 2.4, 3.4, 1.6], unit: 'unit', unitGrams: 200, unitLabel: 'כוס', def: 1, src: 'הערכה' },
   { id: 'cola', names: ['קולה', 'קוקה', 'ספרייט', 'פאנטה'], per100: [42, 0, 10.6, 0], unit: 'unit', unitGrams: 330, unitLabel: 'פחית', def: 1, src: 'USDA' },
@@ -149,11 +153,16 @@ const FILLER = ['עם', 'של', 'ללא', 'בלי', 'סוכר', 'מלח', 'שמ�
 // grams=true כשנכתב "גרם"/"גר'" במפורש → המספר הוא גרמים, גם לפריטי-יחידה (חומוס ממרח, פרוסה שקולה וכו').
 function parseQty(seg: string, food: FoodItem): { qty: number; grams: boolean } {
   const s = seg.replace(/\d+(\.\d+)?\s*%/g, ''); // מנקה אחוזי שומן ("5%") שלא ייחשבו ככמות
-  const gramsMode = /גרם|גר['׳]/.test(s);
   const mult = s.match(/[x×X]\s*(\d+(\.\d+)?)/);
+  const portions = s.match(/(\d+(\.\d+)?)\s*מנ(?:ה|ות)/); // "2 מנות" — מכפיל
+  const times = mult ? parseFloat(mult[1]) : (portions ? parseFloat(portions[1]) : 1);
+  // משקל מפורש: המספר הצמוד ל"גרם/גר'" הוא הגרמים (לא המספר הראשון במשפט), כפול מספר המנות.
+  const gramNum = s.match(/(\d+(\.\d+)?)\s*(?:גרם|גר['׳])/);
+  if (gramNum) return { qty: parseFloat(gramNum[1]) * times, grams: true };
   if (mult) return { qty: parseFloat(mult[1]), grams: false };
+  if (portions) return { qty: parseFloat(portions[1]), grams: false };
   const num = s.match(/(\d+(\.\d+)?)/);
-  if (num) return { qty: parseFloat(num[1]), grams: gramsMode };
+  if (num) return { qty: parseFloat(num[1]), grams: false };
   if (/חצי/.test(seg)) return { qty: food.def * 0.5, grams: false };
   return { qty: food.def, grams: false };
 }
@@ -175,7 +184,7 @@ export function estimateFood(text: string, foods: FoodItem[]): FoodEstimate {
   const total = { kcal: 0, p: 0, c: 0, f: 0 };
   // מפריד: פסיק/נקודה/שורה, וגם מילת החיבור "ו" (הו' תמיד תחילית — נבלעת עם המפריד).
   // "או" לא מפריד — הוא "או" (אותה מנה בשני שמות), כדי לא לספור כפול.
-  const segments = (text || '').split(/[\n,.·;]+|\s+ו/).map(s => s.trim()).filter(s => s.length > 1);
+  const segments = (text || '').split(/[\n,.·;]+|\s+ו|\s+עם\s+/).map(s => s.trim()).filter(s => s.length > 1);
 
   for (const seg of segments) {
     let best: FoodItem | null = null, bestLen = 0;
