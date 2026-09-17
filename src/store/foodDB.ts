@@ -51,6 +51,9 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'oliveoil', names: ['שמן זית', 'שמן'], per100: [884, 0, 0, 100], unit: 'unit', unitGrams: 13.5, unitLabel: 'כף', def: 1, src: 'USDA' },
   { id: 'peanutbutter', names: ['חמאת בוטנים'], per100: [588, 25, 20, 50], unit: 'unit', unitGrams: 16, unitLabel: 'כף', def: 1, src: 'USDA' },
   { id: 'nuts', names: ['שקדים', 'אגוזים', 'קשיו', 'בוטנים', 'פיסטוק', 'שקד', 'אגוז'], per100: [579, 21, 22, 50], unit: 'g', def: 28, src: 'USDA' },
+  // פקאן ומלך שמנוניים בהרבה מהשקד (691/654 מול 579) — שם ספציפי גובר על 'אגוז' הכללי
+  { id: 'pecan', names: ['אגוזי פקאן', 'אגוז פקאן', 'פקאנים', 'פקאן'], per100: [691, 9.2, 14, 72], unit: 'g', def: 28, gout: 'ok', src: 'USDA' },
+  { id: 'walnut', names: ['אגוזי מלך', 'אגוז מלך'], per100: [654, 15, 14, 65], unit: 'g', def: 28, gout: 'ok', src: 'USDA' },
 
   // ---- ירקות / פירות ----
   { id: 'salad', names: ['סלט ירקות', 'סלט', 'ירקות'], per100: [25, 1, 5, 0.2], unit: 'g', def: 200, src: 'USDA' },
