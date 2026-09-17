@@ -19,8 +19,8 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'pro', names: ['יוגורט פרו'], per100: [59, 9, 4, 1], unit: 'g', def: 200, gout: 'ok', src: 'תווית' }, // לא 'פרו' בודד — מתנגש עם "פרוסות"
   { id: 'ski', names: ['גבינת סקי', 'סקי'], per100: [100, 6, 5, 5], unit: 'g', def: 150, gout: 'ok', src: 'הערכה' },
   { id: 'cottage', names: ['קוטג'], per100: [95, 11, 1.5, 5], unit: 'g', def: 125, gout: 'ok', src: 'OFF' },
-  { id: 'white5', names: ['גבינה לבנה', 'לבנה 5', 'לבנה 3', 'לבנה 9', 'גבינה רזה', 'גבינה 5', 'גבינה 3', 'גבינה 9'], per100: [98, 9, 4.3, 5], unit: 'g', def: 100, gout: 'ok', src: 'OFF' },
-  { id: 'bulgarit', names: ['בולגרית', 'פטה', 'צפתית', 'פטא'], per100: [130, 11, 2, 9], unit: 'g', def: 50, gout: 'ok', src: 'תווית' },
+  { id: 'white5', names: ['גבינה לבנה', 'לבנה 5', 'לבנה 3', 'לבנה 9', 'גבינה רזה', 'גבינה 5', 'גבינה 3', 'גבינה 9', 'גבינה'], per100: [98, 9, 4.3, 5], unit: 'g', def: 100, gout: 'ok', src: 'OFF' },
+  { id: 'bulgarit', names: ['גבינה בולגרית', 'גבינה צפתית', 'בולגרית', 'פטה', 'צפתית', 'פטא'], per100: [130, 11, 2, 9], unit: 'g', def: 50, gout: 'ok', src: 'תווית' },
   { id: 'yellow', names: ['גבינה צהובה', 'צהובה', 'עמק', 'גאודה', 'מוצרלה', 'קשקבל'], per100: [350, 25, 1, 27], unit: 'g', def: 30, gout: 'ok', src: 'USDA' },
   { id: 'egg', names: ['ביצה', 'ביצים', 'חביתה', 'אומלט'], per100: [143, 13, 0.7, 10], unit: 'unit', unitGrams: 50, unitLabel: 'ביצה', def: 2, gout: 'ok', src: 'USDA' },
   { id: 'tuna', names: ['טונה'], per100: [116, 26, 0, 1], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
@@ -32,7 +32,7 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'multiyog', names: ['יוגורט מולטי', 'מולטי'], per100: [71, 6.5, 4.6, 3], unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
 
   // ---- פחמימות ----
-  { id: 'pita', names: ['פיתה', 'פיתת'], per100: [275, 9, 55, 1.2], unit: 'unit', unitGrams: 60, unitLabel: 'פיתה', def: 1, src: 'USDA' },
+  { id: 'pita', names: ['פיתה', 'פיתת', 'פיתות'], per100: [275, 9, 55, 1.2], unit: 'unit', unitGrams: 60, unitLabel: 'פיתה', def: 1, src: 'USDA' },
   { id: 'bread', names: ['פרוסת לחם', 'לחם מלא', 'לחם', 'מחמצת', 'פרוסה'], per100: [247, 13, 41, 3.4], unit: 'unit', unitGrams: 30, unitLabel: 'פרוסה', def: 2, src: 'USDA' },
   { id: 'homebread', names: ['לחם ביתי'], per100: [265, 8, 49, 3.5], unit: 'unit', unitGrams: 85, unitLabel: 'פרוסה', def: 2, src: 'תווית' },
   { id: 'challah', names: ['חלה', 'בריוש'], per100: [290, 9, 50, 5.5], unit: 'unit', unitGrams: 40, unitLabel: 'פרוסה', def: 2, src: 'USDA' },
@@ -126,7 +126,7 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'knafeh', names: ['כנאפה', 'קנאפה', 'כנאפ'], per100: [370, 6, 47, 18], unit: 'g', def: 150, gout: 'ok', src: 'הערכה' },
 
   // ---- חטיפים / שתייה ----
-  { id: 'bamba', names: ['במבה'], per100: [530, 13, 49, 33], unit: 'g', def: 50, src: 'תווית' },
+  { id: 'bamba', names: ['במבה', 'במבות'], per100: [530, 13, 49, 33], unit: 'g', def: 50, src: 'תווית' },
   { id: 'bisli', names: ['ביסלי'], per100: [483, 9, 63, 22], unit: 'unit', unitGrams: 55, unitLabel: 'שקית', def: 1, src: 'הערכה' },
   // מאפה מתוק (רוגלך/עוגה/בורקס מתוק): שם ספציפי יותר מ"לחם" → גובר במטצ'ר. הערכה לחתיכה ~80 גר'.
   { id: 'pastry', names: ['מאפה מתוק', 'מאפה', 'רוגלך', 'עוגה'], per100: [380, 6, 52, 16], unit: 'unit', unitGrams: 80, unitLabel: 'יח', def: 1, src: 'הערכה' },
@@ -149,21 +149,48 @@ export interface FoodEstimate { lines: FoodLine[]; total: { kcal: number; p: num
 
 const FILLER = ['עם', 'של', 'ללא', 'בלי', 'סוכר', 'מלח', 'שמן', 'בבוקר', 'בערב', 'בצהריים', 'קופסא', 'קופסה', 'גרם', 'גר', "ג'", 'כוס', 'בקבוק', 'מים', 'קצת', 'הרבה', 'ועוד', 'גדול', 'קטן'];
 
-// כמה מהפריט הזה — מספר צמוד, "x2", או "חצי"; אחרת ברירת-המחדל.
-// grams=true כשנכתב "גרם"/"גר'" במפורש → המספר הוא גרמים, גם לפריטי-יחידה (חומוס ממרח, פרוסה שקולה וכו').
-function parseQty(seg: string, food: FoodItem): { qty: number; grams: boolean } {
-  const s = seg.replace(/\d+(\.\d+)?\s*(?:%|אחוז)/g, ''); // מנקה אחוזי שומן ("5%", "5 אחוז") שלא ייחשבו ככמות
+// מספרים במילים — "שתי במבות", "חביתה משתי ביצים". סדר: הארוך קודם (שתיים לפני שתי).
+const WORD_NUM: Record<string, number> = {
+  'שתיים': 2, 'שניים': 2, 'שלושה': 3, 'שלוש': 3, 'ארבעה': 4, 'ארבע': 4, 'חמישה': 5, 'חמש': 5,
+  'שישה': 6, 'שש': 6, 'שבעה': 7, 'שבע': 7, 'שמונה': 8, 'תשעה': 9, 'תשע': 9, 'עשרה': 10, 'עשר': 10,
+  'שתי': 2, 'שני': 2, 'אחת': 1, 'אחד': 1,
+};
+// מילות-יחידה: מסמנות שהמספר סופר מנות ולא גרמים
+const UNIT_WORD = /פרוס|כפות|כפית|כף|כוס|קערי|קערה|צלחת|חופן|שקית|יחיד|חתיכ|נתח|קופס/;
+const WORD_NUM_RE = new RegExp(`(?:^|\\s)[מובכלה]?(${Object.keys(WORD_NUM).join('|')})(?=\\s|$)`);
+
+// כמה מהפריט הזה — מספר, "x2", "2 מנות", מספר במילים, או "חצי"; אחרת ברירת-המחדל.
+// grams=true כשנכתב "גרם"/"גר'" במפורש → המספר הוא גרמים, גם לפריטי-יחידה.
+// nameAt = איפה שם המאכל יושב בתוך הקטע, כדי להבדיל בין ספירה למשקל (ראה למטה).
+function parseQty(seg: string, food: FoodItem, nameAt = -1): { qty: number; grams: boolean } {
+  // מנקה אחוזי שומן ("5%", "5 אחוז") שלא ייחשבו ככמות — ברווחים, כדי לא להזיז מיקומים
+  const s = seg.replace(/\d+(\.\d+)?\s*(?:%|אחוז)/g, m => ' '.repeat(m.length));
+  // "מנה" = היחידה הטבעית של הפריט: לפריט-גרמים זו מנת ברירת-המחדל, לפריט-יחידה זו יחידה אחת.
+  // בלי זה "3 חזה עוף" נספר כ-3 גרם (5 קק"ל) במקום 3 מנות.
+  const portions = (n: number) => ({ qty: food.unit === 'g' ? n * food.def : n, grams: false });
   const mult = s.match(/[x×X]\s*(\d+(\.\d+)?)/);
-  const portions = s.match(/(\d+(\.\d+)?)\s*מנ(?:ה|ות)/); // "2 מנות" — מכפיל
-  const times = mult ? parseFloat(mult[1]) : (portions ? parseFloat(portions[1]) : 1);
+  const dishes = s.match(/(\d+(\.\d+)?)\s*מנ(?:ה|ות)/);
+  const times = mult ? parseFloat(mult[1]) : (dishes ? parseFloat(dishes[1]) : 1);
   // משקל מפורש: המספר הצמוד ל"גרם/גר'" הוא הגרמים (לא המספר הראשון במשפט), כפול מספר המנות.
   const gramNum = s.match(/(\d+(\.\d+)?)\s*(?:גרם|גר['׳])/);
   if (gramNum) return { qty: parseFloat(gramNum[1]) * times, grams: true };
-  if (mult) return { qty: parseFloat(mult[1]), grams: false };
-  if (portions) return { qty: parseFloat(portions[1]), grams: false };
+  if (mult) return portions(parseFloat(mult[1]));
+  if (dishes) return portions(parseFloat(dishes[1]));
+  const word = s.match(WORD_NUM_RE);
+  if (word) return portions(WORD_NUM[word[1]]);
   const num = s.match(/(\d+(\.\d+)?)/);
-  if (num) return { qty: parseFloat(num[1]), grams: false };
+  if (num) {
+    const n = parseFloat(num[1]);
+    // מספר *לפני* השם הוא ספירה ("3 חזה עוף" = 3 מנות); *אחרי* השם הוא משקל ("חזה עוף 200").
+    // מספר גדול לפני השם הוא עדיין משקל ("50 במבה") — אף אחד לא אוכל 50 מנות.
+    // ספירה רק כשיש מה לספור: מנה מלאה (50 גר'+) או מילת-יחידה לפני השם ("2 פרוסות
+    // גבינה צהובה"). אחרת "10 שקדים" היה הופך ל-10 חופנים במקום 10 שקדים.
+    const countable = food.def >= 50 || UNIT_WORD.test(s.slice(0, nameAt < 0 ? 0 : nameAt));
+    if (nameAt >= 0 && (num.index ?? 0) < nameAt && n <= 10 && countable) return portions(n);
+    return { qty: n, grams: false };
+  }
   if (/חצי/.test(seg)) return { qty: food.def * 0.5, grams: false };
+  if (/(?:^|\s)רבע/.test(seg)) return { qty: food.def * 0.25, grams: false };
   return { qty: food.def, grams: false };
 }
 
@@ -203,18 +230,19 @@ const QTY_TAIL = /(?:^|\s)(\d+(?:\.\d+)?|חצי|רבע|שליש|שתי|שני|ש
 
 // חיתוך הסגמנט לפי המאכלים שנמצאו: כל מאכל מקבל את השם שלו ואת מה שנכתב אחריו
 // (והראשון גם את מה שלפניו), כדי שכל אחד יקבל את הכמות שלו ולא של השכן.
-function sliceBy(seg: string, hits: Hit[]): string[] {
+function sliceBy(seg: string, hits: Hit[]): { text: string; nameAt: number }[] {
   let carry = '';
   return hits.map((h, i) => {
     const from = i === 0 ? 0 : h.start;
     const to = i + 1 < hits.length ? hits[i + 1].start : seg.length;
+    const nameAt = carry.length + (h.start - from);
     let part = carry + seg.slice(from, to);
     carry = '';
     if (i + 1 < hits.length) {
       const m = part.match(QTY_TAIL);
       if (m) { carry = m[1] + ' '; part = part.slice(0, part.length - m[0].length); }
     }
-    return part;
+    return { text: part, nameAt };
   });
 }
 
@@ -237,7 +265,7 @@ export function estimateFood(text: string, foods: FoodItem[]): FoodEstimate {
     const parts = sliceBy(seg, hits);
     hits.forEach((h, i) => {
       const food = h.food;
-      const { qty, grams } = parseQty(parts[i], food);
+      const { qty, grams } = parseQty(parts[i].text, food, parts[i].nameAt);
       const gramsEq = grams ? qty : (food.unit === 'g' ? qty : qty * (food.unitGrams || 100));
       const macro = food.per100.map(v => Math.round(v * gramsEq / 100)) as [number, number, number, number];
       lines.push({ name: food.names[0], qty, qtyLabel: grams ? `${qty}ג'` : qtyLabel(food, qty), macro });
