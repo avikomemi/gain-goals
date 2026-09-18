@@ -36,7 +36,8 @@ export interface DB {
   foods?: FoodItem[]; // מסד תזונה אישי (ערכים פר-100-גרם) — נזרע מ-SEED_FOODS, גדל עם הזמן
   restSec?: number; // ברירת-מחדל גלובלית לזמן מנוחה (שניות) — נפילה לתרגילים שלא הוגדרו פרטנית
   restByEx?: Record<string, number>; // זמן מנוחה פר-תרגיל (exerciseId → שניות) — גובר על restSec
-  waterGoal?: number; // מ"ל ליום — יעד אישי, ניתן לשינוי בדשבורד
+  waterGoal?: number; // מ"ל ליום — השדה הישן, נשמר לתאימות; היעד החי יושב ב-goals
+  goals?: Partial<import('./goals').Goals>; // היעדים שאבי קבע (מה שלא נקבע — ברירת מחדל)
   startDate?: string; // היום שבו אבי התחיל — כל הסטטיסטיקות נמדדות מכאן, לא לפני
   updatedAt?: string; // חותמת שינוי אחרון — לסנכרון ענן (המעודכן מנצח)
   fitbit?: { connected: boolean; connectedAt?: string; scope?: string; fitbitUserId?: string; lastSync?: string }; // סטטוס חיבור Fitbit (הטוקן עצמו בשרת בלבד)

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore, today, daysAgo } from '../store/store';
 import { alerts, nextSteps, nextRoutine, weeklyAvgWeights, lastWaist, streakWeeksNoInjuryStop, currentWeekWorkouts, sleepAdvice, weeklyReviewDue, reviewDigest } from '../store/adi';
 import { PROGRAM } from '../data/program';
+import { getGoals, clampGoal } from '../store/goals';
 import { PulseRing, Alerts, heDate } from '../components/bits';
 
 function greeting(): string {
@@ -25,7 +26,7 @@ export default function Dashboard() {
   const nr = nextRoutine(db);
   const routine = PROGRAM.find(p => p.key === nr)!;
   const steps = nextSteps(db);
-  const goal = db.waterGoal ?? 1500;
+  const goal = getGoals(db).waterMl;
   const ml = db.water.find(w => w.date === today())?.ml ?? 0;
   const addWater = (amt: number) => update(d => {
     let e = d.water.find(w => w.date === today());
@@ -33,7 +34,7 @@ export default function Dashboard() {
     e.ml = Math.max(0, (e.ml || 0) + amt); // גם 0 נשאר רשום — היסטוריה לא נמחקת
     return d;
   });
-  const setGoal = (amt: number) => update(d => { d.waterGoal = Math.max(500, Math.min(4000, (d.waterGoal ?? 1500) + amt)); return d; });
+  const setGoal = (amt: number) => update(d => { d.goals = { ...d.goals, waterMl: clampGoal('waterMl', getGoals(d).waterMl + amt) }; return d; });
   const pct = Math.min(100, Math.round((ml / goal) * 100));
 
   const lastSleep = db.sleep && db.sleep.length ? db.sleep[db.sleep.length - 1] : undefined;

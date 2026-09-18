@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { useStore, today, hydrate, WorkoutLog, ExLog } from '../store/store';
 import { hilaReview } from '../store/hila';
 import { estimateFood } from '../store/foodDB';
+import { getGoals } from '../store/goals';
 import { stepsKcal } from '../store/adi';
 import { supabase } from '../store/cloud';
 
@@ -277,7 +278,7 @@ export default function Journal() {
 
         {(foodToday?.text || foodToday?.photos?.length) ? (
           <HilaResponse text={foodToday?.text || ''} photoCount={foodToday?.photos?.length || 0}
-            waterMl={db.water.find(w => w.date === today())?.ml ?? 0} waterGoal={db.waterGoal ?? 1500} title="תגובה להיום" date={today()} />
+            waterMl={db.water.find(w => w.date === today())?.ml ?? 0} waterGoal={getGoals(db).waterMl} title="תגובה להיום" date={today()} />
         ) : null}
 
         <div className="h-sec">✅ משימות כיול</div>
@@ -434,7 +435,8 @@ function WorkoutEditor({ w, onSave, onDelete, onCancel }: { w: WorkoutLog; onSav
 /* ============ תגובת הילה (משותף: יומן היום + עריכת יום קודם) ============ */
 function HilaResponse({ text, photoCount, waterMl, waterGoal, title, date }: { text: string; photoCount: number; waterMl: number; waterGoal: number; title: string; date: string }) {
   const { db } = useStore();
-  const rev = hilaReview(text, photoCount, waterMl, waterGoal);
+  const g = getGoals(db);
+  const rev = hilaReview(text, photoCount, waterMl, waterGoal, g.protein);
   const est = estimateFood(text, db.foods || []);
   const hasNums = est.lines.length > 0;
   const act = db.fitbit?.connected ? stepsKcal(db, date) : null; // צעדים→קלוריות מ-Fitbit לאותו יום
@@ -450,7 +452,7 @@ function HilaResponse({ text, photoCount, waterMl, waterGoal, title, date }: { t
       {hasNums && (
         <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
           <span className="pill">🔥 ~<b className="num">{est.total.kcal}</b> קק"ל</span>
-          <span className="pill">חלבון ~<b className="num">{est.total.p}</b>/135 גר'</span>
+          <span className="pill">חלבון ~<b className="num">{est.total.p}</b>/{g.protein} גר'</span>
           <span className="pill">פחמ' ~<b className="num">{est.total.c}</b> גר'</span>
           <span className="pill">שומן ~<b className="num">{est.total.f}</b> גר'</span>
         </div>
@@ -463,7 +465,7 @@ function HilaResponse({ text, photoCount, waterMl, waterGoal, title, date }: { t
       )}
       {hasNums && (
         <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 6 }}>
-          לפי ערכים אמיתיים פר-100-גרם והכמויות שציינת (בלי מספר — מנה טיפוסית). היעדים שלך: ~1,800-2,000 קק"ל · חלבון 130-140 · שומן 60-70.
+          לפי ערכים אמיתיים פר-100-גרם והכמויות שציינת (בלי מספר — מנה טיפוסית). היעדים שלך: ~{(g.kcal - 100).toLocaleString('he-IL')}-{(g.kcal + 100).toLocaleString('he-IL')} קק"ל · חלבון {g.protein} · שומן {g.fat}.
         </div>
       )}
       {est.notInDB.length > 0 && (
@@ -576,7 +578,7 @@ function FoodDayEditor({ date, onClose }: { date: string; onClose: () => void })
       </div>
 
       {(text.trim() || photos.length) ? (
-        <HilaResponse text={text} photoCount={photos.length} waterMl={waterMl} waterGoal={db.waterGoal ?? 1500} title={dateLabel(date)} date={date} />
+        <HilaResponse text={text} photoCount={photos.length} waterMl={waterMl} waterGoal={getGoals(db).waterMl} title={dateLabel(date)} date={date} />
       ) : null}
 
       <button className="ghost mt16" style={{ width: '100%' }} onClick={onClose}>← חזרה להיסטוריה</button>

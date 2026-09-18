@@ -3,6 +3,7 @@
 // כאבים וכיול. אין כאן טקסטים קבועים — כל שורה נובעת ממספר, וכל דגל נושא בעלים.
 import { DB, today, daysAgo } from './store';
 import { estimateFood, mergeFoods } from './foodDB';
+import { getGoals } from './goals';
 
 export interface ReviewMetric { label: string; value: string; target?: string; status: 'good' | 'warn' | 'bad' }
 export interface ReviewFlag { from: string; title: string; body: string; sev: 'red' | 'warn' }
@@ -36,7 +37,8 @@ export function fullReview(db: DB, days = 21): FullReview {
   const water = db.water.filter(w => inRange(w.date, from, to) && (w.ml || 0) > 0);
   const foodDays = db.food.filter(f => inRange(f.date, from, to) && (f.text || '').trim().length > 2);
   const pains = db.injuries.filter(j => inRange(j.date, from, to));
-  const waterGoal = db.waterGoal ?? 1500;
+  const g = getGoals(db);
+  const waterGoal = g.waterMl;
   const sleep = (db.sleep || []).filter(x => inRange(x.date, from, to) && x.minutes > 0);
   const sleepAvg = sleep.length ? Math.round(sleep.reduce((a, x) => a + x.minutes, 0) / sleep.length) : 0;
   const hhmm = (min: number) => `${Math.floor(min / 60)}:${String(min % 60).padStart(2, '0')}`;
@@ -69,13 +71,13 @@ export function fullReview(db: DB, days = 21): FullReview {
   const lastWaist = waists[waists.length - 1] || db.waists[db.waists.length - 1];
 
   const metrics: ReviewMetric[] = [
-    { label: 'אימונים', value: `${workouts.length} · ${perWeek.toFixed(1)} בשבוע`, target: '3 בשבוע', status: perWeek >= 2.5 ? 'good' : perWeek >= 1.8 ? 'warn' : 'bad' },
-    { label: 'שקילות', value: lastWeight ? `${weights.length} · אחרונה ${lastWeight.kg} ק"ג לפני ${daysSinceWeigh} ימים` : 'אף אחת', target: '2-3 בשבוע', status: weighPerWeek >= 2 ? 'good' : weighPerWeek >= 1 ? 'warn' : 'bad' },
+    { label: 'אימונים', value: `${workouts.length} · ${perWeek.toFixed(1)} בשבוע`, target: `${g.workouts} בשבוע`, status: perWeek >= g.workouts * 0.85 ? 'good' : perWeek >= g.workouts * 0.6 ? 'warn' : 'bad' },
+    { label: 'שקילות', value: lastWeight ? `${weights.length} · אחרונה ${lastWeight.kg} ק"ג לפני ${daysSinceWeigh} ימים` : 'אף אחת', target: `${g.weighIns} בשבוע`, status: weighPerWeek >= g.weighIns - 0.5 ? 'good' : weighPerWeek >= 1 ? 'warn' : 'bad' },
     { label: 'מותן', value: lastWaist ? `${lastWaist.cm} ס"מ (${lastWaist.date.slice(5).split('-').reverse().join('.')})` : 'לא נמדד', target: 'שבועי', status: waists.length >= weeks - 1 ? 'good' : waists.length ? 'warn' : 'bad' },
     { label: 'מים', value: water.length ? `ממוצע ${waterAvg} מ"ל · ${waterOk}/${water.length} ימים ביעד` : 'לא נרשם', target: `${waterGoal} מ"ל`, status: water.length && waterOk / water.length >= 0.7 ? 'good' : water.length ? 'warn' : 'bad' },
     { label: 'יומן אוכל', value: `${foodDays.length} ימים מתוך ${span}`, target: 'יומי', status: foodDays.length / span >= 0.8 ? 'good' : foodDays.length / span >= 0.4 ? 'warn' : 'bad' },
-    { label: 'חלבון', value: foodDays.length ? `ממוצע ${nutrition.protein} גר' ליום` : '—', target: "135 גר'", status: nutrition.protein >= 120 ? 'good' : nutrition.protein >= 95 ? 'warn' : 'bad' },
-    ...(sleep.length ? [{ label: 'שינה', value: `ממוצע ${hhmm(sleepAvg)} שעות (${sleep.length} לילות מ-Fitbit)`, target: '7:00', status: (sleepAvg >= 390 ? 'good' : sleepAvg >= 330 ? 'warn' : 'bad') as ReviewMetric['status'] }] : []),
+    { label: 'חלבון', value: foodDays.length ? `ממוצע ${nutrition.protein} גר' ליום` : '—', target: `${g.protein} גר'`, status: nutrition.protein >= g.protein * 0.9 ? 'good' : nutrition.protein >= g.protein * 0.7 ? 'warn' : 'bad' },
+    ...(sleep.length ? [{ label: 'שינה', value: `ממוצע ${hhmm(sleepAvg)} שעות (${sleep.length} לילות מ-Fitbit)`, target: hhmm(g.sleepMin), status: (sleepAvg >= g.sleepMin ? 'good' : sleepAvg >= g.sleepMin - 60 ? 'warn' : 'bad') as ReviewMetric['status'] }] : []),
     { label: 'דיווחי כאב', value: pains.length ? `${pains.length} · חמור ${Math.max(...pains.map(p => p.level))}/10` : 'אין', target: '—', status: !pains.length ? 'good' : Math.max(...pains.map(p => p.level)) >= 4 ? 'bad' : 'warn' },
   ];
 
@@ -89,7 +91,7 @@ export function fullReview(db: DB, days = 21): FullReview {
   const flexDone = workouts.filter(w => w.flexDone).length;
   if (workouts.length >= 3 && flexDone / workouts.length >= 0.75)
     wins.push(`בלוק הגמישות בוצע ב-${flexDone} מתוך ${workouts.length} אימונים — נעה מרוצה.`);
-  if (nutrition.protein >= 120) wins.push(`חלבון בממוצע ${nutrition.protein} גר' ליום — קרוב ליעד.`);
+  if (nutrition.protein >= g.protein * 0.9) wins.push(`חלבון בממוצע ${nutrition.protein} גר' ליום — קרוב ליעד.`);
 
   /* ---------- דגלים, לפי בעלים ולפי חומרה ---------- */
   const flags: ReviewFlag[] = [];
@@ -115,25 +117,25 @@ export function fullReview(db: DB, days = 21): FullReview {
       body: `${[...high.entries()].map(([n, c]) => `${n} ×${c}`).join(' · ')} — בדיוק בתקופה שבה הכאב עלה. בשבוע הקרוב להוריד, ומים לצד.`,
     });
   }
-  if (sleep.length >= 4 && sleepAvg < 330) flags.push({
-    from: 'ד"ר ארז', sev: sleepAvg < 300 ? 'red' : 'warn', title: `שינה ${hhmm(sleepAvg)} בממוצע`,
+  if (sleep.length >= 4 && sleepAvg < g.sleepMin - 60) flags.push({
+    from: 'ד"ר ארז', sev: sleepAvg < g.sleepMin - 90 ? 'red' : 'warn', title: `שינה ${hhmm(sleepAvg)} בממוצע`,
     body: `${sleep.length} לילות מדודים. זה המכשול המרכזי ל-shredded: שינה קצרה מעלה קורטיזול, פוגעת בהתאוששות ומגבירה רעב. לא נלחמים בסליחות — אבל כל שכיבה מוקדמת נספרת.`,
   });
-  if (weighPerWeek < 2) flags.push({
-    from: 'עדי', sev: weighPerWeek < 1 ? 'red' : 'warn', title: 'אין מספיק שקילות למדוד מגמה',
-    body: `${weights.length} שקילות ב-${span} ימים${daysSinceWeigh != null ? ` (אחרונה לפני ${daysSinceWeigh} ימים)` : ''}. היעד הוא 400 גר' לשבוע — בלי ממוצע שבועי אי אפשר לדעת אם זה קורה, וגם לא אם הקצב מסוכן לגאוט.`,
+  if (weighPerWeek < g.weighIns - 0.5) flags.push({
+    from: 'עדי', sev: weighPerWeek < g.weighIns / 2 ? 'red' : 'warn', title: 'אין מספיק שקילות למדוד מגמה',
+    body: `${weights.length} שקילות ב-${span} ימים${daysSinceWeigh != null ? ` (אחרונה לפני ${daysSinceWeigh} ימים)` : ''}. היעד הוא ${g.paceGr} גר' לשבוע — בלי ממוצע שבועי אי אפשר לדעת אם זה קורה, וגם לא אם הקצב מסוכן לגאוט.`,
   });
-  if (foodDays.length >= 3 && nutrition.protein < 110) flags.push({
-    from: 'הילה', sev: nutrition.protein < 90 ? 'red' : 'warn', title: 'חלבון מתחת ליעד',
-    body: `ממוצע ${nutrition.protein} גר' ליום מול יעד 135. בגירעון קלורי בלי חלבון הגוף שורף שריר.${nutrition.top[0] ? ` הפריט הכי קלורי אצלך: ${nutrition.top[0].name} — ${nutrition.top[0].kcalPerDay} קק"ל ליום בממוצע.` : ''}`,
+  if (foodDays.length >= 3 && nutrition.protein < g.protein * 0.82) flags.push({
+    from: 'הילה', sev: nutrition.protein < g.protein * 0.67 ? 'red' : 'warn', title: 'חלבון מתחת ליעד',
+    body: `ממוצע ${nutrition.protein} גר' ליום מול יעד ${g.protein}. בגירעון קלורי בלי חלבון הגוף שורף שריר.${nutrition.top[0] ? ` הפריט הכי קלורי אצלך: ${nutrition.top[0].name} — ${nutrition.top[0].kcalPerDay} קק"ל ליום בממוצע.` : ''}`,
   });
   if (foodDays.length >= 3 && foodDays.length / span < 0.6) flags.push({
     from: 'הילה', sev: 'warn', title: 'היומן חלקי',
     body: `${foodDays.length} ימים מתוך ${span}. המספרים למעלה הם רק מה שנרשם — כנראה תת-דיווח, ולכן אי אפשר להבדיל בין גירעון אמיתי לבין יום שלא תועד.`,
   });
-  if (perWeek < 2.5) flags.push({
-    from: 'עמית', sev: perWeek < 1.8 ? 'red' : 'warn', title: 'תדירות מתחת לתוכנית',
-    body: `${perWeek.toFixed(1)} אימונים בשבוע מול 3. זכור את שבוע המינימום: 2 פעולות × 30 דקות זו הרצפה, לא הכל-או-כלום.`,
+  if (perWeek < g.workouts * 0.85) flags.push({
+    from: 'עמית', sev: perWeek < g.workouts * 0.6 ? 'red' : 'warn', title: 'תדירות מתחת לתוכנית',
+    body: `${perWeek.toFixed(1)} אימונים בשבוע מול ${g.workouts}. זכור את שבוע המינימום: 2 פעולות × 30 דקות זו הרצפה, לא הכל-או-כלום.`,
   });
   const areas = new Map<string, number>();
   pains.forEach(p => areas.set(p.area, (areas.get(p.area) || 0) + 1));
@@ -166,12 +168,12 @@ export function fullReview(db: DB, days = 21): FullReview {
     decision = `${worstPain.area} בעוצמה ${worstPain.level} — מאיה מחליפה את התרגילים לאזור, והשבוע בלי עומס עליו.`;
   else if (gout.length && gout[gout.length - 1].level >= 3)
     decision = 'שבוע בלי בשר אדום, ובקבוק מים בכל עקצוץ בכף הרגל. אם הכאב חוזר ב-3+ — עוצרים את התרגילים שמעמיסים על הרגל.';
-  else if (weighPerWeek < 2)
-    decision = 'שקילה 3 פעמים בשבוע — ראשון, שלישי, חמישי. בוקר, אחרי שירותים, לפני אוכל. בלי זה אי אפשר לדעת אם משהו עובד.';
-  else if (perWeek < 2.5)
-    decision = 'שלושה אימונים השבוע, בימים קבועים מראש. אם נופל — שבוע המינימום, לא אפס.';
-  else if (nutrition.protein < 110)
-    decision = `חלבון: להוסיף מקור אחד לכל ארוחה (ביצים, קוטג', עוף). היעד 135, אתה על ${nutrition.protein}.`;
+  else if (weighPerWeek < g.weighIns - 0.5)
+    decision = `שקילה ${g.weighIns} פעמים בשבוע — בוקר, אחרי שירותים, לפני אוכל. בלי זה אי אפשר לדעת אם משהו עובד.`;
+  else if (perWeek < g.workouts * 0.85)
+    decision = `${g.workouts} אימונים השבוע, בימים קבועים מראש. אם נופל — שבוע המינימום, לא אפס.`;
+  else if (nutrition.protein < g.protein * 0.82)
+    decision = `חלבון: להוסיף מקור אחד לכל ארוחה (ביצים, קוטג', עוף). היעד ${g.protein}, אתה על ${nutrition.protein}.`;
   else if (calibMissing.length)
     decision = `לסגור את הכיול: ${calibMissing[0]}.`;
   else decision = 'ממשיכים כרגיל — הנתונים במקום. שומרים על התדירות והמדידות.';

@@ -1,4 +1,5 @@
 import React from 'react';
+import { getGoals } from '../store/goals';
 import { useStore } from '../store/store';
 import { weeklyAvgWeights, heatmap, painByArea } from '../store/adi';
 
@@ -55,8 +56,8 @@ export default function Trends() {
         <div className="row"><span className="k">יחס מותן-גובה</span>
           <span className="v num" style={{ color: whtr != null && whtr < 0.5 ? 'var(--good)' : 'inherit' }}>{whtr ?? '—'} <small>{whtrLabel}</small></span></div>
         <div className="row"><span className="k">קצב שבועי</span>
-          <span className="v num">{pace == null ? '—' : (pace <= 0 ? `▾${Math.abs(pace)}` : `▴${pace}`)} <small>ק"ג/שבוע · יעד ~0.4</small></span></div>
-        <div className="row"><span className="k">צפי הגעה ל-85 ק"ג</span>
+          <span className="v num">{pace == null ? '—' : (pace <= 0 ? `▾${Math.abs(pace)}` : `▴${pace}`)} <small>ק"ג/שבוע · יעד ~{(getGoals(db).paceGr / 1000).toFixed(1)}</small></span></div>
+        <div className="row"><span className="k">צפי הגעה ל-{getGoals(db).weightKg} ק"ג</span>
           <span className="v num">{eta ?? '—'}</span></div>
         <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8 }}>
           יחס מותן-גובה הוא המדד הטוב ביותר לחיטוב אצלך (מתחת ל-0.5 = מצוין). BMI לא מבדיל שריר משומן — התייחס אליו כהקשר בלבד. הקצב מחושב מהממוצעים השבועיים.

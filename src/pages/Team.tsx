@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useStore, today, weekStartOf, mergeByDate } from '../store/store';
 import { reviewDigest, weeklyAvgWeights } from '../store/adi';
 import { fullReview, FullReview } from '../store/review';
+import { Goals, GOAL_LIMITS, getGoals, clampGoal, goalText, paceWarning, DEFAULT_GOALS } from '../store/goals';
 import { supabase } from '../store/cloud';
 import { beginFitbitConnect, disconnectFitbit, fitbitConfigured, syncFitbit } from '../store/fitbit';
 
@@ -178,10 +179,57 @@ const TEAM = [
   { av: '🔥', name: 'טל', role: 'קונדישן — אינטרוולים ואנרגיה. דוחף לקצה בתוך הגבולות' },
   { av: '🩺', name: 'מאיה', role: 'פיזיותרפיסטית — הגב, הברכיים, כל דיווח פציעה. וטו בטיחות' },
   { av: '⚕️', name: 'ד"ר ארז', role: 'רופא ספורט — גאוט, לחץ דם, שינה. וטו רפואי' },
-  { av: '🥗', name: 'הילה', role: 'תזונאית — יומן האוכל, חלבון 135, מים, קצב 400 ג\'/שבוע' },
+  { av: '🥗', name: 'הילה', role: 'תזונאית — יומן האוכל, החלבון, המים וקצב הירידה' },
   { av: '📊', name: 'עדי', role: 'אנליסט — הדשבורד, המגמות, ההתרעות, הסקירה' },
 ];
 
+
+
+/* ============ היעדים — אבי קובע, כל המסכים קוראים מכאן ============ */
+const GOAL_ROWS: (keyof Goals)[] = ['weightKg', 'paceGr', 'kcal', 'protein', 'fat', 'workouts', 'weighIns', 'waterMl', 'sleepMin'];
+
+function GoalsCard() {
+  const { db, update } = useStore();
+  const g = getGoals(db);
+  const current = db.weights[db.weights.length - 1]?.kg;
+  const warn = paceWarning(g, current);
+  const bump = (k: keyof Goals, dir: 1 | -1) => update(d => {
+    const next = getGoals(d)[k] + dir * GOAL_LIMITS[k].step;
+    d.goals = { ...d.goals, [k]: clampGoal(k, next) };
+    return d;
+  });
+
+  return (
+    <div className="card">
+      {GOAL_ROWS.map(k => {
+        const lim = GOAL_LIMITS[k];
+        const mine = db.goals?.[k] != null && db.goals[k] !== DEFAULT_GOALS[k];
+        return (
+          <div key={k} className="spread" style={{ alignItems: 'center', marginTop: 8, fontSize: 13 }}>
+            <span style={{ color: 'var(--dim)', fontWeight: 700 }}>
+              {lim.label} <span style={{ fontSize: 11, fontWeight: 400 }}>{lim.unit}</span>
+              {mine && <span style={{ fontSize: 10, color: 'var(--acc)' }}> · שלך</span>}
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <button className="ok" onClick={() => bump(k, -1)}>−</button>
+              <b className="num" style={{ minWidth: 54, textAlign: 'center' }}>{goalText(k, g[k])}</b>
+              <button className="ok" onClick={() => bump(k, 1)}>+</button>
+            </span>
+          </div>
+        );
+      })}
+      {warn && <div className="alert mt12" style={{ borderColor: 'var(--danger)' }}>⚠️ <span>{warn}</span></div>}
+      <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 10, lineHeight: 1.5 }}>
+        כל המסכים קוראים מכאן — הסקירה, הילה, הדשבורד והמגמות. משנה כאן, משתנה בכל מקום.
+      </div>
+      {db.goals && Object.keys(db.goals).length > 0 && (
+        <button className="ghost mt8" onClick={() => { if (confirm('לאפס את כל היעדים לברירת המחדל שנקבעה באינטייק?')) update(d => { delete d.goals; return d; }); }}>
+          אפס לברירת המחדל
+        </button>
+      )}
+    </div>
+  );
+}
 
 /* ============ הסקירה המלאה — מה שהצוות רואה בנתונים (מנוע: store/review.ts) ============ */
 const DOT: Record<string, string> = { good: 'var(--good)', warn: 'var(--acc2)', bad: 'var(--danger)' };
@@ -260,6 +308,7 @@ export default function Team() {
   const d = reviewDigest(db);
   const wa = weeklyAvgWeights(db, 2);
   const full = fullReview(db);
+  const goals = getGoals(db);
 
   return (
     <div className="scr fade-in">
@@ -318,11 +367,14 @@ export default function Team() {
         ))}
       </div>
 
+      <div className="h-sec">🎯 היעדים שלך · אתה קובע</div>
+      <GoalsCard />
+
       <div className="h-sec">📌 העקרונות שלך</div>
       <div className="card">
         <div className="step-i"><b>·</b><span><b style={{ fontWeight: 700 }}>שבוע מינימום:</b> 2×30 דק' — הרצפה שלא יורדים ממנה</span></div>
         <div className="step-i"><b>·</b><span><b style={{ fontWeight: 700 }}>שבוע עמוס:</b> קרב מגע יורד ראשון, ABC נשאר</span></div>
-        <div className="step-i"><b>·</b><span><b style={{ fontWeight: 700 }}>יעד:</b> 85 ק"ג עד דצמבר · ~400 ג'/שבוע · חלבון 135 ג'/יום</span></div>
+        <div className="step-i"><b>·</b><span><b style={{ fontWeight: 700 }}>יעד:</b> {goals.weightKg} ק"ג · ~{goals.paceGr} ג'/שבוע · חלבון {goals.protein} ג'/יום</span></div>
         <div className="step-i"><b>·</b><span><b style={{ fontWeight: 700 }}>קדוש:</b> מים סביב אימון ובכל עקצוץ גאוט. במבה עד 50 ג' 🙂</span></div>
       </div>
 

@@ -70,3 +70,32 @@ describe('מנוע הסקירה', () => {
     expect(r.nutrition.protein).toBeGreaterThan(60);
   });
 });
+
+describe('היעדים של אבי גוברים על ברירת המחדל', () => {
+  it('יעד חלבון נמוך יותר → אין דגל, והמדד ירוק', () => {
+    const food = [day(3), day(2), day(1)].map(d => ({ date: d, text: 'חזה עוף 200 גרם' }));   // ~62 גר' חלבון ליום
+    const strict = fullReview(hydrate({ ...base, food }));
+    const mine = fullReview(hydrate({ ...base, food, goals: { protein: 60 } }));
+    expect(strict.flags.some(f => f.title.includes('חלבון'))).toBe(true);
+    expect(mine.flags.some(f => f.title.includes('חלבון'))).toBe(false);
+    expect(mine.metrics.find(m => m.label === 'חלבון')!.target).toBe("60 גר'");
+  });
+
+  it('יעד אימונים נמוך → התדירות נחשבת תקינה', () => {
+    const few = { ...base, workouts: [wk(day(18)), wk(day(12)), wk(day(6)), wk(day(2))] };   // 1.4 בשבוע
+    expect(fullReview(hydrate(few)).flags.some(f => f.title.includes('תדירות'))).toBe(true);
+    expect(fullReview(hydrate({ ...few, goals: { workouts: 1 } })).flags.some(f => f.title.includes('תדירות'))).toBe(false);
+  });
+
+  it('יעד מים אישי הוא הרף בפועל', () => {
+    const r = fullReview(hydrate({ ...base, goals: { waterMl: 2750 } }));
+    expect(r.metrics.find(m => m.label === 'מים')!.value).toContain('0/5');   // 2000 מ"ל < 2750
+    expect(r.wins.some(w => w.includes('מים'))).toBe(false);
+  });
+
+  it('שקילות: היעד קובע מתי עדי מתריע', () => {
+    const few = { ...base, weights: [{ date: day(5), kg: 90 }, { date: day(2), kg: 89.8 }] };
+    expect(fullReview(hydrate(few)).flags.some(f => f.from === 'עדי')).toBe(true);
+    expect(fullReview(hydrate({ ...few, goals: { weighIns: 1 } })).flags.some(f => f.from === 'עדי')).toBe(false);
+  });
+});
