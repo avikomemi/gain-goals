@@ -28,6 +28,16 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'whey', names: ['אבקת חלבון', 'שייק חלבון', 'וויי', 'פרוטאין', 'סקופ'], per100: [380, 75, 8, 6], unit: 'unit', unitGrams: 30, unitLabel: 'מנה', def: 1, gout: 'ok', src: 'תווית' },
   // משקה חלבון מוכן (מולר פרוטאין וכו', 1.5% שומן): בקבוק 400 מ"ל = 25 גר' חלבון. per100 = פר 100 מ"ל, הערכה.
   { id: 'proteindrink', names: ['משקה חלבון', 'מולר פרוטאין', 'müller protein'], per100: [51, 6.3, 3, 1.5], unit: 'unit', unitGrams: 400, unitLabel: 'בקבוק', def: 1, gout: 'ok', src: 'הערכה' },
+  // ---- חלבון זול ודל-פורינים (הפתרון לשילוב גאוט + תקציב) ----
+  // קטניות: הפורינים הצמחיים אינם מעלים סיכון גאוט, והחלבון הזול ביותר לשקל.
+  { id: 'lentils', names: ['עדשים כתומות', 'עדשים', 'מרק עדשים'], per100: [116, 9, 20, 0.4], unit: 'g', def: 200, gout: 'ok', src: 'USDA' }, // מבושל
+  { id: 'chickpeas', names: ['גרגרי חומוס', 'חומוס גרגרים', 'גרגירי חומוס'], per100: [164, 9, 27, 2.6], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
+  { id: 'edamame', names: ['אדממה'], per100: [121, 12, 9, 5], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
+  { id: 'tofu', names: ['טופו'], per100: [76, 8, 1.9, 4.8], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
+  { id: 'turkey', names: ['חזה הודו', 'שניצל הודו', 'הודו'], per100: [135, 29, 0, 1], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
+  { id: 'milk', names: ['חלב'], per100: [60, 3.4, 4.7, 3.3], unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'skyr', names: ['יוגורט יווני', 'סקיר', 'יווני'], per100: [63, 11, 4, 0.2], unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
+  { id: 'shakshuka', names: ['שקשוקה'], per100: [95, 6, 4, 6], unit: 'g', def: 250, gout: 'ok', src: 'הערכה' },
   { id: 'steak', names: ['סטייק', 'סטיק', 'אנטריקוט', 'בשר בקר', 'בקר'], per100: [271, 25, 0, 19], unit: 'g', def: 150, gout: 'high', src: 'USDA' },
   { id: 'multiyog', names: ['יוגורט מולטי', 'מולטי'], per100: [71, 6.5, 4.6, 3], unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
 

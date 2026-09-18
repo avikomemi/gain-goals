@@ -99,3 +99,20 @@ describe('היעדים של אבי גוברים על ברירת המחדל', () 
     expect(fullReview(hydrate({ ...few, goals: { weighIns: 1 } })).flags.some(f => f.from === 'עדי')).toBe(false);
   });
 });
+
+describe('יעילות שינה', () => {
+  it('הרבה זמן ער במיטה = דגל נפרד, עם כמה דקות אפשר להחזיר', () => {
+    const r = fullReview(hydrate({
+      ...base,
+      sleep: [1, 2, 3, 4, 5].map(i => ({ date: day(i), minutes: 280, inBed: 420 })),   // 67%
+    }));
+    const f = r.flags.find(x => x.title.includes('יעילות שינה'));
+    expect(f).toMatchObject({ from: 'ד"ר ארז', sev: 'red' });
+    expect(f!.body).toContain('140 דקות ער');
+    expect(r.metrics.find(m => m.label === 'שינה')!.value).toContain('יעילות 67%');
+  });
+  it('שינה יעילה — אין דגל יעילות', () => {
+    const r = fullReview(hydrate({ ...base, sleep: [1, 2, 3, 4].map(i => ({ date: day(i), minutes: 400, inBed: 420 })) }));
+    expect(r.flags.some(x => x.title.includes('יעילות'))).toBe(false);
+  });
+});

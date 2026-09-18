@@ -41,6 +41,11 @@ export function fullReview(db: DB, days = 21): FullReview {
   const waterGoal = g.waterMl;
   const sleep = (db.sleep || []).filter(x => inRange(x.date, from, to) && x.minutes > 0);
   const sleepAvg = sleep.length ? Math.round(sleep.reduce((a, x) => a + x.minutes, 0) / sleep.length) : 0;
+  // יעילות שינה: כמה מהזמן במיטה היה באמת שינה. מתחת ל-85% הבעיה היא לא "אין זמן"
+  // אלא שינה קטועה — וזה שעה שאפשר להחזיר בלי ללכת לישון מוקדם יותר.
+  const inBed = sleep.filter(x => (x.inBed || 0) > x.minutes);
+  const bedAvg = inBed.length ? Math.round(inBed.reduce((a, x) => a + (x.inBed || 0), 0) / inBed.length) : 0;
+  const sleepEff = inBed.length >= 3 && bedAvg ? Math.round(100 * (inBed.reduce((a, x) => a + x.minutes, 0) / inBed.length) / bedAvg) : null;
   const hhmm = (min: number) => `${Math.floor(min / 60)}:${String(min % 60).padStart(2, '0')}`;
 
   /* ---------- תזונה: אותו פרסר שהילה מציגה בו את היום, על כל הימים ---------- */
@@ -77,7 +82,7 @@ export function fullReview(db: DB, days = 21): FullReview {
     { label: 'מים', value: water.length ? `ממוצע ${waterAvg} מ"ל · ${waterOk}/${water.length} ימים ביעד` : 'לא נרשם', target: `${waterGoal} מ"ל`, status: water.length && waterOk / water.length >= 0.7 ? 'good' : water.length ? 'warn' : 'bad' },
     { label: 'יומן אוכל', value: `${foodDays.length} ימים מתוך ${span}`, target: 'יומי', status: foodDays.length / span >= 0.8 ? 'good' : foodDays.length / span >= 0.4 ? 'warn' : 'bad' },
     { label: 'חלבון', value: foodDays.length ? `ממוצע ${nutrition.protein} גר' ליום` : '—', target: `${g.protein} גר'`, status: nutrition.protein >= g.protein * 0.9 ? 'good' : nutrition.protein >= g.protein * 0.7 ? 'warn' : 'bad' },
-    ...(sleep.length ? [{ label: 'שינה', value: `ממוצע ${hhmm(sleepAvg)} שעות (${sleep.length} לילות מ-Fitbit)`, target: hhmm(g.sleepMin), status: (sleepAvg >= g.sleepMin ? 'good' : sleepAvg >= g.sleepMin - 60 ? 'warn' : 'bad') as ReviewMetric['status'] }] : []),
+    ...(sleep.length ? [{ label: 'שינה', value: `ממוצע ${hhmm(sleepAvg)} שעות${sleepEff != null ? ` · יעילות ${sleepEff}%` : ''} (${sleep.length} לילות מ-Fitbit)`, target: hhmm(g.sleepMin), status: (sleepAvg >= g.sleepMin ? 'good' : sleepAvg >= g.sleepMin - 60 ? 'warn' : 'bad') as ReviewMetric['status'] }] : []),
     { label: 'דיווחי כאב', value: pains.length ? `${pains.length} · חמור ${Math.max(...pains.map(p => p.level))}/10` : 'אין', target: '—', status: !pains.length ? 'good' : Math.max(...pains.map(p => p.level)) >= 4 ? 'bad' : 'warn' },
   ];
 
@@ -120,6 +125,10 @@ export function fullReview(db: DB, days = 21): FullReview {
   if (sleep.length >= 4 && sleepAvg < g.sleepMin - 60) flags.push({
     from: 'ד"ר ארז', sev: sleepAvg < g.sleepMin - 90 ? 'red' : 'warn', title: `שינה ${hhmm(sleepAvg)} בממוצע`,
     body: `${sleep.length} לילות מדודים. זה המכשול המרכזי ל-shredded: שינה קצרה מעלה קורטיזול, פוגעת בהתאוששות ומגבירה רעב. לא נלחמים בסליחות — אבל כל שכיבה מוקדמת נספרת.`,
+  });
+  if (sleepEff != null && sleepEff < 85) flags.push({
+    from: 'ד"ר ארז', sev: sleepEff < 75 ? 'red' : 'warn', title: `יעילות שינה ${sleepEff}%`,
+    body: `אתה במיטה ${hhmm(bedAvg)} וישן ${hhmm(sleepAvg)} — ${bedAvg - sleepAvg} דקות ער בלילה בממוצע. זה לא "אין זמן", זו שינה קטועה: העלאה ל-90% מחזירה ${Math.round(bedAvg * 0.9 - sleepAvg)} דקות בלי ללכת לישון מוקדם יותר. קפאין אחרון עד 15:00, חדר קריר וחשוך, ומסך מחוץ למיטה.`,
   });
   if (weighPerWeek < g.weighIns - 0.5) flags.push({
     from: 'עדי', sev: weighPerWeek < g.weighIns / 2 ? 'red' : 'warn', title: 'אין מספיק שקילות למדוד מגמה',
