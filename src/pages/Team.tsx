@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useStore, today, weekStartOf, mergeByDate } from '../store/store';
-import { reviewDigest, amitDecision, weeklyAvgWeights } from '../store/adi';
+import { reviewDigest, weeklyAvgWeights } from '../store/adi';
+import { fullReview, FullReview } from '../store/review';
 import { supabase } from '../store/cloud';
 import { beginFitbitConnect, disconnectFitbit, fitbitConfigured, syncFitbit } from '../store/fitbit';
 
@@ -181,6 +182,75 @@ const TEAM = [
   { av: '📊', name: 'עדי', role: 'אנליסט — הדשבורד, המגמות, ההתרעות, הסקירה' },
 ];
 
+
+/* ============ הסקירה המלאה — מה שהצוות רואה בנתונים (מנוע: store/review.ts) ============ */
+const DOT: Record<string, string> = { good: 'var(--good)', warn: 'var(--acc2)', bad: 'var(--danger)' };
+
+function FullReviewCard({ r }: { r: FullReview }) {
+  const [openAll, setOpenAll] = useState(false);
+  const flags = openAll ? r.flags : r.flags.slice(0, 3);
+  const dateLab = (d: string) => d.slice(5).split('-').reverse().join('.');
+
+  if (!r.logged) return (
+    <div className="card">
+      <div style={{ fontSize: 13, lineHeight: 1.6 }}>אין עדיין מספיק נתונים לסקירה. תרשום אימון, שקילה או יום ביומן — ועמית יתחיל לעבוד.</div>
+    </div>
+  );
+
+  return (
+    <div className="card">
+      <div className="micro">{dateLab(r.from)}–{dateLab(r.to)} · {r.days} ימים</div>
+
+      {r.metrics.map(m => (
+        <div key={m.label} className="spread" style={{ alignItems: 'baseline', marginTop: 8, fontSize: 13, gap: 8 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6, flex: '0 0 auto' }}>
+            <i style={{ width: 7, height: 7, borderRadius: 4, background: DOT[m.status], display: 'inline-block' }} />
+            <b style={{ fontWeight: 700 }}>{m.label}</b>
+          </span>
+          <span style={{ textAlign: 'end', minWidth: 0 }}>
+            <span className="num" style={{ fontSize: 12.5 }}>{m.value}</span>
+            {m.target && m.target !== '—' && <span style={{ color: 'var(--dim)', fontSize: 11 }}> · יעד {m.target}</span>}
+          </span>
+        </div>
+      ))}
+
+      {r.nutrition.top.length > 0 && (
+        <div style={{ fontSize: 11.5, color: 'var(--dim)', marginTop: 10, lineHeight: 1.5 }}>
+          הכי קלורי אצלך: {r.nutrition.top.map(t => `${t.name} ~${t.kcalPerDay} קק"ל/יום`).join(' · ')}
+        </div>
+      )}
+
+      {r.wins.length > 0 && (
+        <div className="mt12">
+          <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--good)' }}>✅ מה עובד</div>
+          {r.wins.map((w, i) => <div key={i} style={{ fontSize: 12.5, marginTop: 5, lineHeight: 1.55 }}>{w}</div>)}
+        </div>
+      )}
+
+      {flags.map((f, i) => (
+        <div key={i} className="alert mt8" style={{ borderColor: f.sev === 'red' ? 'var(--danger)' : 'rgba(217,119,6,.45)', alignItems: 'flex-start' }}>
+          <span>{f.sev === 'red' ? '🔴' : '⚠️'}</span>
+          <span style={{ lineHeight: 1.55 }}>
+            <b>{f.from}: {f.title}</b>
+            <div style={{ fontSize: 12.5, marginTop: 3 }}>{f.body}</div>
+          </span>
+        </div>
+      ))}
+      {r.flags.length > 3 && (
+        <button className="pill mt8" onClick={() => setOpenAll(v => !v)}>
+          {openAll ? 'פחות' : `עוד ${r.flags.length - 3} דגלים`}
+        </button>
+      )}
+
+      {r.calibMissing.length > 0 && (
+        <div style={{ fontSize: 12.5, marginTop: 12, lineHeight: 1.5 }}>
+          <b>לסגירת הכיול חסר:</b> {r.calibMissing.join(' · ')}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Team() {
   const { db, update } = useStore();
   const wk = weekStartOf(today());
@@ -189,13 +259,17 @@ export default function Team() {
   const [reviewing, setReviewing] = useState(false);
   const d = reviewDigest(db);
   const wa = weeklyAvgWeights(db, 2);
+  const full = fullReview(db);
 
   return (
     <div className="scr fade-in">
       <div className="micro">הצוות שלך</div>
       <div className="h-huge mt8">שמונה אנשים<br /><em>בפינה שלך.</em></div>
 
-      <div className="h-sec">🤝 הסקירה השבועית · ראשון בערב</div>
+      <div className="h-sec">🤝 הסקירה · 3 שבועות אחרונים</div>
+      <FullReviewCard r={full} />
+
+      <div className="h-sec">🧠 ההחלטה של עמית · השבוע</div>
       {done ? (
         <div className="decision">
           <span className="who">השבוע נסגר · ההחלטה של עמית</span>
@@ -213,7 +287,10 @@ export default function Team() {
             ממוצע שבועי: <b className="num">{wa[wa.length - 1].avg} ק"ג</b>
             {wa.length > 1 && <> · שבוע קודם: <b className="num">{wa[0].avg}</b></>}
           </div>}
-          <button className="cta mt12" onClick={() => setReviewing(true)}>פתח סקירה שבועית עם עמית</button>
+          <div style={{ fontSize: 12.5, marginTop: 10, lineHeight: 1.55 }}>
+            <b>ההצעה של עמית:</b> {full.decision}
+          </div>
+          <button className="cta mt12" onClick={() => setReviewing(true)}>סגור שבוע · דווח לחץ ואשר</button>
         </div>
       ) : (
         <div className="card">
@@ -222,8 +299,9 @@ export default function Team() {
               {[2, 3, 4, 5, 6, 7, 8, 9].map(n => <b key={n} className={stress === n ? 'on' : ''} onClick={() => setStress(n)}>{n}</b>)}
             </div>
           </div>
+          <div style={{ fontSize: 12.5, marginBottom: 10, lineHeight: 1.55 }}><b>ההחלטה שתישמר:</b> {full.decision}</div>
           <button className="cta red mt12" onClick={() => {
-            const decision = amitDecision(db, stress);
+            const decision = full.decision;
             update(x => { x.reviews.push({ weekStart: wk, stress, decision, closedAt: today() }); return x; });
             setReviewing(false);
           }}>סגור שבוע · קבל את ההחלטה של עמית</button>

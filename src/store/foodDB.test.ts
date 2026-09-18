@@ -171,3 +171,17 @@ describe('פריט-יחידה עם מספר גדול', () => {
     expect(est('פיתה 2').lines[0].qty).toBe(2);
   });
 });
+
+describe('מיזוג המאגר', () => {
+  it('פריט-זרע מתעדכן גם אם כבר קיים אצל המשתמש (אחרת תיקונים לא מגיעים למכשיר)', () => {
+    const stale: FoodItem = { id: 'white5', names: ['לבנה 5'], per100: [98, 9, 4.3, 5], unit: 'g', def: 100 };
+    const merged = mergeFoods([stale]);
+    const white = merged.find(f => f.id === 'white5')!;
+    expect(white.names).toContain('גבינה');          // הכינוי החדש הגיע
+    expect(estimateFood('גבינה 125 גרם', merged).lines).toHaveLength(1);
+  });
+  it('מאכל שאבי הוסיף בעצמו נשמר', () => {
+    const mine: FoodItem = { id: 'my-thing', names: ['התבשיל של אשתי'], per100: [200, 10, 20, 8], unit: 'g', def: 300 };
+    expect(mergeFoods([mine]).find(f => f.id === 'my-thing')).toEqual(mine);
+  });
+});

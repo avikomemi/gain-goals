@@ -140,11 +140,19 @@ export const SEED_FOODS: FoodItem[] = [
 ];
 
 // מיזוג: הטבלה של אבי + כל פריט-זרע שעוד לא קיים אצלו (לפי id). לא דורס עריכות שלו.
+/**
+ * מיזוג מסד התזונה: פריטי-הזרע תמיד בגרסה העדכנית, ומה שאבי הוסיף בעצמו נשמר.
+ *
+ * עד כה הפונקציה הוסיפה רק פריטים *חדשים* ולא נגעה בקיימים — וזה אומר שכל תיקון
+ * לפריט קיים (כינוי חדש, ערך מתוקן) לעולם לא הגיע למכשיר של מי שכבר התקין את
+ * האפליקציה: הטבלה שנשמרה אצלו נשארה מהיום שבו נזרעה. אין מסך לעריכת מאכלים,
+ * אז אין מה לשמר בפריטי-זרע — הזרע מנצח, ופריטים שאינם בזרע (תוספות של אבי)
+ * נשארים כמו שהם.
+ */
 export function mergeFoods(userFoods: FoodItem[] | undefined): FoodItem[] {
-  const list = Array.isArray(userFoods) ? userFoods.filter(f => f && f.id) : [];
-  const have = new Set(list.map(f => f.id));
-  for (const s of SEED_FOODS) if (!have.has(s.id)) list.push(s);
-  return list;
+  const seedIds = new Set(SEED_FOODS.map(s => s.id));
+  const mine = (Array.isArray(userFoods) ? userFoods : []).filter(f => f && f.id && !seedIds.has(f.id));
+  return [...SEED_FOODS, ...mine];
 }
 
 export interface FoodLine { name: string; qty: number; qtyLabel: string; macro: [number, number, number, number] }
