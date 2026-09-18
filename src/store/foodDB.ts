@@ -39,6 +39,8 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'skyr', names: ['יוגורט יווני', 'סקיר', 'יווני'], per100: [63, 11, 4, 0.2], unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
   { id: 'shakshuka', names: ['שקשוקה'], per100: [95, 6, 4, 6], unit: 'g', def: 250, gout: 'ok', src: 'הערכה' },
   { id: 'steak', names: ['סטייק', 'סטיק', 'אנטריקוט', 'בשר בקר', 'בקר'], per100: [271, 25, 0, 19], unit: 'g', def: 150, gout: 'high', src: 'USDA' },
+  // מהתווית שאבי צילם: גביע 200 גר' = 134 קק"ל · 10.4 חלבון · 6 שומן · 9.6 פחמ' (הכל לקטוז) · 500 מ"ג סידן
+  { id: 'bioyog', names: ['יוגורט ביו', 'ביו 3%'], per100: [67, 5.2, 4.8, 3], unit: 'unit', unitGrams: 200, unitLabel: 'גביע', def: 1, gout: 'ok', src: 'תווית' },
   { id: 'multiyog', names: ['יוגורט מולטי', 'מולטי'], per100: [71, 6.5, 4.6, 3], unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
 
   // ---- פחמימות ----

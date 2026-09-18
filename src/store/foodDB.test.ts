@@ -191,3 +191,16 @@ describe('מיזוג המאגר', () => {
     expect(mergeFoods([mine]).find(f => f.id === 'my-thing')).toEqual(mine);
   });
 });
+
+describe('יוגורט ביו (מהתווית שאבי צילם)', () => {
+  it('גביע = 134 קק"ל · 10 גר\' חלבון, והאנרגיה מסתדרת עם המאקרו', () => {
+    const e = est('יוגורט ביו');
+    expect(e.lines[0].qtyLabel).toBe('1 גביע');
+    expect(e.lines[0].macro).toEqual([134, 10, 10, 6]);
+    const [kcal, p, c, f] = e.lines[0].macro;
+    expect(Math.abs(p * 4 + c * 4 + f * 9 - kcal)).toBeLessThan(15);   // התווית עקבית
+  });
+  it('משקל מפורש עדיין גובר', () => {
+    expect(est('יוגורט ביו 100 גרם').total.kcal).toBe(67);
+  });
+});
