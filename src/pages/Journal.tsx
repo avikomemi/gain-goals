@@ -3,6 +3,7 @@ import { useStore, today, hydrate, WorkoutLog, ExLog } from '../store/store';
 import { hilaReview } from '../store/hila';
 import { estimateFood } from '../store/foodDB';
 import { getGoals } from '../store/goals';
+import { flexMissing } from '../store/review';
 import { stepsKcal } from '../store/adi';
 import { supabase } from '../store/cloud';
 
@@ -496,7 +497,11 @@ function FlexTestCard() {
     const num = (s?: string) => { const t = (s ?? '').trim(); if (t === '') return undefined; const n = parseFloat(t); return isNaN(n) ? undefined : n; };
     const entry = { date: today(), fingerFloor: num(vals.fingerFloor), squatSec: num(vals.squatSec), shoulderR: num(vals.shoulderR), shoulderL: num(vals.shoulderL) };
     if ([entry.fingerFloor, entry.squatSec, entry.shoulderR, entry.shoulderL].every(v => v === undefined)) { alert('הכנס לפחות מדד אחד לפני שמירה.'); return; }
-    update(d => { d.flex = [...(d.flex || []).filter(f => f.date !== entry.date), entry]; d.calib.flexTests = true; return d; });
+    update(d => {
+      d.flex = [...(d.flex || []).filter(f => f.date !== entry.date), entry];
+      d.calib.flexTests = flexMissing(d).length === 0;   // בסיס מלא = כל ארבעת המדדים נמדדו
+      return d;
+    });
     setVals({}); setSaved(true); setTimeout(() => setSaved(false), 2500);
   };
 
@@ -516,6 +521,11 @@ function FlexTestCard() {
       {last && (
         <div style={{ fontSize: 12, color: 'var(--dim)', marginTop: 10, lineHeight: 1.6 }}>
           מדידה אחרונה · {last.date}: {FLEX_FIELDS.map(f => last[f.key] != null ? `${f.short} ${last[f.key]}` : null).filter(Boolean).join(' · ') || '—'}
+        </div>
+      )}
+      {flexMissing(db).length > 0 && (
+        <div style={{ fontSize: 11.5, color: 'var(--acc2)', marginTop: 8, lineHeight: 1.5 }}>
+          עוד לא נמדדו: {flexMissing(db).join(' · ')} — בלי כולם אין בסיס מלא למדוד ממנו התקדמות.
         </div>
       )}
       <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8 }}>מדוד פעם בחודש. ההתקדמות מול הבסיס בטאב המגמות.</div>

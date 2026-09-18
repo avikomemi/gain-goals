@@ -116,3 +116,25 @@ describe('יעילות שינה', () => {
     expect(r.flags.some(x => x.title.includes('יעילות'))).toBe(false);
   });
 });
+
+describe('מבחני הגמישות', () => {
+  it('מדד אחד אינו בסיס — הסקירה אומרת בדיוק מה חסר', () => {
+    const r = fullReview(hydrate({
+      ...base,
+      calib: { ...base.calib, done: false, flexTests: true },
+      flex: [{ date: day(2), fingerFloor: -1 }],
+    }));
+    const line = r.calibMissing.find(x => x.includes('גמישות'))!;
+    expect(line).toContain('סקוואט עמוק');
+    expect(line).toContain('כתף ימין');
+    expect(line).not.toContain('אצבעות');
+  });
+  it('ארבעת המדדים — הגמישות יורדת מרשימת החוסרים', () => {
+    const r = fullReview(hydrate({
+      ...base,
+      calib: { ...base.calib, done: false },
+      flex: [{ date: day(2), fingerFloor: -1, squatSec: 40, shoulderR: 5, shoulderL: 12 }],
+    }));
+    expect(r.calibMissing.some(x => x.includes('גמישות'))).toBe(false);
+  });
+});

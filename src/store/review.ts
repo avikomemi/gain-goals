@@ -17,6 +17,21 @@ export interface FullReview {
   nutrition: { days: number; kcal: number; protein: number; top: { name: string; kcalPerDay: number }[] };
 }
 
+// ארבעת מדדי הגמישות של נעה. מבחן הבסיס נחשב שבוצע רק כשלכולם יש מספר —
+// עד כה מספיק היה למלא אחד מהם כדי ש"מבחני גמישות" יסומנו כבוצעו, ואז שלושה
+// מדדים נשארו ריקים לנצח ולא היה ממה למדוד התקדמות.
+export const FLEX_METRICS = [
+  { key: 'fingerFloor', label: 'אצבעות–רצפה' },
+  { key: 'squatSec', label: 'סקוואט עמוק' },
+  { key: 'shoulderR', label: 'כתף ימין' },
+  { key: 'shoulderL', label: 'כתף שמאל' },
+] as const;
+
+/** אילו מדדי גמישות עוד לא נמדדו אף פעם */
+export function flexMissing(db: DB): string[] {
+  return FLEX_METRICS.filter(m => !(db.flex || []).some(f => f[m.key] != null)).map(m => m.label);
+}
+
 const inRange = (d: string, from: string, to: string) => d >= from && d <= to;
 const round = (n: number) => Math.round(n);
 
@@ -166,7 +181,8 @@ export function fullReview(db: DB, days = 21): FullReview {
     if (!c.firstWeight) calibMissing.push('שקילת בוקר ראשונה');
     if (!c.waist) calibMissing.push('מדידת מותן');
     if (!c.bp) calibMissing.push('לחץ דם');
-    if (!c.flexTests) calibMissing.push('מבחני גמישות');
+    const fm = flexMissing(db);
+    if (!c.flexTests || fm.length) calibMissing.push(fm.length ? `מבחני גמישות: ${fm.join(', ')}` : 'מבחני גמישות');
     const left = 6 - (c.runs.A + c.runs.B + c.runs.C);
     if (left > 0) calibMissing.push(`עוד ${left} אימוני כיול (A:${c.runs.A} B:${c.runs.B} C:${c.runs.C})`);
   }
