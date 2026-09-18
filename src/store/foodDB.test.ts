@@ -158,3 +158,16 @@ describe('אגוזים — כל אגוז והערך שלו', () => {
     expect(est('שקדים 30 גרם').total.kcal).toBe(174);
   });
 });
+
+describe('פריט-יחידה עם מספר גדול', () => {
+  it('"פיתת מחמצת 150" = 150 גרם, לא 150 פיתות', () => {
+    const e = est('פיתת מחמצת 150');
+    expect(e.lines).toHaveLength(1);             // פיתת מחמצת = פריט אחד, לא פיתה + לחם
+    expect(e.lines[0].qtyLabel).toBe("150ג'");
+    expect(e.total.kcal).toBe(413);              // לפני התיקון: 11,115 (150 פיתות)
+  });
+  it('מספר קטן אחרי פריט-יחידה נשאר ספירה', () => {
+    expect(est('ביצים 3').lines[0].qty).toBe(3);
+    expect(est('פיתה 2').lines[0].qty).toBe(2);
+  });
+});

@@ -32,7 +32,7 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'multiyog', names: ['יוגורט מולטי', 'מולטי'], per100: [71, 6.5, 4.6, 3], unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
 
   // ---- פחמימות ----
-  { id: 'pita', names: ['פיתה', 'פיתת', 'פיתות'], per100: [275, 9, 55, 1.2], unit: 'unit', unitGrams: 60, unitLabel: 'פיתה', def: 1, src: 'USDA' },
+  { id: 'pita', names: ['פיתה', 'פיתת מחמצת', 'פיתה מחמצת', 'פיתת', 'פיתות'], per100: [275, 9, 55, 1.2], unit: 'unit', unitGrams: 60, unitLabel: 'פיתה', def: 1, src: 'USDA' },
   { id: 'bread', names: ['פרוסת לחם', 'לחם מלא', 'לחם', 'מחמצת', 'פרוסה'], per100: [247, 13, 41, 3.4], unit: 'unit', unitGrams: 30, unitLabel: 'פרוסה', def: 2, src: 'USDA' },
   { id: 'homebread', names: ['לחם ביתי'], per100: [265, 8, 49, 3.5], unit: 'unit', unitGrams: 85, unitLabel: 'פרוסה', def: 2, src: 'תווית' },
   { id: 'challah', names: ['חלה', 'בריוש'], per100: [290, 9, 50, 5.5], unit: 'unit', unitGrams: 40, unitLabel: 'פרוסה', def: 2, src: 'USDA' },
@@ -190,6 +190,9 @@ function parseQty(seg: string, food: FoodItem, nameAt = -1): { qty: number; gram
     // גבינה צהובה"). אחרת "10 שקדים" היה הופך ל-10 חופנים במקום 10 שקדים.
     const countable = food.def >= 50 || UNIT_WORD.test(s.slice(0, nameAt < 0 ? 0 : nameAt));
     if (nameAt >= 0 && (num.index ?? 0) < nameAt && n <= 10 && countable) return portions(n);
+    // פריט-יחידה עם מספר גדול אחריו = משקל, לא ספירה: "פיתת מחמצת 150" זה 150 גרם,
+    // לא 150 פיתות (11,000 קק"ל). אף אחד לא אוכל 25 פיתות או 25 ביצים.
+    if (food.unit !== 'g' && n >= 25) return { qty: n, grams: true };
     return { qty: n, grams: false };
   }
   if (/חצי/.test(seg)) return { qty: food.def * 0.5, grams: false };
