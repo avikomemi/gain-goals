@@ -480,16 +480,22 @@ function HilaResponse({ text, photoCount, waterMl, waterGoal, title, date }: { t
 }
 
 /* ============ מבחני גמישות (נעה) — רישום המספרים, לא רק צ'קבוקס ============ */
+// ההוראות יושבות ליד השדה — מדידה בלי הוראה היא מספר שאי אפשר לחזור עליו
 const FLEX_FIELDS = [
-  { key: 'fingerFloor', label: 'אצבעות–רצפה', short: 'אצבעות', unit: 'ס"מ', hint: 'שלילי = מתחת לרצפה' },
-  { key: 'squatSec', label: 'סקוואט עמוק', short: 'סקוואט', unit: 'שנ׳', hint: 'החזקה' },
-  { key: 'shoulderR', label: 'כתף · ימין למעלה', short: 'כתף ימ׳', unit: 'ס"מ', hint: 'שלילי = חפיפה' },
-  { key: 'shoulderL', label: 'כתף · שמאל למעלה', short: 'כתף שמ׳', unit: 'ס"מ', hint: 'שלילי = חפיפה' },
+  { key: 'fingerFloor', label: 'אצבעות–רצפה', short: 'אצבעות', unit: 'ס"מ', hint: 'שלילי = מתחת לרצפה',
+    how: 'עמידה, רגליים צמודות, ברכיים ישרות. נשיפה ויורדים לאט עם הידיים. מודדים מקצות האצבעות לרצפה: נגיעה = 0, מתחת לרצפה = מספר שלילי. בלי קפיצות — עד ההתנגדות, לא עד הכאב.' },
+  { key: 'squatSec', label: 'סקוואט עמוק', short: 'סקוואט', unit: 'שנ׳', hint: 'החזקה',
+    how: 'רגליים ברוחב כתפיים, אצבעות מעט החוצה. יורדים עמוק כשהעקבים על הרצפה והחזה פתוח, וסופרים שניות עד שהצורה נשברת (עקב מתרומם / גב מתעגל / ברך קורסת). מודדים בטווח שאתה שולט בו.' },
+  { key: 'shoulderR', label: 'כתף · יד ימין מלמעלה', short: 'כתף ימ׳', unit: 'ס"מ', hint: 'שלילי = חפיפה',
+    how: 'יד ימין עולה מעל הכתף ויורדת במורד הגב (אצבעות כלפי מטה, כמו לגרד בין השכמות). יד שמאל מגיעה מאחורי הגב מלמטה, גב כף היד על עמוד השדרה, אצבעות כלפי מעלה. שתי הידיים מתקרבות — מודדים את המרווח בין קצות האצבעות. נגיעה = 0, אחיזה/חפיפה = מספר שלילי.' },
+  { key: 'shoulderL', label: 'כתף · יד שמאל מלמעלה', short: 'כתף שמ׳', unit: 'ס"מ', hint: 'שלילי = חפיפה',
+    how: 'אותה תנוחה בדיוק, הפוך: יד שמאל מלמעלה וימין מלמטה. מודדים כל צד בנפרד — ההפרש בין הצדדים הוא הממצא, לא המספר עצמו.' },
 ] as const;
 
 function FlexTestCard() {
   const { db, update } = useStore();
   const [vals, setVals] = useState<Record<string, string>>({});
+  const [howOpen, setHowOpen] = useState(false);
   const [saved, setSaved] = useState(false);
   const last = [...(db.flex || [])].sort((a, b) => (a.date < b.date ? 1 : -1))[0];
 
@@ -507,13 +513,17 @@ function FlexTestCard() {
 
   return (
     <div className="card">
+      <button className="pill" onClick={() => setHowOpen(v => !v)}>{howOpen ? 'הסתר הוראות' : '❓ איך מודדים'}</button>
       {FLEX_FIELDS.map(f => (
-        <div key={f.key} className="spread" style={{ alignItems: 'center', marginTop: 8 }}>
+        <div key={f.key} style={{ marginTop: 8 }}>
+        <div className="spread" style={{ alignItems: 'center' }}>
           <span style={{ fontSize: 13, minWidth: 0 }}>{f.label} <small style={{ color: 'var(--dim)' }}>({f.unit} · {f.hint})</small></span>
           <input inputMode="numeric" value={vals[f.key] ?? ''} aria-label={f.label}
             placeholder={last?.[f.key] != null ? String(last[f.key]) : '—'}
             onChange={e => { const v = e.target.value.replace(/[^0-9.-]/g, ''); setVals(s => ({ ...s, [f.key]: v })); }}
             style={{ width: 64, minWidth: 0, textAlign: 'center', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 4px', fontSize: 16, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }} />
+        </div>
+        {howOpen && <div style={{ fontSize: 11.5, color: 'var(--dim)', lineHeight: 1.55, marginTop: 4, paddingInlineStart: 2 }}>{f.how}</div>}
         </div>
       ))}
       <button className="cta mt12" style={{ width: '100%' }} onClick={save}>💾 שמור מדידה</button>
