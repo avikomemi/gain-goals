@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore, today, daysAgo } from '../store/store';
-import { alerts, nextSteps, nextRoutine, weeklyAvgWeights, lastWaist, streakWeeksNoInjuryStop, currentWeekWorkouts, sleepAdvice } from '../store/adi';
+import { alerts, nextSteps, nextRoutine, weeklyAvgWeights, lastWaist, streakWeeksNoInjuryStop, currentWeekWorkouts, sleepAdvice, weeklyReviewDue, reviewDigest } from '../store/adi';
 import { PROGRAM } from '../data/program';
 import { PulseRing, Alerts, heDate } from '../components/bits';
 
@@ -84,6 +84,28 @@ export default function Dashboard() {
           {sleepNote && <div style={{ fontSize: 12, marginTop: 10, lineHeight: 1.5, color: 'var(--acc2)' }}>😴 {sleepNote.msg}</div>}
         </div>
       </>)}
+
+      {/* הסקירה השבועית ישבה רק בטאב הצוות, ורק בימי ראשון — אבי פשוט לא ראה אותה.
+          עכשיו היא צפה כאן, במסך הראשי, כל עוד היא פתוחה. */}
+      {weeklyReviewDue(db) && (() => {
+        const rd = reviewDigest(db);
+        return (
+          <>
+            <div className="h-sec">🤝 הסקירה השבועית · מחכה לך</div>
+            <div className="card" style={{ borderColor: 'var(--acc)' }}>
+              <div className="grid3">
+                <div className="cell"><b className="num">{rd.workouts}</b><span>אימונים</span></div>
+                <div className="cell"><b className="num">{rd.pains.length}</b><span>דיווחי כאב</span></div>
+                <div className="cell"><b className="num">{rd.waterDays}</b><span>ימי מים</span></div>
+              </div>
+              <div style={{ fontSize: 12.5, color: 'var(--dim)', marginTop: 8, lineHeight: 1.5 }}>
+                עמית מחכה לסגור את השבוע שעבר — מגמה, מה בוצע, כאבים, ומדד לחץ. החלטה אחת לשבוע הבא.
+              </div>
+              <button className="cta mt12" onClick={() => nav('/team')}>פתח סקירה עם עמית</button>
+            </div>
+          </>
+        );
+      })()}
 
       <div className="h-sec">הצעדים הבאים · עדי</div>
       <div className="card">

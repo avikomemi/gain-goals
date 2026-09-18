@@ -153,9 +153,13 @@ export function nextSteps(db: DB): string[] {
     const wk2 = weekStartOf(today());
     if (!db.waists.some(w => weekStartOf(w.date) === wk2)) steps.push('מדידת מותן שבועית');
   }
-  // הסקירה השבועית רלוונטית גם בשלב הכיול
-  const wk = weekStartOf(today());
-  if (new Date().getDay() === 0 && !db.reviews.some(rv => rv.weekStart === wk)) steps.push('הסקירה השבועית עם עמית — הערב (בטאב הצוות)');
+  // הסקירה השבועית — שני באגים שהסתירו אותה לגמרי: (1) היא הופיעה רק בימי ראשון,
+  // (2) והיא נדחפה אחרונה, אחרי צעדי הכיול, ואז נחתכה ב-slice(0,3). עכשיו היא ראשונה
+  // ונשארת פתוחה כל השבוע עד שנסגרת. הטקס הוא ראשון בערב — אבל מי שפספס עדיין רואה.
+  if (weeklyReviewDue(db))
+    steps.unshift(new Date().getDay() === 0
+      ? 'הסקירה השבועית עם עמית — הערב (בטאב הצוות)'
+      : 'הסקירה השבועית של השבוע שעבר — עדיין פתוחה (בטאב הצוות)');
   return steps.slice(0, 3);
 }
 
@@ -192,8 +196,18 @@ export function painByArea(db: DB): { area: string; n: number; last: string; max
 }
 
 /* ---------- weekly review digest + decision ---------- */
+// השבוע שהסקירה סוגרת = השבוע המלא שהסתיים (ראשון–שבת שעברו).
+// בלי זה, סקירה של ראשון בערב סיכמה שבוע בן יום אחד והציגה אפסים.
+export function reviewedWeek(): string { return weekStartOf(daysAgo(7)); }
+
+// הסקירה השבועית עוד לא נסגרה — ויש בכלל מה לסכם (לא מציקים למשתמש טרי)
+export function weeklyReviewDue(db: DB): boolean {
+  const hasData = db.workouts.length > 0 || db.weights.length > 0 || db.food.length > 0;
+  return hasData && !db.reviews.some(rv => rv.weekStart === weekStartOf(today()));
+}
+
 export function reviewDigest(db: DB) {
-  const wk = weekStartOf(today());
+  const wk = reviewedWeek();
   const workouts = db.workouts.filter(w => weekStartOf(w.date) === wk).length;
   const kravN = db.krav.filter(k => weekStartOf(k.date) === wk).length;
   const pains = db.injuries.filter(j => weekStartOf(j.date) === wk);
