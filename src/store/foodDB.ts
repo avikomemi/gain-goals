@@ -23,6 +23,13 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'bulgarit', names: ['גבינה בולגרית', 'גבינה צפתית', 'בולגרית', 'פטה', 'צפתית', 'פטא'], per100: [130, 11, 2, 9], unit: 'g', def: 50, gout: 'ok', src: 'תווית' },
   { id: 'yellow', names: ['גבינה צהובה', 'צהובה', 'עמק', 'גאודה', 'מוצרלה', 'קשקבל'], per100: [350, 25, 1, 27], unit: 'g', def: 30, gout: 'ok', src: 'USDA' },
   { id: 'egg', names: ['ביצה', 'ביצים', 'חביתה', 'אומלט'], per100: [143, 13, 0.7, 10], unit: 'unit', unitGrams: 50, unitLabel: 'ביצה', def: 2, gout: 'ok', src: 'USDA' },
+  // אבי ביקש גמישות: סלמון ושוקולד הם חלק מהתוכנית, לא חריגה ממנה — אז הם במאגר
+  { id: 'salmon', names: ['סלמון'], per100: [208, 22, 0, 13], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
+  { id: 'darkchoc', names: ['שוקולד מריר'], per100: [598, 7.8, 46, 43], unit: 'g', def: 25, src: 'USDA' },
+  { id: 'choc', names: ['שוקולד חלב', 'שוקולד'], per100: [535, 7.6, 59, 30], unit: 'g', def: 25, src: 'USDA' },
+  // מזונות נפח — הרבה שובע במעט קלוריות, הפתרון לרעב שמוביל לשטויות
+  { id: 'vegsoup', names: ['מרק ירקות', 'מרק צח'], per100: [35, 1.5, 6, 0.8], unit: 'g', def: 300, gout: 'ok', src: 'הערכה' },
+  { id: 'popcorn', names: ['פופקורן'], per100: [387, 13, 78, 4], unit: 'g', def: 30, src: 'USDA' },
   { id: 'tuna', names: ['טונה'], per100: [116, 26, 0, 1], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
   { id: 'chicken', names: ['חזה עוף', 'עוף', 'פרגיות', 'פרגית', 'פרגי', 'שניצל'], per100: [165, 31, 0, 3.6], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
   { id: 'whey', names: ['אבקת חלבון', 'שייק חלבון', 'וויי', 'פרוטאין', 'סקופ'], per100: [380, 75, 8, 6], unit: 'unit', unitGrams: 30, unitLabel: 'מנה', def: 1, gout: 'ok', src: 'תווית' },
