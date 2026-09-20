@@ -4,6 +4,7 @@ import { hilaReview } from '../store/hila';
 import { estimateFood } from '../store/foodDB';
 import { getGoals } from '../store/goals';
 import { flexMissing } from '../store/review';
+import MealBuilder from '../components/MealBuilder';
 import { stepsKcal } from '../store/adi';
 import { supabase } from '../store/cloud';
 
@@ -281,6 +282,9 @@ export default function Journal() {
           <HilaResponse text={foodToday?.text || ''} photoCount={foodToday?.photos?.length || 0}
             waterMl={db.water.find(w => w.date === today())?.ml ?? 0} waterGoal={getGoals(db).waterMl} title="תגובה להיום" date={today()} />
         ) : null}
+
+        <div className="h-sec">🧮 בונה ארוחה · הילה</div>
+        <MealBuilder />
 
         <div className="h-sec">✅ משימות כיול</div>
         <div className="card">
