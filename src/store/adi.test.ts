@@ -30,8 +30,11 @@ describe('הסקירה השבועית', () => {
   it('מסכמת את השבוע שנסגר, לא את זה שרק התחיל', () => {
     expect(reviewedWeek()).toBe(weekStartOf(day(7)));
     const d = reviewDigest(withData());
-    // שני האימונים מלפני 8-9 ימים שייכים לשבוע שנסגר; זה שמלפני יומיים — לשבוע הנוכחי
-    const belongsToReviewed = [day(9), day(8)].filter(x => weekStartOf(x) === reviewedWeek()).length;
+    // נספרים רק האימונים שנפלו בשבוע שנסגר. איזה מהם — תלוי ביום בשבוע שבו הטסט רץ,
+    // אז הציפייה מחושבת מכל התאריכים ולא מהנחה על יומיים מסוימים.
+    const dates = [day(9), day(8), day(2)];
+    const belongsToReviewed = dates.filter(x => weekStartOf(x) === reviewedWeek()).length;
     expect(d.workouts).toBe(belongsToReviewed);
+    expect(d.workouts).toBeLessThan(dates.length);   // לא כל האימונים — רק של השבוע שנסגר
   });
 });
