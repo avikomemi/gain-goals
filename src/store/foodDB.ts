@@ -25,6 +25,8 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'egg', names: ['ביצה', 'ביצים', 'חביתה', 'אומלט'], per100: [143, 13, 0.7, 10], unit: 'unit', unitGrams: 50, unitLabel: 'ביצה', def: 2, gout: 'ok', src: 'USDA' },
   // אבי ביקש גמישות: סלמון ושוקולד הם חלק מהתוכנית, לא חריגה ממנה — אז הם במאגר
   { id: 'salmon', names: ['סלמון'], per100: [208, 22, 0, 13], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
+  // מוליפופ (מהתווית שאבי צילם): סוכריה 8.3 גר' = 25 קק"ל · 6 פחמ' · 10 מ"ג קפאין
+  { id: 'lollipop', names: ['סוכריה על מקל', 'סוכרייה על מקל', 'מוליפופ', 'mollipop'], per100: [301, 0, 72, 0], unit: 'unit', unitGrams: 8.3, unitLabel: 'סוכריה', def: 1, gout: 'ok', src: 'תווית' },
   { id: 'darkchoc', names: ['שוקולד מריר'], per100: [598, 7.8, 46, 43], unit: 'g', def: 25, src: 'USDA' },
   { id: 'choc', names: ['שוקולד חלב', 'שוקולד'], per100: [535, 7.6, 59, 30], unit: 'g', def: 25, src: 'USDA' },
   // מזונות נפח — הרבה שובע במעט קלוריות, הפתרון לרעב שמוביל לשטויות
