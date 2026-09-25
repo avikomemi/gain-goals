@@ -71,6 +71,7 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'avocado', names: ['אבוקדו', 'גוואקמול', 'גואקמול'], per100: [160, 2, 9, 15], unit: 'g', def: 100, src: 'USDA' },
   { id: 'oliveoil', names: ['שמן זית', 'שמן'], per100: [884, 0, 0, 100], unit: 'unit', unitGrams: 13.5, unitLabel: 'כף', def: 1, src: 'USDA' },
   { id: 'peanutbutter', names: ['חמאת בוטנים'], per100: [588, 25, 20, 50], unit: 'unit', unitGrams: 16, unitLabel: 'כף', def: 1, src: 'USDA' },
+  { id: 'honey', names: ['דבש'], per100: [304, 0.3, 82, 0], unit: 'unit', unitGrams: 7, unitLabel: 'כפית', def: 1, gout: 'ok', src: 'USDA' },   // כפית = 7 גר'; "כף דבש" מומר ל-3 כפיות
   { id: 'nuts', names: ['שקדים', 'אגוזים', 'קשיו', 'בוטנים', 'פיסטוק', 'שקד', 'אגוז'], per100: [579, 21, 22, 50], unit: 'g', def: 28, src: 'USDA' },
   // פקאן ומלך שמנוניים בהרבה מהשקד (691/654 מול 579) — שם ספציפי גובר על 'אגוז' הכללי
   { id: 'pecan', names: ['אגוזי פקאן', 'אגוז פקאן', 'פקאנים', 'פקאן'], per100: [691, 9.2, 14, 72], unit: 'g', def: 28, gout: 'ok', src: 'USDA' },
@@ -189,17 +190,36 @@ const WORD_NUM: Record<string, number> = {
 };
 // מילות-יחידה: מסמנות שהמספר סופר מנות ולא גרמים
 const UNIT_WORD = /פרוס|כפות|כפית|כף|כוס|קערי|קערה|צלחת|חופן|שקית|יחיד|חתיכ|נתח|קופס/;
+// גודל הכף שנכתב מול גודל הכף של הפריט. כף = 3 כפיות — ובלי זה "כפית טחינה"
+// נספרה ככף שלמה (89 קק"ל במקום 30), ו"כף דבש" ככפית (21 במקום 64).
+const TBSP = /(?:^|\s)[מובכלה]?(?:כף|כפות)(?=\s|$)/;
+const TSP = /(?:^|\s)[מובכלה]?(?:כפית|כפיות)(?=\s|$)/;
+const isSpoon = (f: FoodItem) => f.unitLabel === 'כף' || f.unitLabel === 'כפית';
+function spoonScale(seg: string, food: FoodItem): number {
+  if (food.unitLabel === 'כף' && TSP.test(seg)) return 1 / 3;
+  if (food.unitLabel === 'כפית' && TBSP.test(seg)) return 3;
+  return 1;
+}
 const WORD_NUM_RE = new RegExp(`(?:^|\\s)[מובכלה]?(${Object.keys(WORD_NUM).join('|')})(?=\\s|$)`);
 
 // כמה מהפריט הזה — מספר, "x2", "2 מנות", מספר במילים, או "חצי"; אחרת ברירת-המחדל.
 // grams=true כשנכתב "גרם"/"גר'" במפורש → המספר הוא גרמים, גם לפריטי-יחידה.
 // nameAt = איפה שם המאכל יושב בתוך הקטע, כדי להבדיל בין ספירה למשקל (ראה למטה).
 function parseQty(seg: string, food: FoodItem, nameAt = -1): { qty: number; grams: boolean } {
+  // כשנכתבה כף או כפית במפורש, היחידה הטבעית היא כף אחת — לא מנת ברירת-המחדל.
+  // "כף טחינה" זו כף אחת, גם אם מנת ברירת-המחדל של טחינה היא שתי כפות.
+  const spoonNamed = isSpoon(food) && (TSP.test(seg) || TBSP.test(seg));
+  const r = parseQtyRaw(seg, food, nameAt, spoonNamed ? 1 : food.def);
+  // "200 גרם" זה משקל מפורש — גודל הכף לא רלוונטי לו
+  return r.grams ? r : { qty: r.qty * spoonScale(seg, food), grams: false };
+}
+
+function parseQtyRaw(seg: string, food: FoodItem, nameAt = -1, def = food.def): { qty: number; grams: boolean } {
   // מנקה אחוזי שומן ("5%", "5 אחוז") שלא ייחשבו ככמות — ברווחים, כדי לא להזיז מיקומים
   const s = seg.replace(/\d+(\.\d+)?\s*(?:%|אחוז)/g, m => ' '.repeat(m.length));
   // "מנה" = היחידה הטבעית של הפריט: לפריט-גרמים זו מנת ברירת-המחדל, לפריט-יחידה זו יחידה אחת.
   // בלי זה "3 חזה עוף" נספר כ-3 גרם (5 קק"ל) במקום 3 מנות.
-  const portions = (n: number) => ({ qty: food.unit === 'g' ? n * food.def : n, grams: false });
+  const portions = (n: number) => ({ qty: food.unit === 'g' ? n * def : n, grams: false });
   const mult = s.match(/[x×X]\s*(\d+(\.\d+)?)/);
   const dishes = s.match(/(\d+(\.\d+)?)\s*מנ(?:ה|ות)/);
   const times = mult ? parseFloat(mult[1]) : (dishes ? parseFloat(dishes[1]) : 1);
@@ -217,22 +237,24 @@ function parseQty(seg: string, food: FoodItem, nameAt = -1): { qty: number; gram
     // מספר גדול לפני השם הוא עדיין משקל ("50 במבה") — אף אחד לא אוכל 50 מנות.
     // ספירה רק כשיש מה לספור: מנה מלאה (50 גר'+) או מילת-יחידה לפני השם ("2 פרוסות
     // גבינה צהובה"). אחרת "10 שקדים" היה הופך ל-10 חופנים במקום 10 שקדים.
-    const countable = food.def >= 50 || UNIT_WORD.test(s.slice(0, nameAt < 0 ? 0 : nameAt));
+    const countable = def >= 50 || UNIT_WORD.test(s.slice(0, nameAt < 0 ? 0 : nameAt));
     if (nameAt >= 0 && (num.index ?? 0) < nameAt && n <= 10 && countable) return portions(n);
     // פריט-יחידה עם מספר גדול אחריו = משקל, לא ספירה: "פיתת מחמצת 150" זה 150 גרם,
     // לא 150 פיתות (11,000 קק"ל). אף אחד לא אוכל 25 פיתות או 25 ביצים.
     if (food.unit !== 'g' && n >= 25) return { qty: n, grams: true };
     return { qty: n, grams: false };
   }
-  if (/חצי/.test(seg)) return { qty: food.def * 0.5, grams: false };
-  if (/(?:^|\s)רבע/.test(seg)) return { qty: food.def * 0.25, grams: false };
-  return { qty: food.def, grams: false };
+  if (/חצי/.test(seg)) return { qty: def * 0.5, grams: false };
+  if (/(?:^|\s)רבע/.test(seg)) return { qty: def * 0.25, grams: false };
+  return { qty: def, grams: false };
 }
 
-const PLURAL: Record<string, string> = { 'כף': 'כפות', 'כוס': 'כוסות', 'פרוסה': 'פרוסות', 'מנה': 'מנות' };
+const PLURAL: Record<string, string> = { 'כף': 'כפות', 'כפית': 'כפיות', 'כוס': 'כוסות', 'פרוסה': 'פרוסות', 'מנה': 'מנות' };
 function qtyLabel(food: FoodItem, qty: number): string {
   const n = Math.round(qty * 10) / 10;
   if (food.unit === 'g') return `${n}ג'`;
+  // פחות מיחידה שלמה — "0.3 כף" לא אומר כלום. מציגים גרמים.
+  if (n > 0 && n < 1 && food.unitGrams) return `${Math.round(qty * food.unitGrams * 10) / 10}ג'`;
   const lab = food.unitLabel;
   // 'יח', או תווית שכפולה בשם הפריט (פיתה/ביצה) → פשוט ×n
   if (!lab || lab === 'יח' || food.names[0].includes(lab)) return `×${n}`;

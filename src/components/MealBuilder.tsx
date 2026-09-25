@@ -29,7 +29,7 @@ const GROUPS: { label: string; ids: string[] }[] = [
   { label: '🥗 ירקות ומרקים', ids: ['salad', 'vegsoup', 'cucumber', 'tomato', 'pepper', 'carrot', 'broccoli', 'cauliflower', 'cabbage', 'zucchini', 'eggplant', 'mushroom', 'beet', 'spinach'] },
   { label: '🍎 פירות', ids: ['apple', 'banana', 'nectarine', 'orange', 'clementine', 'grapes', 'watermelon', 'melon', 'strawberry', 'blueberry', 'date', 'kiwi', 'pear', 'persimmon', 'mango'] },
   { label: '🥑 שומנים', ids: ['avocado', 'tahini', 'hummus', 'oliveoil', 'peanutbutter', 'nuts', 'pecan', 'walnut'] },
-  { label: '🍫 תקציב חופשי', ids: ['darkchoc', 'choc', 'bamba', 'bisli', 'popcorn', 'pastry', 'knafeh', 'fries', 'cola', 'coladiet'] },
+  { label: '🍫 תקציב חופשי', ids: ['honey', 'darkchoc', 'choc', 'bamba', 'bisli', 'popcorn', 'pastry', 'knafeh', 'fries', 'cola', 'coladiet'] },
 ];
 
 export default function MealBuilder() {
