@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
-import { Loc } from '../data/program';
+import { Loc, RoutineKey } from '../data/program';
 import { supabase } from './cloud';
 import { FoodItem, mergeFoods } from './foodDB';
 import { readFitbitCallback, exchangeFitbitCode, clearFitbitCallbackUrl, syncFitbit } from './fitbit';
@@ -8,7 +8,7 @@ import type { Session } from '@supabase/supabase-js';
 export interface SetLog { reps: number; weight?: number; done: boolean; bw?: boolean }
 export interface ExLog { id: string; name: string; sets: SetLog[]; rpe?: number; skipped?: boolean; params?: Record<string, number> }
 export interface WorkoutLog {
-  id: string; date: string; routine: 'A' | 'B' | 'C'; loc: Loc;
+  id: string; date: string; routine: RoutineKey; loc: Loc;   // 'P' = דף הפיזיו, אימון נפרד מסבב ABC
   exercises: ExLog[]; stoppedEarly?: boolean; flexDone?: boolean; finisherDone?: boolean;
 }
 export interface WeightEntry { date: string; kg: number }
@@ -32,7 +32,7 @@ export interface DB {
   weights: WeightEntry[]; waists: WaistEntry[]; workouts: WorkoutLog[];
   injuries: Injury[]; krav: KravLog[]; food: FoodLog[]; reviews: Review[];
   water: WaterDay[]; bp: BpEntry[]; flex: FlexEntry[]; calib: Calib;
-  orders: { A?: string[]; B?: string[]; C?: string[] };
+  orders: { A?: string[]; B?: string[]; C?: string[]; P?: string[] };
   foods?: FoodItem[]; // מסד תזונה אישי (ערכים פר-100-גרם) — נזרע מ-SEED_FOODS, גדל עם הזמן
   restSec?: number; // ברירת-מחדל גלובלית לזמן מנוחה (שניות) — נפילה לתרגילים שלא הוגדרו פרטנית
   restByEx?: Record<string, number>; // זמן מנוחה פר-תרגיל (exerciseId → שניות) — גובר על restSec

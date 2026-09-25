@@ -7,6 +7,7 @@ import { flexMissing } from '../store/review';
 import MealBuilder from '../components/MealBuilder';
 import { stepsKcal } from '../store/adi';
 import { supabase } from '../store/cloud';
+import { routineLabel } from '../data/program';
 
 // דוחס תמונת מנה לתמונה קטנה שנשמרת ביומן (מקומי, עד הסנכרון)
 function compressImage(file: File): Promise<string> {
@@ -319,7 +320,7 @@ export default function Journal() {
           {db.workouts.length === 0 && <div style={{ fontSize: 13, color: 'var(--dim)' }}>עדיין אין — הראשון מחכה לך 🥋</div>}
           {[...db.workouts].reverse().slice(0, 10).map(w => (
             <div className="list-item" key={w.id} style={{ cursor: 'pointer' }} onClick={() => setDraft(structuredClone(w))}>
-              <span className="d">{w.date}</span> · אימון {w.routine} · {w.loc === 'home' ? '🏠' : '🏋️'}
+              <span className="d">{w.date}</span> · {routineLabel(w.routine)} · {w.loc === 'home' ? '🏠' : '🏋️'}
               {w.stoppedEarly && <span style={{ color: 'var(--danger)' }}> · נעצר</span>}
               {w.flexDone && ' · גמישות ✓'}
               <span style={{ float: 'right', color: 'var(--acc)', fontSize: 12, fontWeight: 700 }}>ערוך ✎</span>
@@ -374,7 +375,7 @@ function WorkoutEditor({ w, onSave, onDelete, onCancel }: { w: WorkoutLog; onSav
   return (
     <div className="scr fade-in">
       <div className="micro">עריכת אימון · {w.date} · {w.loc === 'home' ? '🏠 בית' : '🏋️ חדר'}</div>
-      <div className="h-huge mt8">אימון {w.routine}<em>.</em></div>
+      <div className="h-huge mt8">{routineLabel(w.routine)}<em>.</em></div>
       <div style={{ fontSize: 12.5, color: 'var(--dim)', marginTop: 6 }}>תקן חזרות/משקל/סטים בדיעבד, או מחק את האימון. השינוי חל על היומן ועל הניתוחים של עדי.</div>
 
       {ex.map((e, i) => (

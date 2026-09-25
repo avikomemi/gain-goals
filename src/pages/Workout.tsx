@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PROGRAM, RoutineDef, Loc, exName, exNote, exStruct, BODY_AREAS, KRAV_TAGS, SENSITIVE_BACK_DAY } from '../data/program';
+import { PROGRAM, PHYSIO_BACK, routineByKey, routineLabel, RoutineDef, Loc, exName, exNote, exStruct, BODY_AREAS, KRAV_TAGS, SENSITIVE_BACK_DAY } from '../data/program';
 import { useStore, today, WorkoutLog, ExLog } from '../store/store';
 import { nextRoutine, direction, sleepAdvice } from '../store/adi';
 import { heDate } from '../components/bits';
@@ -34,7 +34,7 @@ function loadLive(): any | null {
     const raw = localStorage.getItem(LIVE_KEY);
     if (!raw) return null;
     const s = JSON.parse(raw);
-    const routine = PROGRAM.find(p => p.key === s.routineKey);
+    const routine = routineByKey(s.routineKey);
     const fresh = s.ts && (Date.now() - s.ts) < LIVE_MAX_AGE;
     // אימון פעיל שנשמר לפני שינוי בתוכנית = לא תואם (שמות/סדר מעורבבים). משליכים ומתחילים נקי.
     const matchesProgram = routine && Array.isArray(s.log)
@@ -200,7 +200,8 @@ export default function Workout() {
     update(d => {
       const w: WorkoutLog = { id: crypto.randomUUID(), date: today(), routine: routine.key, loc, exercises: log, stoppedEarly, flexDone };
       d.workouts.push(w);
-      if (!d.calib.done) {
+      // אימון הפיזיו נפרד מהתוכנית — הוא לא נספר ככיול של A/B/C
+      if (!d.calib.done && routine.key !== 'P') {
         d.calib.runs[routine.key] = Math.min(2, d.calib.runs[routine.key] + 1);
         const c = d.calib;
         if (c.firstWeight && c.waist && c.bp && c.flexTests && c.runs.A >= 2 && c.runs.B >= 2 && c.runs.C >= 2) c.done = true;
@@ -245,6 +246,26 @@ export default function Workout() {
             </div>
           </div>
         ))}
+        <div className="h-sec">אימון נפרד · לא חלק מהסבב</div>
+        <div className="card mt8" style={{ borderColor: 'var(--acc2)' }}>
+          <div>
+            <b style={{ fontSize: 16, fontWeight: 900 }}>{PHYSIO_BACK.icon} {PHYSIO_BACK.name}</b>
+            <span className="dir ease" style={{ marginInlineStart: 8 }}>דף הפיזיו</span>
+            <div style={{ fontSize: 12, color: 'var(--dim)', marginTop: 4 }}>{PHYSIO_BACK.focus}</div>
+            <div style={{ fontSize: 12, marginTop: 6, cursor: 'pointer', color: 'var(--acc)', fontWeight: 700 }}
+              onClick={() => setWhyOpen(whyOpen === 'P' ? null : 'P')}>
+              {whyOpen === 'P' ? '▴ מה האימון הזה משיג' : '▾ מה האימון הזה משיג?'}
+            </div>
+            {whyOpen === 'P' && <div style={{ fontSize: 12.5, marginTop: 6, lineHeight: 1.55 }}>{PHYSIO_BACK.why}</div>}
+          </div>
+          <div className="seg mt12">
+            <b onClick={() => startLive(PHYSIO_BACK, 'home')}>▶︎ התחל · {PHYSIO_BACK.exercises.length} תרגילים</b>
+            <b style={{ flex: '0 0 auto', padding: '10px 14px' }} title="שנה סדר תרגילים" onClick={() => { setRoutine(PHYSIO_BACK); setPhase('order'); }}>⇅</b>
+          </div>
+          <div style={{ fontSize: 11.5, color: 'var(--dim)', marginTop: 10, lineHeight: 1.5 }}>
+            בכאב 4+ מדלגים על Box Squat ועל Single Leg Deadlift — שני התרגילים היחידים עם משקל.
+          </div>
+        </div>
         <div className="h-sec">עוד</div>
         <div className="seg">
           <b onClick={() => setPhase('krav')}>🥊 רישום קרב מגע</b>
@@ -266,7 +287,7 @@ export default function Workout() {
     };
     return (
       <div className="scr fade-in">
-        <div className="micro">אימון {routine.key} · {routine.name}</div>
+        <div className="micro">{routineLabel(routine.key)} · {routine.name}</div>
         <div className="h-huge mt8">סדר <em>התרגילים.</em></div>
         <div style={{ fontSize: 12.5, color: 'var(--dim)', marginTop: 6 }}>אתה הבוס. חיצים לשינוי — נשמר אוטומטית וחל על כל האימונים הבאים. המלצת עמית: נפיצות מוקדם, כשהגוף חם וטרי.</div>
         <div className="card mt12">
@@ -291,7 +312,7 @@ export default function Workout() {
   if (phase === 'warmup') {
     return (
       <div className="scr fade-in">
-        <div className="micro">אימון {routine.key} · {loc === 'home' ? '🏠 בית' : '🏋️ חדר כושר'}</div>
+        <div className="micro">{routineLabel(routine.key)}{routine.key === 'P' ? '' : ` · ${loc === 'home' ? '🏠 בית' : '🏋️ חדר כושר'}`}</div>
         <div className="h-huge mt8">חימום.</div>
         {loc === 'gym' && (
           <div className="alert mt12">🧊 <span><b>פרוטוקול אנטי-התכווצות:</b> רחוק מפתח המזגן, סווטשירט/חולצה יבשה בהישג יד. הפליאומטריה מיד אחרי החימום — כשהגוף חם.</span></div>
@@ -325,7 +346,7 @@ export default function Workout() {
     return (
       <div className="scr fade-in" key={exDef.id}>
         <div className="spread">
-          <div className="micro">אימון {routine.key} · {loc === 'home' ? '🏠 בית' : '🏋️ חדר'}</div>
+          <div className="micro">{routineLabel(routine.key)}{routine.key === 'P' ? '' : ` · ${loc === 'home' ? '🏠 בית' : '🏋️ חדר'}`}</div>
           <div className="dots">
             {exList.map((_, i) => (
               <i key={i} className={i < exIdx ? 'done' : i === exIdx ? 'now' : ''} />
@@ -531,7 +552,7 @@ export default function Workout() {
   if (phase === 'flex') {
     return (
       <div className="scr fade-in">
-        <div className="micro">אימון {routine.key} · שלב אחרון</div>
+        <div className="micro">{routineLabel(routine.key)} · שלב אחרון</div>
         <div className="h-huge mt8">{routine.flexTitle.split('·')[1]}<em>.</em></div>
         <div style={{ fontSize: 12.5, color: 'var(--dim)', marginTop: 6 }}>הגמישות היא חלק מהאימון — הדגש החזק שלך. של נעה. סמן כל מתיחה, ולמתיחות בזמן — לחץ ▶ והטיימר יצלצל.</div>
         <div className="card mt12">
@@ -578,7 +599,7 @@ export default function Workout() {
     return (
       <div className="scr fade-in" style={{ textAlign: 'center', paddingTop: 80 }}>
         <div style={{ fontSize: 60 }}>{endedByInjury ? '🩺' : '💥'}</div>
-        <div className="h-huge mt12">{endedByInjury ? <>נעצר נכון.<br /><em>הדיווח נרשם.</em></> : <>אימון {routine.key}<br /><em>בפנקס.</em></>}</div>
+        <div className="h-huge mt12">{endedByInjury ? <>נעצר נכון.<br /><em>הדיווח נרשם.</em></> : <>{routineLabel(routine.key)}<br /><em>בפנקס.</em></>}</div>
         {endedByInjury && (
           <div style={{ fontSize: 13, color: 'var(--dim)', marginTop: 10 }}>מאיה תראה את הדיווח. אם זה גב 4+ — האימון הבא הוא "יום גב רגיש".</div>
         )}

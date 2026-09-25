@@ -46,10 +46,12 @@ export function streakWeeksNoInjuryStop(db: DB): number {
 }
 
 export function nextRoutine(db: DB): 'A' | 'B' | 'C' {
-  const last = db.workouts[db.workouts.length - 1];
-  if (!last) return 'A';
   const order: ('A' | 'B' | 'C')[] = ['A', 'B', 'C'];
-  return order[(order.indexOf(last.routine) + 1) % 3];
+  // דף הפיזיו ('P') הוא אימון נפרד — הוא לא מקדם ולא מאפס את הסבב.
+  // בלי הסינון הזה indexOf היה מחזיר -1 וכל אימון שיקום היה מחזיר את הסבב ל-A.
+  const last = [...db.workouts].reverse().find(w => order.includes(w.routine as 'A' | 'B' | 'C'));
+  if (!last) return 'A';
+  return order[(order.indexOf(last.routine as 'A' | 'B' | 'C') + 1) % 3];
 }
 
 /* ---------- שינה → עומס אימון (מנתוני Fitbit) ---------- */

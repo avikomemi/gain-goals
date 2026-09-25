@@ -1,7 +1,7 @@
 // הסקירה השבועית — מתי היא נדרשת ואיזה שבוע היא מסכמת
 import { describe, expect, it } from 'vitest';
 import { hydrate, weekStartOf, today } from './store';
-import { weeklyReviewDue, reviewedWeek, reviewDigest, nextSteps } from './adi';
+import { weeklyReviewDue, reviewedWeek, reviewDigest, nextSteps, nextRoutine } from './adi';
 
 const day = (back: number) => new Date(Date.now() - back * 864e5).toISOString().slice(0, 10);
 const withData = (extra = {}) => hydrate({
@@ -36,5 +36,28 @@ describe('הסקירה השבועית', () => {
     const belongsToReviewed = dates.filter(x => weekStartOf(x) === reviewedWeek()).length;
     expect(d.workouts).toBe(belongsToReviewed);
     expect(d.workouts).toBeLessThan(dates.length);   // לא כל האימונים — רק של השבוע שנסגר
+  });
+});
+
+// אבי, 25.9.26: "זה אימון נפרד לחלוטין מהשלושה שיש".
+// לכן אימון הפיזיו ('P') לא מקדם את סבב ABC — ובעיקר לא מאפס אותו:
+// לפני התיקון indexOf('P') החזיר 1-, ו-(1-+1)%3 היה מחזיר את הסבב ל-A אחרי כל אימון שיקום.
+describe('סבב ABC מול אימון הפיזיו', () => {
+  const rot = (routines: string[]) =>
+    nextRoutine(hydrate({ startDate: day(30), workouts: routines.map((r, i) => ({ date: day(routines.length - i), routine: r, exercises: [] })) }));
+
+  it('מתקדם רגיל כשאין פיזיו', () => {
+    expect(rot(['A'])).toBe('B');
+    expect(rot(['A', 'B'])).toBe('C');
+    expect(rot(['A', 'B', 'C'])).toBe('A');
+  });
+
+  it('אימון פיזיו לא מזיז את הסבב', () => {
+    expect(rot(['A', 'P'])).toBe('B');
+    expect(rot(['A', 'B', 'P', 'P'])).toBe('C');
+  });
+
+  it('רק אימוני פיזיו — הסבב מתחיל מ-A', () => {
+    expect(rot(['P', 'P'])).toBe('A');
   });
 });
