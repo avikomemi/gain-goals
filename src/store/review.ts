@@ -4,6 +4,7 @@
 import { DB, today, daysAgo } from './store';
 import { estimateFood, mergeFoods } from './foodDB';
 import { getGoals } from './goals';
+import { effortOf, intensityLabel } from './effort';
 
 export interface ReviewMetric { label: string; value: string; target?: string; status: 'good' | 'warn' | 'bad' }
 export interface ReviewFlag { from: string; title: string; body: string; sev: 'red' | 'warn' }
@@ -83,6 +84,7 @@ export function fullReview(db: DB, days = 21): FullReview {
 
   /* ---------- מדדים ---------- */
   const perWeek = workouts.length / weeks;
+  const effort = effortOf(db, workouts);   // כולל את אימון הפיזיו — כל אימון שנרשם נספר
   const weighPerWeek = weights.length / weeks;
   const lastWeight = weights[weights.length - 1] || db.weights[db.weights.length - 1];
   const daysSinceWeigh = lastWeight ? Math.round((new Date(to).getTime() - new Date(lastWeight.date).getTime()) / 864e5) : null;
@@ -92,6 +94,8 @@ export function fullReview(db: DB, days = 21): FullReview {
 
   const metrics: ReviewMetric[] = [
     { label: 'אימונים', value: `${workouts.length} · ${perWeek.toFixed(1)} בשבוע`, target: `${g.workouts} בשבוע`, status: perWeek >= g.workouts * 0.85 ? 'good' : perWeek >= g.workouts * 0.6 ? 'warn' : 'bad' },
+    // עומס, לא רק ספירה — אימון של 20 דקות ואימון של שעה נראו עד כה זהים.
+    ...(effort.workouts ? [{ label: 'עומס אימונים', value: `${effort.minutes} דקות · ${effort.kcal} קק"ל (אומדן) · מאמץ ${effort.rpe ?? '—'} (${intensityLabel(effort.rpe)})`, target: 'מגמה', status: 'good' as ReviewMetric['status'] }] : []),
     { label: 'שקילות', value: lastWeight ? `${weights.length} · אחרונה ${lastWeight.kg} ק"ג לפני ${daysSinceWeigh} ימים` : 'אף אחת', target: `${g.weighIns} בשבוע`, status: weighPerWeek >= g.weighIns - 0.5 ? 'good' : weighPerWeek >= 1 ? 'warn' : 'bad' },
     { label: 'מותן', value: lastWaist ? `${lastWaist.cm} ס"מ (${lastWaist.date.slice(5).split('-').reverse().join('.')})` : 'לא נמדד', target: 'שבועי', status: waists.length >= weeks - 1 ? 'good' : waists.length ? 'warn' : 'bad' },
     { label: 'מים', value: water.length ? `ממוצע ${waterAvg} מ"ל · ${waterOk}/${water.length} ימים ביעד` : 'לא נרשם', target: `${waterGoal} מ"ל`, status: water.length && waterOk / water.length >= 0.7 ? 'good' : water.length ? 'warn' : 'bad' },

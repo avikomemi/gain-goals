@@ -8,6 +8,7 @@ import MealBuilder from '../components/MealBuilder';
 import { stepsKcal } from '../store/adi';
 import { supabase } from '../store/cloud';
 import { routineLabel } from '../data/program';
+import { workoutMinutes, workoutKcal } from '../store/effort';
 
 // דוחס תמונת מנה לתמונה קטנה שנשמרת ביומן (מקומי, עד הסנכרון)
 function compressImage(file: File): Promise<string> {
@@ -321,6 +322,7 @@ export default function Journal() {
           {[...db.workouts].reverse().slice(0, 10).map(w => (
             <div className="list-item" key={w.id} style={{ cursor: 'pointer' }} onClick={() => setDraft(structuredClone(w))}>
               <span className="d">{w.date}</span> · {routineLabel(w.routine)} · {w.loc === 'home' ? '🏠' : '🏋️'}
+              {workoutMinutes(db, w) > 0 && <span style={{ color: 'var(--dim)' }}> · {workoutMinutes(db, w)} דק' · {workoutKcal(db, w)} קק"ל</span>}
               {w.stoppedEarly && <span style={{ color: 'var(--danger)' }}> · נעצר</span>}
               {w.flexDone && ' · גמישות ✓'}
               <span style={{ float: 'right', color: 'var(--acc)', fontSize: 12, fontWeight: 700 }}>ערוך ✎</span>

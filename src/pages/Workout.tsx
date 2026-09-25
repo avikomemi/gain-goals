@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PROGRAM, PHYSIO_BACK, routineByKey, routineLabel, RoutineDef, Loc, exName, exNote, exStruct, BODY_AREAS, KRAV_TAGS, SENSITIVE_BACK_DAY } from '../data/program';
 import { useStore, today, WorkoutLog, ExLog } from '../store/store';
+import { workoutMinutes, workoutKcal, workoutRpe, intensityLabel } from '../store/effort';
 import { nextRoutine, direction, sleepAdvice } from '../store/adi';
 import { heDate } from '../components/bits';
 import { ringBell, primeBell } from '../lib/bell';
@@ -532,6 +533,9 @@ export default function Workout() {
         )}
 
         <button className="ghost mt8" onClick={() => { setLogAt(e => { e.skipped = true; }); if (exIdx < exList.length - 1) setExIdx(exIdx + 1); else setPhase('flex'); }}>דלג על התרגיל</button>
+        {/* מוצא חירום: אבי דיווח שאימון "לא מסתיים". לא משנה איפה נתקעים — מכאן
+            אפשר תמיד לסגור ולשמור, בלי לעבור את שאר התרגילים ואת בלוק הגמישות. */}
+        <button className="ghost mt8" onClick={() => { if (confirm('לסיים את האימון כאן ולשמור ביומן?')) { saveWorkout(true, false); setPhase('done'); } }}>✔︎ סיים ושמור עכשיו</button>
         <button className="ghost mt8" style={{ opacity: .7 }} onClick={abandonLive}>יציאה מהאימון (בלי לשמור)</button>
       </div>
     );
@@ -596,6 +600,12 @@ export default function Workout() {
   /* ============ DONE ============ */
   if (phase === 'done') {
     const doneSets = log.reduce((a, e) => a + e.sets.filter(s => s.done).length, 0);
+    // עומס האימון שזה עתה הסתיים — זמן, מאמץ וקלוריות (אומדן). נשען על אותו
+    // חישוב שמזין את הסקירה, כך שמה שרואים כאן הוא מה שייספר בסטטיסטיקה.
+    const justDone: WorkoutLog = { id: 'x', date: today(), routine: routine.key, loc, exercises: log, stoppedEarly: false };
+    const mins = workoutMinutes(db, justDone);
+    const kcal = workoutKcal(db, justDone);
+    const rpe = workoutRpe(justDone);
     return (
       <div className="scr fade-in" style={{ textAlign: 'center', paddingTop: 80 }}>
         <div style={{ fontSize: 60 }}>{endedByInjury ? '🩺' : '💥'}</div>
@@ -606,7 +616,15 @@ export default function Workout() {
         <div className="grid3 mt20">
           <div className="cell"><b className="num">{doneSets}</b><span>סטים</span></div>
           <div className="cell"><b className="num">{log.filter(e => !e.skipped).length}</b><span>תרגילים</span></div>
+          <div className="cell"><b className="num">{mins}</b><span>דקות (בערך)</span></div>
+        </div>
+        <div className="grid3 mt8">
+          <div className="cell"><b className="num">{kcal}</b><span>קק"ל (אומדן)</span></div>
+          <div className="cell"><b className="num">{rpe ?? '—'}</b><span>מאמץ · {intensityLabel(rpe)}</span></div>
           <div className="cell"><b className="num">{loc === 'home' ? '🏠' : '🏋️'}</b><span>{loc === 'home' ? 'בית' : 'חדר'}</span></div>
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 10, lineHeight: 1.5 }}>
+          הזמן והקלוריות הם אומדן מהסטים והמאמץ שדיווחת, לא מדידה. האימון נספר בסטטיסטיקה השבועית ככל אימון אחר.
         </div>
         <div style={{ fontSize: 12, color: 'var(--good)', marginTop: 14 }}>✓ נשמר ביומן · {heDate()}{!savedFlex && !endedByInjury && ' · בלי בלוק גמישות'}</div>
         <button className="cta mt20" onClick={() => nav('/')}>חזרה לדשבורד</button>
