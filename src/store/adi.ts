@@ -1,6 +1,8 @@
 // עדי — האנליסט: ממוצעים, מגמות, אנומליות, התרעות, צ'יפ כיוון, הצעדים הבאים.
 import { DB, WorkoutLog, weekStartOf, today, daysAgo } from './store';
 import { PROGRAM } from '../data/program';
+import { estimateFood, mergeFoods } from './foodDB';
+import { getGoals } from './goals';
 
 export interface Alert { from: string; text: string; sev: 'warn' | 'info' }
 
@@ -116,7 +118,7 @@ export function alerts(db: DB): Alert[] {
   // water — לפי כמות במונה, רק אם עברו לפחות יומיים מאז שהתחיל
   const waterMl2d = db.water.filter(w => w.date >= daysAgo(2)).reduce((a, w) => a + (w.ml || 0), 0);
   if (waterMl2d < 500 && startOf(db) <= daysAgo(2)) {
-    out.push({ from: 'ד"ר ארז', text: 'כמעט בלי מים במונה יומיים. עם גאוט זה לא מותרות — כוס אחת עכשיו, ולחץ "+ כוס" בדשבורד.', sev: 'warn' });
+    out.push({ from: 'ד"ר ארז', text: 'כמעט בלי מים במונה יומיים. עם גאוט זה לא מותרות — כוס אחת עכשיו, ולחץ "+ כוס" ביומן.', sev: 'warn' });
   }
   // pain repeat
   const wk = weekStartOf(today());
@@ -133,8 +135,66 @@ export function alerts(db: DB): Alert[] {
   const wkNow = weekStartOf(today());
   const noFlex = db.workouts.filter(w => weekStartOf(w.date) === wkNow && !w.flexDone && !w.stoppedEarly).length;
   if (noFlex >= 2) out.push({ from: 'נעה', text: `${noFlex} אימונים השבוע בלי בלוק הגמישות — זה הדגש החזק שלך, לא התוספת.`, sev: 'info' });
-  // בטיחות קודמת: warn לפני info, ואז מקסימום 2
-  return out.sort((a, b) => (a.sev === 'warn' ? 0 : 1) - (b.sev === 'warn' ? 0 : 1)).slice(0, 2);
+  out.push(...kcalAlerts(db), ...frequencyAlerts(db));
+  // קול אחד לכל בעל תחום — חמש הערות מאותו אדם זה רעש, ובלי זה התרעה של הילה
+  // או של עמית יכלה להידחק החוצה ע"י שתי התרעות של מישהו אחר.
+  const byOwner = new Map<string, Alert>();
+  for (const a of out.sort((x, y) => (x.sev === 'warn' ? 0 : 1) - (y.sev === 'warn' ? 0 : 1)))
+    if (!byOwner.has(a.from)) byOwner.set(a.from, a);
+  // בטיחות קודמת: warn לפני info, ואז מקסימום 3
+  return [...byOwner.values()].sort((a, b) => (a.sev === 'warn' ? 0 : 1) - (b.sev === 'warn' ? 0 : 1)).slice(0, 3);
+}
+
+/* ---------- קלוריות — הילה ----------
+   אבי, 26.9.26: "אם אני עובר את מספר הקלוריות היומי [...] אני מצפה שמי שרלוונטי
+   מהצוות ייתן אינדיקציה." עד כה הילה הגיבה רק כשפתחו את היומן. עכשיו היא מתריעה
+   מעצמה: על היום שעבר את היעד, ועל ממוצע שבועי שחורג. */
+export function dayKcal(db: DB, date: string): number | null {
+  const entry = db.food.find(f => f.date === date);
+  if (!entry?.text?.trim()) return null;
+  return estimateFood(entry.text, mergeFoods(db.foods)).total.kcal;
+}
+
+function kcalAlerts(db: DB): Alert[] {
+  const goal = getGoals(db).kcal;
+  const out: Alert[] = [];
+  const todayK = dayKcal(db, today());
+  if (todayK != null && todayK > goal)
+    out.push({ from: 'הילה', text: `${todayK} קק"ל היום — ${todayK - goal} מעל היעד (${goal}). עוד משהו לפני השינה? עדיף חלבון או ירקות, לא פחמימה.`, sev: 'warn' });
+
+  // ממוצע 7 ימים — רק כשיש לפחות 3 ימים רשומים, אחרת זה רעש
+  const days = Array.from({ length: 7 }, (_, i) => daysAgo(i)).filter(d => d >= startOf(db));
+  const logged = days.map(d => dayKcal(db, d)).filter((k): k is number => k != null);
+  if (logged.length >= 3) {
+    const avg = Math.round(logged.reduce((a, b) => a + b, 0) / logged.length);
+    if (avg > goal + 100)
+      out.push({ from: 'הילה', text: `ממוצע ${avg} קק\"ל ביום ב-${logged.length} הימים שנרשמו — ${avg - goal} מעל היעד. בקצב הזה אין גירעון, והמשקל לא יזוז.`, sev: 'warn' });
+  }
+  return out;
+}
+
+/* ---------- תדירות אימונים — עמית ----------
+   לא "5 ימים בלי אימון" (שזה כבר מאוחר) אלא: כמה נשארו לעשות מול כמה ימים נשארו
+   בשבוע. מתריע רק כשהיעד כבר לא בר-השגה או ממש על הקצה — לא נודניק ביום ראשון. */
+export function weekPace(db: DB): { done: number; goal: number; daysLeft: number; needed: number } {
+  const goal = getGoals(db).workouts;
+  const done = currentWeekWorkouts(db);
+  const daysLeft = 6 - new Date().getDay();   // ראשון=0 … שבת=6
+  return { done, goal, daysLeft, needed: Math.max(0, goal - done) };
+}
+
+function frequencyAlerts(db: DB): Alert[] {
+  if (startOf(db) > daysAgo(7)) return [];   // שבוע ראשון — לא שופטים
+  const { done, goal, daysLeft, needed } = weekPace(db);
+  if (!needed) return [];
+  // שבת — השבוע נגמר, אין מה "להספיק". מסכמים, לא דוחפים.
+  if (daysLeft === 0)
+    return [{ from: 'עמית', text: `השבוע נסגר על ${done} אימונים מתוך ${goal}. לא מחפשים אשמים — מחר מתחיל שבוע חדש, ואני רוצה את הראשון כבר ביומיים הראשונים.`, sev: 'info' }];
+  if (needed > daysLeft)
+    return [{ from: 'עמית', text: `${done} אימונים השבוע מתוך ${goal}, ונשאר ${daysLeft === 1 ? 'יום אחד' : `${daysLeft} ימים`}. היעד כבר לא ייסגר — אבל שבוע המינימום כן: 2 פעולות × 30 דקות. אל תרד מתחת לזה.`, sev: 'warn' }];
+  if (needed === daysLeft)
+    return [{ from: 'עמית', text: `${done} מתוך ${goal} השבוע — צריך אימון בכל אחד מ-${daysLeft} הימים שנשארו. אם זה לא ריאלי, תחליט עכשיו מה יורד.`, sev: 'info' }];
+  return [];
 }
 
 /* ---------- next steps ---------- */

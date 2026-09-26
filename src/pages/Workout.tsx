@@ -362,6 +362,13 @@ export default function Workout() {
           <span>יעד: <b>{st.target}</b></span>
           {exNote(exDef, loc) && <span style={{ color: 'var(--acc2)' }}>{exNote(exDef, loc)}</span>}
         </div>
+        {/* אבי: "התרגילים קלים במונחי מאמץ". בתרגילי ייצוב לא מוסיפים משקל — מאטים ומאריכים. */}
+        {exDef.harder && (
+          <div className="card mt8" style={{ borderColor: 'var(--good)' }}>
+            <span style={{ fontSize: 12, color: 'var(--dim)', fontWeight: 800 }}>💪 קל מדי? כך מקשים</span>
+            <div style={{ fontSize: 13, marginTop: 6, lineHeight: 1.5 }}>{exDef.harder}</div>
+          </div>
+        )}
         {/* סעיף 14 — כרטיס מאמן בולט: מה עשית קודם, היעד עכשיו, והנחיית עמית */}
         <div className="card mt12" style={{ borderColor: 'var(--acc)' }}>
           <div className="spread" style={{ alignItems: 'center' }}>

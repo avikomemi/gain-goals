@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useStore, today, daysAgo } from '../store/store';
 import { alerts, nextSteps, nextRoutine, weeklyAvgWeights, lastWaist, streakWeeksNoInjuryStop, currentWeekWorkouts, sleepAdvice, weeklyReviewDue, reviewDigest } from '../store/adi';
 import { PROGRAM } from '../data/program';
-import { getGoals, clampGoal } from '../store/goals';
 import { PulseRing, Alerts, heDate } from '../components/bits';
 
 function greeting(): string {
@@ -26,16 +25,6 @@ export default function Dashboard() {
   const nr = nextRoutine(db);
   const routine = PROGRAM.find(p => p.key === nr)!;
   const steps = nextSteps(db);
-  const goal = getGoals(db).waterMl;
-  const ml = db.water.find(w => w.date === today())?.ml ?? 0;
-  const addWater = (amt: number) => update(d => {
-    let e = d.water.find(w => w.date === today());
-    if (!e) { e = { date: today(), ml: 0 }; d.water.push(e); }
-    e.ml = Math.max(0, (e.ml || 0) + amt); // גם 0 נשאר רשום — היסטוריה לא נמחקת
-    return d;
-  });
-  const setGoal = (amt: number) => update(d => { d.goals = { ...d.goals, waterMl: clampGoal('waterMl', getGoals(d).waterMl + amt) }; return d; });
-  const pct = Math.min(100, Math.round((ml / goal) * 100));
 
   const lastSleep = db.sleep && db.sleep.length ? db.sleep[db.sleep.length - 1] : undefined;
   const lastSteps = db.steps && db.steps.length ? db.steps[db.steps.length - 1] : undefined;
@@ -64,6 +53,10 @@ export default function Dashboard() {
           <div className="row"><span className="k">רצף ללא השבתה</span><span className="v num">{streak} <small>{streak === 1 ? 'שבוע' : 'שבועות'}</small></span></div>
         </div>
       </div>
+
+      {/* התרעות הצוות מיד מתחת לנתונים — אבי: "אני מצפה שמי שרלוונטי מהצוות ייתן
+          אינדיקציה". קודם הן ישבו מתחת לצעדים הבאים, מחוץ למסך הראשון. */}
+      <Alerts list={alerts(db)} />
 
       {db.fitbit?.connected && (lastSleep || lastSteps) && (<>
         <div className="h-sec">⌚ מ-Fitbit</div>
@@ -115,31 +108,6 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <Alerts list={alerts(db)} />
-
-      <div className="h-sec">💧 מים · היום</div>
-      <div className="card">
-        <div className="spread" style={{ alignItems: 'baseline' }}>
-          <b className="num" style={{ fontSize: 22, color: ml >= goal ? 'var(--good)' : 'inherit' }}>
-            {ml} <small style={{ fontSize: 12, fontWeight: 400 }}>מ"ל</small>{ml >= goal && ' ✓'}
-          </b>
-          <span style={{ fontSize: 12, color: 'var(--dim)', display: 'flex', alignItems: 'center', gap: 6 }}>
-            יעד אישי:
-            <button className="ok" style={{ width: 26, height: 26 }} onClick={() => setGoal(-250)}>−</button>
-            <b className="num">{goal}</b>
-            <button className="ok" style={{ width: 26, height: 26 }} onClick={() => setGoal(250)}>+</button>
-          </span>
-        </div>
-        <div style={{ height: 6, background: 'var(--chip)', borderRadius: 3, marginTop: 10, overflow: 'hidden' }}>
-          <div style={{ width: `${pct}%`, height: '100%', background: ml >= goal ? 'var(--good)' : 'var(--acc)', transition: 'width .3s' }} />
-        </div>
-        <div className="seg mt12">
-          <b onClick={() => addWater(250)}>+ כוס (250)</b>
-          <b onClick={() => addWater(500)}>+ בקבוק (500)</b>
-          <b style={{ flex: '0 0 auto', padding: '10px 14px', opacity: ml === 0 ? .35 : 1 }} onClick={() => addWater(-250)}>−</b>
-        </div>
-        <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8 }}>כל לחיצה נרשמת לתאריך של היום. היעד שלך — קצב שנוח לך, מעלים בהדרגה. עדי עוקבת אחרי ימים בלי רישום.</div>
-      </div>
 
       <button className="cta mt16" onClick={() => nav('/workout')}>
         התחל אימון {nr} · {routine.name}

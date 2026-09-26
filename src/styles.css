@@ -12,7 +12,7 @@
 html,body,#root{height:100%}
 body{font-family:'Heebo',sans-serif;background:var(--page);color:var(--ink);-webkit-font-smoothing:antialiased}
 .app{max-width:480px;margin:0 auto;min-height:100dvh;background:var(--bg);display:flex;flex-direction:column;position:relative}
-.scr{flex:1;padding:22px 18px 84px}
+.scr{flex:1;padding:22px 18px 96px}
 button{font-family:inherit;cursor:pointer}
 input,textarea,select{font-family:inherit;color:var(--ink)}
 .num{font-variant-numeric:tabular-nums;letter-spacing:-.02em}
@@ -24,8 +24,9 @@ input,textarea,select{font-family:inherit;color:var(--ink)}
 .h-sec{font-size:10.5px;font-weight:700;letter-spacing:.22em;color:var(--dim);margin:20px 0 8px}
 
 /* nav */
-.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;display:flex;border-top:1px solid var(--line);background:var(--nav);z-index:40}
-.nav a{flex:1;text-align:center;padding:10px 0 14px;font-size:9.5px;color:var(--dim);font-weight:500;text-decoration:none}
+/* סרגל צף וצר — לא נוגע בקצוות המסך, באותו שוליים של התוכן (אבי: "רחב מדי") */
+.nav{position:fixed;bottom:calc(10px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:calc(100% - 36px);max-width:400px;display:flex;border:1px solid var(--line);border-radius:20px;background:var(--nav);box-shadow:0 6px 24px rgba(0,0,0,.14);overflow:hidden;z-index:40}
+.nav a{flex:1;text-align:center;padding:9px 0 8px;font-size:9.5px;color:var(--dim);font-weight:500;text-decoration:none}
 .nav a i{display:block;font-style:normal;font-size:17px;margin-bottom:2px}
 .nav a.on{color:var(--acc)}
 
