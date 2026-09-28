@@ -14,6 +14,11 @@ body{font-family:'Heebo',sans-serif;background:var(--page);color:var(--ink);-web
 .app{max-width:480px;margin:0 auto;min-height:100dvh;background:var(--bg);display:flex;flex-direction:column;position:relative}
 .scr{flex:1;padding:22px 18px 96px}
 button{font-family:inherit;cursor:pointer}
+/* אבי: "צריך לגלול לרוחב כדי לראות את הכל". השורש: פריט פלקס לא מתכווץ מתחת
+   לרוחב התוכן שלו (min-width:auto), אז שורה עם תוכן ארוך דוחפת את המסך.
+   הצ'יפים והגלולות מתכווצים; כפתורים עם רוחב קבוע לא — הם היו נחתכים
+   באמצע המילה. שם התכווצות היא של שדה הקלט שלצידם. */
+.scr .seg b,.scr .pill,.scr .ok{min-width:0}
 input,textarea,select{font-family:inherit;color:var(--ink)}
 .num{font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 

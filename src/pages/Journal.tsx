@@ -143,8 +143,8 @@ export default function Journal() {
         <div className="card">
           <div style={{ display: 'flex', gap: 10 }}>
             <input inputMode="decimal" placeholder='ק"ג (למשל 89.6)' value={kg} onChange={e => setKg(e.target.value)}
-              style={{ flex: 1, background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '11px 12px', fontSize: 15 }} />
-            <button className="cta" style={{ width: 110 }} onClick={() => {
+              style={{ flex: '1 1 0', minWidth: 0, background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '11px 12px', fontSize: 15 }} />
+            <button className="cta" style={{ flex: '0 0 auto', width: 110, whiteSpace: 'nowrap' }} onClick={() => {
               const v = parseFloat(kg);
               if (!(v > 40 && v < 200)) { alert('בדוק את המשקל — למשל 89.6'); return; }
               update(d => {
@@ -168,8 +168,8 @@ export default function Journal() {
         <div className="card">
           <div style={{ display: 'flex', gap: 10 }}>
             <input inputMode="decimal" placeholder='ס"מ בגובה הטבור' value={cm} onChange={e => setCm(e.target.value)}
-              style={{ flex: 1, background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '11px 12px', fontSize: 15 }} />
-            <button className="cta" style={{ width: 110 }} onClick={() => {
+              style={{ flex: '1 1 0', minWidth: 0, background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '11px 12px', fontSize: 15 }} />
+            <button className="cta" style={{ flex: '0 0 auto', width: 110, whiteSpace: 'nowrap' }} onClick={() => {
               const v = parseFloat(cm);
               if (!(v > 50 && v < 200)) { alert('בדוק את המדידה — למשל 97'); return; }
               update(d => {
@@ -202,7 +202,7 @@ export default function Journal() {
             <span style={{ color: 'var(--dim)', fontWeight: 900 }}>/</span>
             <input inputMode="numeric" placeholder="80" value={dia} onChange={e => setDia(e.target.value.replace(/\D/g, ''))}
               style={{ flex: 1, minWidth: 0, width: '100%', textAlign: 'center', background: 'var(--chip)', border: '1px solid var(--line)', borderRadius: 6, padding: '11px 6px', fontSize: 15 }} />
-            <button className="cta" style={{ width: 90 }} onClick={() => {
+            <button className="cta" style={{ flex: '0 0 auto', width: 90, whiteSpace: 'nowrap' }} onClick={() => {
               const s = parseInt(sys), d2 = parseInt(dia);
               if (s > 60 && s < 260 && d2 > 35 && d2 < 160 && d2 < s) {
                 update(d => {
@@ -259,8 +259,10 @@ export default function Journal() {
           ) : null}
           <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
             onChange={e => { const f = e.target.files?.[0]; if (f) addPhoto(f); e.target.value = ''; }} />
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button className="ghost mt8" style={{ flex: 1, ...(foodSaved ? { borderColor: 'var(--good)', color: 'var(--good)' } : {}) }} onClick={() => {
+          {/* minWidth:0 — בלי זה כפתור עם טקסט ארוך לא מתכווץ והשורה גולשת מהמסך.
+              flexWrap — ואם עדיין צר מדי, כפתור המצלמה יורד לשורה משלו. */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button className="ghost mt8" style={{ flex: '1 1 180px', minWidth: 0, ...(foodSaved ? { borderColor: 'var(--good)', color: 'var(--good)' } : {}) }} onClick={() => {
               const text = (food || foodToday?.text || '').trim();
               if (!text && !foodToday?.photos?.length) { alert('כתוב משהו או צלם מנה — ואז שמור.'); return; }
               update(d => {
@@ -272,7 +274,7 @@ export default function Journal() {
               setFoodSaved(true);
               setTimeout(() => setFoodSaved(false), 3000);
             }}>{foodSaved ? '✓ נשמר ביומן של היום' : 'שמור · הילה תגיב מיד'}</button>
-            <button className="ghost mt8" style={{ flex: '0 0 auto' }} onClick={() => fileRef.current?.click()}>📷 צלם מנה</button>
+            <button className="ghost mt8" style={{ flex: '0 1 auto', minWidth: 0, whiteSpace: 'nowrap' }} onClick={() => fileRef.current?.click()}>📷 צלם מנה</button>
           </div>
           <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 8 }}>מנה מורכבת? צלם במקום לפרט — ואז "🔍 ניתוח הילה" מתחת לתמונה (דורש חיבור בטאב הצוות).</div>
         </div>
