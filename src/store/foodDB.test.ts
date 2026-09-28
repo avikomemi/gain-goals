@@ -284,3 +284,42 @@ describe('דבש וגודל הכף', () => {
     expect(kcal('חצי כף טחינה')).toBe(45);
   });
 });
+
+// יומן 27.9: "גלידת פיסטוק" נספרה כאגוזים ו"5 עוגיות תמרים" כחמישה תמרים — יחד
+// כ-500 קק"ל שלא נספרו. שמות ארוכים חייבים לנצח את השמות שבלועים בתוכם.
+describe('גלידה, עוגיות ותה', () => {
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+
+  it('גלידת פיסטוק היא גלידה, לא אגוזים', () => {
+    const e = estimateFood('גלידת פיסטוק של מקדונלדס', foods);
+    expect(e.lines).toHaveLength(1);
+    expect(e.lines[0].name).toBe('גלידה');
+    expect(e.total.kcal).toBe(290);
+  });
+
+  it('"פיסטוק" לבד עדיין אגוזים', () => {
+    expect(estimateFood('פיסטוק', foods).lines[0].name).toBe('שקדים');
+  });
+
+  it('5 עוגיות תמרים הן עוגיות, לא 5 תמרים', () => {
+    const e = estimateFood('5 עוגיות תמרים', foods);
+    expect(e.lines).toHaveLength(1);
+    expect(e.total.kcal).toBe(504);
+  });
+
+  it('"3 תמרים" עדיין תמרים', () => {
+    expect(estimateFood('3 תמרים', foods).lines[0].name).toBe('תמר');
+  });
+
+  it('תה נספר — ולא בולע מאכלים אחרים', () => {
+    expect(kcal('כוס תה')).toBe(2);
+    expect(kcal('תה ירוק')).toBe(2);
+    // "תה" לבד יושב בתוך "חביתה" ובתוך "פיתה" — לכן רק צירופים מלאים
+    expect(estimateFood('חביתה משתי ביצים', foods).lines[0].name).toBe('ביצה');
+    expect(estimateFood('פיתה', foods).lines[0].name).toBe('פיתה');
+  });
+
+  it('עוגייה גנרית', () => {
+    expect(kcal('2 עוגיות')).toBe(188);
+  });
+});
