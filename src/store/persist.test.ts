@@ -6,7 +6,7 @@ import { hydrate, DB, WorkoutLog } from './store';
 import { nextRoutine } from './adi';
 import { fullReview } from './review';
 import { workoutKcal, workoutMinutes, effortOf } from './effort';
-import { PHYSIO_BACK, routineByKey, routineLabel } from '../data/program';
+import { PHYSIO_BACK, routineByKey, routineLabel, PROGRAM, WARMUP_COMMON } from '../data/program';
 
 const physio = (date: string): WorkoutLog => ({
   id: `p-${date}`, date, routine: 'P', loc: 'home', stoppedEarly: false, flexDone: true,
@@ -75,5 +75,50 @@ describe('אימון הפיזיו נספר בסטטיסטיקה', () => {
       { id: 'a', date: '2026-09-23', routine: 'A', loc: 'gym', exercises: [], stoppedEarly: false },
       physio('2026-09-25'),
     ] }))).toBe('B');
+  });
+});
+
+// התוכנית חייבת להישאר נאמנה למקור מ-Lovable. הפריטים האלה נשמטו פעם אחת
+// והוחלפו — הבדיקות כאן הן כדי שזה לא יקרה שוב בלי ששמים לב.
+describe('נאמנות למקור', () => {
+  const A = PROGRAM.find(r => r.key === 'A')!;
+  const B = PROGRAM.find(r => r.key === 'B')!;
+  const names = (r: typeof A) => r.flexibility.map(f => f.name);
+
+  it('בלוק הגב העליון של המקור נמצא באימון A', () => {
+    expect(names(A)).toContain('Bended Half Kneeling Archers');
+    expect(names(A)).toContain('Quadruped T-Spine Rotation');
+    expect(names(A)).toContain('Prayer → Upward Dog');
+  });
+
+  it('הירכיים לא ירדו כשהגב העליון חזר', () => {
+    expect(names(A)).toContain('90/90 Hip Switch');
+    expect(names(A)).toContain('Couch Stretch');
+  });
+
+  it('החימום כולל את שני הפריטים שנשמטו', () => {
+    expect(WARMUP_COMMON.some(w => w.includes('Jefferson'))).toBe(true);
+    expect(WARMUP_COMMON.some(w => w.includes('Press + Squat'))).toBe(true);
+  });
+
+  it('ג׳פרסון קרל מסומן כראשון שיורד — הכלל של אבי', () => {
+    const j = WARMUP_COMMON.find(w => w.includes('Jefferson'))!;
+    expect(j).toMatch(/הראשון שיורד/);
+  });
+
+  it('מאסל-אפ נשאר — אבי ביקש במפורש', () => {
+    expect(B.exercises.some(e => e.id === 'b-mu')).toBe(true);
+  });
+
+  it('Lever נמדד בשניות ולא בהצלחה/כישלון', () => {
+    const lv = B.exercises.find(e => e.id === 'b-lever')!;
+    expect(lv.timeBased).toBe(true);
+    expect(lv.note).toMatch(/שניות/);
+  });
+
+  it('תרגילי הכתף החדשים נכנסו, וכלל האסימטריה איתם', () => {
+    expect(names(B)).toContain('Wall Slides');
+    expect(names(B)).toContain('Sleeper Stretch');
+    expect(names(B).some(n => n.includes('שמאל'))).toBe(true);
   });
 });
