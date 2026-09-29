@@ -122,3 +122,12 @@ describe('נאמנות למקור', () => {
     expect(names(B).some(n => n.includes('שמאל'))).toBe(true);
   });
 });
+
+describe('דגשים קבועים', () => {
+  it('למאסל-אפ יש דגשים שמוצגים תמיד, לא בסבב', () => {
+    const mu = PROGRAM.find(r => r.key === 'B')!.exercises.find(e => e.id === 'b-mu')!;
+    expect(mu.cues?.length).toBeGreaterThanOrEqual(3);
+    expect(mu.cues!.some(c => c.includes('שקרית'))).toBe(true);
+    expect(mu.cues!.some(c => c.includes('אגן'))).toBe(true);
+  });
+});

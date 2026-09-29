@@ -362,6 +362,15 @@ export default function Workout() {
           <span>יעד: <b>{st.target}</b></span>
           {exNote(exDef, loc) && <span style={{ color: 'var(--acc2)' }}>{exNote(exDef, loc)}</span>}
         </div>
+        {/* דגשים קבועים — לא בסבב הטיפים. לתרגיל שאבי נתקע בו וביקש אותם מול העיניים. */}
+        {exDef.cues?.length && (
+          <div className="card mt8" style={{ borderColor: 'var(--acc2)' }}>
+            <span style={{ fontSize: 12, color: 'var(--dim)', fontWeight: 800 }}>🎯 דגשים — בכל חזרה</span>
+            {exDef.cues.map((c, i) => (
+              <div className="step-i" key={i} style={{ fontSize: 13 }}><b>·</b><span>{c}</span></div>
+            ))}
+          </div>
+        )}
         {/* אבי: "התרגילים קלים במונחי מאמץ". בתרגילי ייצוב לא מוסיפים משקל — מאטים ומאריכים. */}
         {exDef.harder && (
           <div className="card mt8" style={{ borderColor: 'var(--good)' }}>
