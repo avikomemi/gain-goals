@@ -323,3 +323,25 @@ describe('גלידה, עוגיות ותה', () => {
     expect(kcal('2 עוגיות')).toBe(188);
   });
 });
+
+// חטיף שוקולד-בוטנים מהתווית שאבי צילם (30.9)
+describe('חטיף שוקולד בוטנים', () => {
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+
+  it('חטיף שלם לפי התווית', () => {
+    expect(kcal('חטיף שוקולד בוטנים')).toBe(304);
+  });
+
+  it('חצי חטיף', () => {
+    expect(kcal('חצי חטיף שוקולד')).toBe(152);
+  });
+
+  it('לא בולע את "בוטנים" ואת "חמאת בוטנים"', () => {
+    expect(estimateFood('בוטנים', foods).lines[0].name).toBe('שקדים');
+    expect(estimateFood('חמאת בוטנים', foods).lines[0].name).toBe('חמאת בוטנים');
+  });
+
+  it('משקל מפורש גובר', () => {
+    expect(kcal('חטיף שוקולד בוטנים 40 גרם')).toBe(154);
+  });
+});
