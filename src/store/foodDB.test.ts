@@ -1,6 +1,6 @@
 // רגרסיה לפרסר התזונה של הילה. מה שנשבר כאן = הילה מציגה לאבי מספר לא נכון.
 import { describe, expect, it } from 'vitest';
-import { estimateFood, mergeFoods, FoodItem } from './foodDB';
+import { estimateFood, mergeFoods, unknownFoods, FoodItem } from './foodDB';
 import { hilaReview } from './hila';
 
 const foods: FoodItem[] = mergeFoods(undefined);
@@ -350,5 +350,52 @@ describe('קראנץ בוטנים', () => {
 
   it('משקל מפורש גובר', () => {
     expect(kcal('קראנץ בוטנים 40 גרם')).toBe(154);
+  });
+});
+
+// תור המאכלים שלא זוהו — נגזר מהיומן, מרפא את עצמו
+describe('ממתינים למסד', () => {
+  const d = (back: number) => new Date(Date.now() - back * 864e5).toISOString().slice(0, 10);
+
+  it('אוסף מה שלא זוהה, ומדלג על מה שכן', () => {
+    const q = unknownFoods([{ date: d(1), text: 'חזה עוף 200 גרם, דג אמנון' }], foods);
+    expect(q).toHaveLength(1);
+    expect(q[0].text).toContain('אמנון');
+  });
+
+  it('מאחד חזרות וסופר ימים', () => {
+    const q = unknownFoods([
+      { date: d(3), text: 'דג אמנון' },
+      { date: d(1), text: 'דג אמנון' },
+    ], foods);
+    expect(q).toHaveLength(1);
+    expect(q[0].times).toBe(2);
+    expect(q[0].firstSeen).toBe(d(3));
+    expect(q[0].lastSeen).toBe(d(1));
+  });
+
+  it('מה שחוזר יותר מופיע ראשון', () => {
+    const q = unknownFoods([
+      { date: d(5), text: 'ירק מוזר אחד' },
+      { date: d(4), text: 'ירק מוזר שני' },
+      { date: d(3), text: 'ירק מוזר שני' },
+    ], foods);
+    expect(q[0].text).toContain('שני');
+  });
+
+  it('מכבד את טווח התאריכים', () => {
+    const entries = [{ date: d(40), text: 'דג אמנון' }];
+    expect(unknownFoods(entries, foods, d(21))).toHaveLength(0);
+    expect(unknownFoods(entries, foods, d(60))).toHaveLength(1);
+  });
+
+  it('נעלם לבד ברגע שהמאכל נכנס למסד', () => {
+    const entries = [{ date: d(1), text: 'קראנץ בוטנים' }];
+    expect(unknownFoods(entries, foods)).toHaveLength(0);   // כבר במסד
+  });
+
+  it('לא נופל על יומן ריק או חסר', () => {
+    expect(unknownFoods(undefined, foods)).toEqual([]);
+    expect(unknownFoods([{ date: d(1), text: '' }], foods)).toEqual([]);
   });
 });

@@ -342,3 +342,41 @@ export function estimateFood(text: string, foods: FoodItem[]): FoodEstimate {
 
   return { lines, total, notInDB: notInDB.slice(0, 4) };
 }
+
+/* ---------- תור המאכלים שהילה לא מכירה ----------
+   אבי, 1.10.26: "כשאני כותב ביומן משהו והיא לא יודעת — שתאסוף את זה
+   בלי שאצטרך להגיע לכאן בכל פעם."
+   התור נגזר מהיומן בכל טעינה, ולא נשמר בשום מקום. כלומר הוא מרפא את עצמו:
+   ברגע שהמאכל נכנס למסד, הוא נעלם מהתור לבד — בלי מחיקה ובלי כתיבה לנתונים. */
+export interface UnknownFood {
+  text: string;        // הקטע שלא זוהה, כפי שנכתב
+  firstSeen: string;   // התאריך הראשון שבו הופיע
+  lastSeen: string;
+  times: number;       // בכמה ימים שונים הופיע — מה שחוזר, דחוף יותר
+}
+
+export function unknownFoods(
+  entries: { date: string; text?: string }[] | undefined,
+  foods: FoodItem[],
+  since?: string,
+): UnknownFood[] {
+  const byText = new Map<string, UnknownFood>();
+  for (const e of entries || []) {
+    if (!e?.date || !e.text?.trim()) continue;
+    if (since && e.date < since) continue;
+    for (const raw of estimateFood(e.text, foods).notInDB) {
+      const text = raw.trim();
+      if (!text) continue;
+      const cur = byText.get(text);
+      if (cur) {
+        cur.times += 1;
+        if (e.date < cur.firstSeen) cur.firstSeen = e.date;
+        if (e.date > cur.lastSeen) cur.lastSeen = e.date;
+      } else {
+        byText.set(text, { text, firstSeen: e.date, lastSeen: e.date, times: 1 });
+      }
+    }
+  }
+  // מה שחוזר קודם, ובין שווים — החדש קודם
+  return [...byText.values()].sort((a, b) => b.times - a.times || b.lastSeen.localeCompare(a.lastSeen));
+}

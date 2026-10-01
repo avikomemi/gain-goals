@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useStore, today, hydrate, WorkoutLog, ExLog } from '../store/store';
 import { hilaReview } from '../store/hila';
-import { estimateFood } from '../store/foodDB';
+import { estimateFood, mergeFoods, unknownFoods } from '../store/foodDB';
 import { getGoals } from '../store/goals';
 import { flexMissing } from '../store/review';
 import MealBuilder from '../components/MealBuilder';
@@ -10,6 +10,37 @@ import { stepsKcal } from '../store/adi';
 import { supabase } from '../store/cloud';
 import { routineLabel } from '../data/program';
 import { workoutMinutes, workoutKcal } from '../store/effort';
+
+/* ---------- ממתינים למסד ----------
+   כל מה שהילה לא זיהתה ביומן של 21 הימים האחרונים, במקום אחד.
+   נגזר מהיומן בכל טעינה — ברגע שמאכל נכנס למסד הוא נעלם מכאן לבד. */
+function UnknownQueue() {
+  const { db } = useStore();
+  const foods = React.useMemo(() => mergeFoods(db.foods), [db.foods]);
+  const since = new Date(Date.now() - 21 * 864e5).toISOString().slice(0, 10);
+  const list = React.useMemo(() => unknownFoods(db.food, foods, since), [db.food, foods, since]);
+  if (!list.length) return null;
+  return (
+    <>
+      <div className="h-sec">📥 ממתינים למסד · {list.length}</div>
+      <div className="card">
+        {list.slice(0, 12).map(u => (
+          <div className="spread" key={u.text} style={{ alignItems: 'baseline', marginTop: 6, fontSize: 13.5 }}>
+            <span style={{ minWidth: 0 }}>{u.text}</span>
+            <small style={{ color: 'var(--dim)', flex: '0 0 auto', marginInlineStart: 10 }}>
+              {u.times > 1 ? `${u.times} ימים` : u.lastSeen.slice(5).split('-').reverse().join('.')}
+            </small>
+          </div>
+        ))}
+        <div style={{ fontSize: 11.5, color: 'var(--dim)', marginTop: 12, lineHeight: 1.55 }}>
+          מאכל רגיל — נכנס למסד מעצמו בבדיקה הקרובה. <b>מוצר ממותג</b> (חטיף, יוגורט, משקה) —
+          צריך את התווית: צלם אותה ליומן בכפתור 📷, והערכים ייקראו ממנה.
+          הרשימה מתנקה לבד ברגע שהמאכל מזוהה.
+        </div>
+      </div>
+    </>
+  );
+}
 
 // דוחס תמונת מנה לתמונה קטנה שנשמרת ביומן (מקומי, עד הסנכרון)
 function compressImage(file: File): Promise<string> {
@@ -305,6 +336,8 @@ export default function Journal() {
           <div className="step-i"><b>·</b><span>אימוני כיול: A {db.calib.runs.A}/2 · B {db.calib.runs.B}/2 · C {db.calib.runs.C}/2</span></div>
         </div>
 
+        <UnknownQueue />
+
         <div className="h-sec">🤸 מבחני גמישות · נעה</div>
         <FlexTestCard />
 
@@ -484,7 +517,7 @@ function HilaResponse({ text, photoCount, waterMl, waterGoal, title, date }: { t
       )}
       {est.notInDB.length > 0 && (
         <div style={{ fontSize: 12, marginTop: 6, color: 'var(--acc2)' }}>
-          לא במסד עדיין: {est.notInDB.join(' · ')} — הוסף כמות לדיוק, וסריקת ברקוד בדרך 🙂
+          לא במסד עדיין: {est.notInDB.join(' · ')} — נאסף אוטומטית, ראה "ממתינים למסד" למטה.
         </div>
       )}
       <div style={{ fontSize: 10.5, color: 'var(--dim)', marginTop: 8 }}>תגובה מיידית לפי כללי התזונה שלך · לתמונות — כפתור 🔍 · לניתוח מעמיק — הסקירה השבועית או צ'אט</div>
