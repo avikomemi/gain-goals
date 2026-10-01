@@ -399,3 +399,36 @@ describe('ממתינים למסד', () => {
     expect(unknownFoods([{ date: d(1), text: '' }], foods)).toEqual([]);
   });
 });
+
+describe('קבבונים', () => {
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+  const name = (t: string) => estimateFood(t, foods).lines[0].name;
+
+  it('ברבים, ביחיד ובקיצור — אותו פריט', () => {
+    expect(name('קבבונים')).toBe('קבבונים');
+    expect(name('קבבון')).toBe('קבבונים');   // נו"ן סופית — לא תת-מחרוזת, לכן כינוי נפרד
+    expect(name('קבב')).toBe('קבבונים');
+  });
+
+  it('סופר יחידות', () => {
+    expect(kcal('קבבונים')).toBe(265);     // ברירת מחדל 2
+    expect(kcal('3 קבבונים')).toBe(398);
+    expect(kcal('קבבונים 200 גרם')).toBe(530);
+  });
+
+  it('מסומן גאוט — בשר אדום', () => {
+    expect(foods.find(f => f.id === 'kebab')!.gout).toBe('high');
+  });
+
+  it('קבבוני הודו הם פריט אחר, בלי דגל גאוט', () => {
+    expect(name('קבבוני הודו')).toBe('קבבוני הודו');
+    expect(name('4 קבבוני עוף')).toBe('קבבוני הודו');
+    expect(foods.find(f => f.id === 'kebab_poultry')!.gout).toBe('ok');
+    expect(kcal('קבבוני הודו')).toBeLessThan(kcal('קבבונים'));
+  });
+
+  it('לא בולע את הודו ואת הבקר הרגילים', () => {
+    expect(name('חזה הודו')).toBe('חזה הודו');
+    expect(name('סטייק')).toBe('סטייק');
+  });
+});
