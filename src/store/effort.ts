@@ -5,7 +5,7 @@
 //
 // המודל: זמן מוערך מהסטים (עבודה + מנוחה) → MET לפי מאמץ מדווח → קלוריות לפי משקל.
 // זה אומדן, לא מדידה. אין מד דופק ואין מד זמן באימון — לכן המספר מוצג כ"בערך".
-import { DB, WorkoutLog } from './store';
+import { DB, WorkoutLog, KravLog } from './store';
 import { routineByKey } from '../data/program';
 import { getGoals } from './goals';
 
@@ -64,15 +64,31 @@ export function workoutKcal(db: DB, w: WorkoutLog): number {
 export const intensityLabel = (rpe: number | null): string =>
   rpe == null ? 'לא דווח' : rpe <= 6 ? 'קל' : rpe <= 7.5 ? 'בינוני' : rpe <= 8.5 ? 'נמרץ' : 'מקסימלי';
 
-export interface EffortSummary { workouts: number; minutes: number; kcal: number; rpe: number | null }
+/* ---------- קרב מגע ----------
+   אבי, 6.10.26: "אתה מחשב קלורית אימון קרב מגע?" — לא. הוא תועד (משך, עצימות)
+   אבל לא נספר בקלוריות ולא בעומס, ולכן אימון של שעה נראה כמו כלום.
+   ה-MET לאומנויות לחימה (Ainsworth): כ-5.3 לתרגול איטי, כ-10.3 לקצב מלא.
+   לקחתי ערכים מעט שמרניים מהם, כי שיעור כולל גם הסברים ועמידה — והמספר
+   אמור לשקף שעה בשיעור, לא שעה של ספארינג רצוף. */
+const KRAV_MET: Record<1 | 2 | 3, number> = { 1: 5.0, 2: 7.0, 3: 9.5 };
 
-/** סיכום עומס לקבוצת אימונים — לשבוע, לחודש, או לכל טווח שהמסך מבקש */
-export function effortOf(db: DB, workouts: WorkoutLog[]): EffortSummary {
-  const minutes = workouts.reduce((a, w) => a + workoutMinutes(db, w), 0);
-  const kcal = workouts.reduce((a, w) => a + workoutKcal(db, w), 0);
+export const kravKcal = (db: DB, k: KravLog): number =>
+  Math.round((KRAV_MET[k.intensity] * 3.5 * currentKg(db) / 200) * (k.min || 0));
+
+export const kravLabel = (i: 1 | 2 | 3) => (i === 1 ? 'טכני' : i === 2 ? 'בינוני' : 'מלא');
+
+export interface EffortSummary { workouts: number; krav: number; minutes: number; kcal: number; rpe: number | null }
+
+/** סיכום עומס — אימוני ABC/שיקום יחד עם קרב מגע. הכל נספר, כי הכל מאמץ. */
+export function effortOf(db: DB, workouts: WorkoutLog[], kravs: KravLog[] = []): EffortSummary {
+  const minutes = workouts.reduce((a, w) => a + workoutMinutes(db, w), 0)
+    + kravs.reduce((a, k) => a + (k.min || 0), 0);
+  const kcal = workouts.reduce((a, w) => a + workoutKcal(db, w), 0)
+    + kravs.reduce((a, k) => a + kravKcal(db, k), 0);
   const rpes = workouts.map(workoutRpe).filter((r): r is number => r != null);
   return {
     workouts: workouts.length,
+    krav: kravs.length,
     minutes,
     kcal,
     rpe: rpes.length ? +(rpes.reduce((a, b) => a + b, 0) / rpes.length).toFixed(1) : null,

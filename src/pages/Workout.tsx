@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PROGRAM, PHYSIO_BACK, routineByKey, routineLabel, RoutineDef, Loc, exName, exNote, exStruct, BODY_AREAS, KRAV_TAGS, SENSITIVE_BACK_DAY } from '../data/program';
 import { useStore, today, WorkoutLog, ExLog } from '../store/store';
-import { workoutMinutes, workoutKcal, workoutRpe, intensityLabel } from '../store/effort';
+import { workoutMinutes, workoutKcal, workoutRpe, intensityLabel, kravKcal } from '../store/effort';
 import { nextRoutine, direction, sleepAdvice } from '../store/adi';
 import { heDate } from '../components/bits';
 import { ringBell, primeBell } from '../lib/bell';
@@ -722,7 +722,7 @@ function InjuryFlow({ exerciseName, onDone }: { exerciseName?: string; onDone: (
 
 /* ================= Krav flow ================= */
 function KravFlow({ onDone, onBack }: { onDone: () => void; onBack: () => void }) {
-  const { update } = useStore();
+  const { db, update } = useStore();
   const [min, setMin] = useState('60');
   const [intensity, setIntensity] = useState<1 | 2 | 3>(2);
   const [tags, setTags] = useState<string[]>([]);
@@ -737,8 +737,12 @@ function KravFlow({ onDone, onBack }: { onDone: () => void; onBack: () => void }
         <div className="h-huge mt12">קרב מגע<br /><em>בפנקס.</em></div>
         <div className="grid3 mt20">
           <div className="cell"><b className="num">{minNum}</b><span>דקות</span></div>
+          <div className="cell"><b className="num">{kravKcal(db, { date: today(), min: minNum, intensity, tags })}</b><span>קק"ל (אומדן)</span></div>
           <div className="cell"><b className="num">{['', 'קל', 'בינוני', 'עד הסוף'][intensity]}</b><span>עצימות</span></div>
-          <div className="cell"><b className="num">{tags.length || '—'}</b><span>נושאים</span></div>
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--dim)', marginTop: 10, lineHeight: 1.5 }}>
+          הקלוריות הן אומדן מהמשך והעצימות שדיווחת, לפי משקל הגוף שלך — לא מדידה.
+          האימון נספר בעומס השבועי יחד עם אימוני ABC.
         </div>
         <div style={{ fontSize: 12, color: 'var(--good)', marginTop: 14 }}>✓ נשמר ביומן · {heDate()} · רז רואה את זה בסקירה</div>
         <button className="cta mt20" onClick={onDone}>חזרה לדשבורד</button>

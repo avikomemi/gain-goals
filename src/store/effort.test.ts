@@ -1,7 +1,7 @@
 // עומס אימון — זמן, עצימות וקלוריות. נתונים סינתטיים בלבד.
 import { describe, expect, it } from 'vitest';
 import { hydrate } from './store';
-import { workoutMinutes, workoutKcal, workoutRpe, effortOf, intensityLabel, currentKg } from './effort';
+import { workoutMinutes, workoutKcal, workoutRpe, effortOf, intensityLabel, currentKg, kravKcal } from './effort';
 
 const sets = (n: number, reps: number, done = true) => Array.from({ length: n }, () => ({ reps, done }));
 const wk = (over = {}) => ({
@@ -91,5 +91,47 @@ describe('סיכום עומס', () => {
 
   it('בלי שקילה נופל ליעד המשקל', () => {
     expect(currentKg(hydrate({ startDate: '2026-08-21' }))).toBe(85);
+  });
+});
+
+// אבי, 6.10.26: "אתה מחשב קלורית אימון קרב מגע?" — לא היה. עכשיו כן.
+describe('קרב מגע', () => {
+  const kdb = db();
+  const k = (min: number, intensity: 1 | 2 | 3) => ({ date: '2026-10-05', min, intensity, tags: [] });
+
+  it('מחשב קלוריות ממשך, עצימות ומשקל גוף', () => {
+    expect(kravKcal(kdb, k(60, 2))).toBeGreaterThan(400);
+    expect(kravKcal(kdb, k(60, 2))).toBeLessThan(900);
+  });
+
+  it('עצימות גבוהה יותר = יותר קלוריות', () => {
+    expect(kravKcal(kdb, k(60, 3))).toBeGreaterThan(kravKcal(kdb, k(60, 2)));
+    expect(kravKcal(kdb, k(60, 2))).toBeGreaterThan(kravKcal(kdb, k(60, 1)));
+  });
+
+  it('משך כפול = קלוריות כפולות', () => {
+    expect(kravKcal(kdb, k(60, 2))).toBe(kravKcal(kdb, k(30, 2)) * 2);
+  });
+
+  it('אימון ללא משך = אפס, לא NaN', () => {
+    expect(kravKcal(kdb, k(0, 2))).toBe(0);
+  });
+
+  it('משקל גוף גבוה יותר = יותר קלוריות', () => {
+    const light = db({ weights: [{ date: '2026-09-20', kg: 70 }] });
+    const heavy = db({ weights: [{ date: '2026-09-20', kg: 110 }] });
+    expect(kravKcal(heavy, k(60, 2))).toBeGreaterThan(kravKcal(light, k(60, 2)));
+  });
+
+  it('נספר בעומס השבועי יחד עם האימונים', () => {
+    const noKrav = effortOf(kdb, [wk()]);
+    const withKrav = effortOf(kdb, [wk()], [k(60, 2)]);
+    expect(withKrav.krav).toBe(1);
+    expect(withKrav.minutes).toBe(noKrav.minutes + 60);
+    expect(withKrav.kcal).toBeGreaterThan(noKrav.kcal);
+  });
+
+  it('בלי קרב מגע — הסיכום לא משתנה', () => {
+    expect(effortOf(kdb, [wk()], []).kcal).toBe(effortOf(kdb, [wk()]).kcal);
   });
 });
