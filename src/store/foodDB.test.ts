@@ -576,9 +576,16 @@ describe('משקה חלבון ביתי', () => {
 
   it('מספרי השייק תואמים את המתכון שהורכב', () => {
     const l = line('שייק חלבון ביתי');
-    expect(l.macro[0]).toBeGreaterThanOrEqual(320);   // ~328 קק"ל
-    expect(l.macro[0]).toBeLessThanOrEqual(336);
+    expect(l.macro[0]).toBeGreaterThanOrEqual(345);   // ~353 קק"ל
+    expect(l.macro[0]).toBeLessThanOrEqual(360);
     expect(l.macro[1]).toBeGreaterThanOrEqual(36);    // ~38 ח'
+  });
+
+  it('המתכון המפורט מסתכם כמו הפריט המורכב', () => {
+    const r = estimateFood('יוגורט יווני 250 גרם, חלב 150 מל, כף חמאת בוטנים, כפית קקאו', foods);
+    expect(r.notInDB).toEqual([]);
+    expect(r.total.kcal).toBe(353);
+    expect(Math.abs(r.total.kcal - line('שייק חלבון ביתי').macro[0])).toBeLessThanOrEqual(2);
   });
 
   it('רכיבי השייק מזוהים אחד-אחד, כולל חלב 1%', () => {
@@ -587,7 +594,6 @@ describe('משקה חלבון ביתי', () => {
     expect(r.lines).toHaveLength(4);
     expect(r.lines[1].name).toBe('חלב 1%');
     expect(r.lines[1].macro[0]).toBe(63);             // ה-'1' של 1% לא נקרא ככמות
-    expect(r.total.kcal).toBe(326);                   // תואם את הפריט המורכב
   });
 
   it('חלב 1% לא בולע את חלב 3%, וחלב שקדים לא את השקדים', () => {
