@@ -492,4 +492,25 @@ describe('ארוחת מסעדה — עוף בתנור, ממולאים וסלטי
     expect(r.total.kcal).toBeGreaterThan(1300);
     expect(r.total.p).toBeGreaterThan(80);
   });
+
+  it('ירק בתנור אינו ירק חי — השמן נספר', () => {
+    expect(name('ירקות בתנור')).toBe('ירקות בתנור');
+    expect(name('קישואים בתנור')).toBe('ירקות בתנור');
+    expect(name('כרוב אפוי')).toBe('ירקות בתנור');
+    expect(name('חציל בתנור')).toBe('ירקות בתנור');
+    expect(kcal('קישואים בתנור 200 גרם')).toBeGreaterThan(4 * kcal('קישוא 200 גרם'));
+    expect(name('קוסא')).toBe('קישוא');   // קוסא = קישוא, והוא עדיין ירק חי
+  });
+
+  it('צלחת מסעדה שלמה — כל הפריטים מזוהים', () => {
+    const r = estimateFood(
+      'ירך עוף 200 גרם, קישואים בתנור 250 גרם, כרוב בתנור 100 גרם, בטטה אפויה 80 גרם, '
+      + 'גזר אפוי 80 גרם, סלט ירקות 150 גרם, סלט סלק 100 גרם, כף סחוג',
+      foods,
+    );
+    expect(r.notInDB).toEqual([]);
+    expect(r.lines).toHaveLength(8);
+    expect(r.total.kcal).toBeGreaterThan(1000);
+    expect(r.total.p).toBeGreaterThan(55);
+  });
 });

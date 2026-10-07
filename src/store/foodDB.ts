@@ -128,7 +128,7 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'cabbage', names: ['כרוב'], per100: [25, 1.3, 6, 0.1], unit: 'g', def: 100, src: 'USDA' },
   { id: 'cauliflower', names: ['כרובית'], per100: [25, 1.9, 5, 0.3], unit: 'g', def: 100, src: 'USDA' },
   { id: 'broccoli', names: ['ברוקולי'], per100: [34, 2.8, 7, 0.4], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'zucchini', names: ['קישוא'], per100: [17, 1.2, 3.1, 0.3], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'zucchini', names: ['קישוא', 'קוסא', 'כוסא'], per100: [17, 1.2, 3.1, 0.3], unit: 'g', def: 100, src: 'USDA' },
   { id: 'eggplant', names: ['חציל'], per100: [25, 1, 6, 0.2], unit: 'g', def: 100, src: 'USDA' },
   { id: 'spinach', names: ['תרד'], per100: [23, 2.9, 3.6, 0.4], unit: 'g', def: 100, src: 'USDA' },
   { id: 'beet', names: ['סלק'], per100: [43, 1.6, 10, 0.2], unit: 'g', def: 100, src: 'USDA' },
@@ -164,6 +164,9 @@ export const SEED_FOODS: FoodItem[] = [
   // סלט סלק מסעדתי — סלק מבושל עם שמן ולימון, פי 2 מסלק חי.
   { id: 'beetsalad', names: ['סלט סלק', 'סלט סלקים'], per100: [90, 1.5, 11, 4], unit: 'g', def: 100, gout: 'ok', src: 'הערכה' },
   { id: 'schug', names: ['סחוג', 'זחוג'], per100: [230, 3, 8, 21], unit: 'unit', unitGrams: 15, unitLabel: 'כף', def: 1, gout: 'ok', src: 'הערכה' },
+  // ירק בתנור אינו ירק חי: מסעדה מוסיפה 5-7 גר' שמן ל-100 גר', והמים מתאדים.
+  // הכינוי המורכב ('קישואים בתנור') ארוך מ'קישוא' ולכן גובר — אחרת ירק אפוי נספר כ-17 קק"ל.
+  { id: 'vegroast', names: ['ירקות בתנור', 'ירקות אפויים', 'ירקות צלויים', 'ירקות בגריל', 'קישואים בתנור', 'קישוא בתנור', 'קישואים אפויים', 'קישוא אפוי', 'כרוב בתנור', 'כרוב אפוי', 'כרוב צלוי', 'חציל בתנור', 'חציל אפוי'], per100: [95, 2, 11, 5], unit: 'g', def: 200, gout: 'ok', src: 'הערכה' },
 
   // ---- חטיפים / שתייה ----
   { id: 'bamba', names: ['במבה', 'במבות'], per100: [530, 13, 49, 33], unit: 'g', def: 50, src: 'תווית' },
