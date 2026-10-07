@@ -432,3 +432,64 @@ describe('קבבונים', () => {
     expect(name('סטייק')).toBe('סטייק');
   });
 });
+
+describe('ארוחת מסעדה — עוף בתנור, ממולאים וסלטים', () => {
+  const name = (t: string) => estimateFood(t, foods).lines[0].name;
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+
+  it('ירך/שוק/כרעיים אינם חזה — פריט נפרד ושמן יותר', () => {
+    expect(name('ירך עוף')).toBe('ירך עוף');
+    expect(name('שוק עוף')).toBe('ירך עוף');
+    expect(name('כרעיים')).toBe('ירך עוף');
+    expect(name('עוף בתנור')).toBe('ירך עוף');
+    expect(kcal('ירך עוף 200 גרם')).toBeGreaterThan(kcal('חזה עוף 200 גרם'));
+  });
+
+  it('לא בולע את חזה העוף, את ההודו ואת השוקולד', () => {
+    expect(name('חזה עוף')).toBe('חזה עוף');
+    expect(name('עוף')).toBe('חזה עוף');
+    expect(name('שניצל')).toBe('חזה עוף');
+    expect(name('חזה הודו')).toBe('חזה הודו');
+    expect(name('שוקולד')).toBe('שוקולד חלב');   // 'שוק' אינו כינוי בודד בכוונה
+    expect(name('שוקולד מריר')).toBe('שוקולד מריר');
+  });
+
+  it('ממולא נספר כממולא, לא כירק ריק', () => {
+    expect(name('ממולאים')).toBe('ממולאים');
+    expect(name('קישואים ממולאים')).toBe('ממולאים');
+    expect(name('כרוב ממולא')).toBe('ממולאים');
+    expect(name('פלפלים ממולאים')).toBe('ממולאים');
+    expect(kcal('3 ממולאים')).toBe(504);
+    expect(kcal('קישואים ממולאים')).toBeGreaterThan(5 * kcal('קישוא'));
+  });
+
+  it('הירקות החיים נשארים כמו שהם', () => {
+    expect(name('קישוא')).toBe('קישוא');
+    expect(name('כרוב')).toBe('כרוב');
+    expect(name('פלפל')).toBe('פלפל');
+  });
+
+  it('עלי גפן, סלט סלק וסחוג נכנסו', () => {
+    expect(name('עלי גפן')).toBe('עלי גפן');
+    expect(name('סלט סלק')).toBe('סלט סלק');
+    expect(name('סחוג')).toBe('סחוג');
+    expect(kcal('סלט סלק 100 גרם')).toBeGreaterThan(kcal('סלק 100 גרם'));  // שמן ולימון
+  });
+
+  it('סלט סלק לא גונב את סלט הירקות ולא את הסלק החי', () => {
+    expect(name('סלט ירקות')).toBe('סלט ירקות');
+    expect(name('סלט')).toBe('סלט ירקות');
+    expect(name('סלק')).toBe('סלק');
+  });
+
+  it('צלחת מסעדה שלמה — כל הפריטים מזוהים', () => {
+    const r = estimateFood(
+      'ירך עוף 200 גרם, 4 ממולאים, בטטה אפויה 80 גרם, גזר אפוי 80 גרם, סלט ירקות 150 גרם, סלט סלק 100 גרם, כף סחוג',
+      foods,
+    );
+    expect(r.notInDB).toEqual([]);
+    expect(r.lines).toHaveLength(7);
+    expect(r.total.kcal).toBeGreaterThan(1300);
+    expect(r.total.p).toBeGreaterThan(80);
+  });
+});
