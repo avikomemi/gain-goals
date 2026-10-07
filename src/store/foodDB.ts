@@ -130,6 +130,7 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'watermelon', names: ['אבטיח'], per100: [30, 0.6, 8, 0.2], unit: 'g', def: 200, src: 'USDA' },
   { id: 'melon', names: ['מלון'], per100: [34, 0.8, 8, 0.2], unit: 'g', def: 200, src: 'USDA' },
   { id: 'strawberry', names: ['תות שדה', 'תות'], per100: [32, 0.7, 8, 0.3], unit: 'g', def: 150, src: 'USDA' },
+  { id: 'berries', names: ['פירות יער', 'פירות קפואים', 'תערובת פירות יער'], per100: [45, 0.9, 11, 0.4], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
   { id: 'raspberry', names: ['פטל'], per100: [52, 1.2, 12, 0.7], unit: 'g', def: 100, src: 'USDA' },
   { id: 'cherry', names: ['דובדבן'], per100: [63, 1, 16, 0.2], unit: 'g', def: 100, src: 'USDA' },
   { id: 'persimmon', names: ['אפרסמון'], per100: [70, 0.6, 18, 0.2], unit: 'unit', unitGrams: 170, unitLabel: 'יח', def: 1, src: 'USDA' },
@@ -227,7 +228,7 @@ export function mergeFoods(userFoods: FoodItem[] | undefined): FoodItem[] {
 export interface FoodLine { name: string; qty: number; qtyLabel: string; macro: [number, number, number, number] }
 export interface FoodEstimate { lines: FoodLine[]; total: { kcal: number; p: number; c: number; f: number }; notInDB: string[] }
 
-const FILLER = ['עם', 'של', 'ללא', 'בלי', 'סוכר', 'מלח', 'שמן', 'בבוקר', 'בערב', 'בצהריים', 'קופסא', 'קופסה', 'גרם', 'גר', "ג'", 'כוס', 'בקבוק', 'מים', 'קצת', 'הרבה', 'ועוד', 'גדול', 'קטן'];
+const FILLER = ['עם', 'של', 'ללא', 'בלי', 'סוכר', 'מלח', 'קינמון', 'וניל', 'נענע', 'מנטה', 'קרח', 'כורכום', 'תמצית', 'שמן', 'בבוקר', 'בערב', 'בצהריים', 'קופסא', 'קופסה', 'גרם', 'גר', "ג'", 'כוס', 'בקבוק', 'מים', 'קצת', 'הרבה', 'ועוד', 'גדול', 'קטן'];
 
 // מספרים במילים — "שתי במבות", "חביתה משתי ביצים". סדר: הארוך קודם (שתיים לפני שתי).
 const WORD_NUM: Record<string, number> = {
