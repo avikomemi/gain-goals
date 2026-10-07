@@ -638,3 +638,32 @@ describe('תפריט השייקים — כל הגרסאות מתפרסרות', (
     expect(estimateFood('אוכמניות', foods).lines[0].name).toBe('אוכמניות');
   });
 });
+
+describe('נס קפה עם חלב — לא כוס חלב', () => {
+  it('נספר כקפה עם טיפת חלב, לא ככוס מלאה', () => {
+    const r = estimateFood('נס קפה עם חלב', foods);
+    expect(r.lines).toHaveLength(1);
+    expect(r.lines[0].name).toBe('קפה בחלב');
+    expect(r.total.kcal).toBeLessThan(45);          // היה 149: קפה 5 + כוס חלב 144
+  });
+
+  it('כל הניסוחים של אבי מגיעים לאותו פריט', () => {
+    for (const t of ['נס קפה עם חלב', 'קפה עם חלב', 'קפה שחור עם חלב', 'קפה בחלב', 'נס קפה בחלב']) {
+      expect(estimateFood(t, foods).lines[0].name).toBe('קפה בחלב');
+    }
+  });
+
+  it('לא בולע את הקפה השחור, את ההפוך ואת כוס החלב', () => {
+    expect(estimateFood('נס קפה', foods).lines[0].name).toBe('קפה שחור');
+    expect(estimateFood('קפה שחור', foods).lines[0].name).toBe('קפה שחור');
+    expect(estimateFood('קפה הפוך', foods).lines[0].name).toBe('קפה הפוך');
+    expect(estimateFood('כוס חלב', foods).lines[0].name).toBe('חלב');
+    expect(estimateFood('כוס חלב', foods).total.kcal).toBe(144);
+  });
+
+  it("' עם ' ממשיך להפריד בין מאכלים — תור הלא-מזוהים לא נפגע", () => {
+    const r = estimateFood('חזה עוף 200 גרם עם פירה', foods);
+    expect(r.lines.map(l => l.name)).toEqual(['חזה עוף']);
+    expect(r.notInDB).toEqual(['פירה']);           // חייב להגיע להילה
+  });
+});
