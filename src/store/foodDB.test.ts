@@ -514,3 +514,37 @@ describe('ארוחת מסעדה — עוף בתנור, ממולאים וסלטי
     expect(r.total.p).toBeGreaterThan(55);
   });
 });
+
+describe('אורז שהתבשל בתוך הבשר', () => {
+  const name = (t: string) => estimateFood(t, foods).lines[0].name;
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+
+  it('סופג שומן — יותר מאורז לבן במים', () => {
+    expect(name('אורז מהתבשיל')).toBe('אורז מהתבשיל');
+    expect(name('אורז בתנור')).toBe('אורז מהתבשיל');
+    expect(name('מילוי אורז')).toBe('אורז מהתבשיל');
+    expect(kcal('אורז מהתבשיל 150 גרם')).toBeGreaterThan(kcal('אורז 150 גרם'));
+  });
+
+  it('לא בולע את האורז הרגיל', () => {
+    expect(name('אורז')).toBe('אורז');
+    expect(name('אורז 150 גרם')).toBe('אורז');
+  });
+});
+
+describe('כינויים חייבים להיות ניתנים-לתפיסה', () => {
+  // estimateFood מפצל את הטקסט למקטעים לפני המטצ'ר. כינוי שמכיל מפריד
+  // (פסיק, ' עם ', וא"ו חיבור) לא ייתפס לעולם — באג שקט שאין לו שום סימן חיצוני.
+  const SEP = /[\n,.·;]+|\s+ו(?!ניל|ופל|יטמין|רוד|רק\s)|\s+עם\s+/;
+
+  it('אף כינוי במסד אינו מכיל מפריד', () => {
+    const bad = foods.flatMap(f => f.names.filter(n => SEP.test(n)).map(n => `${f.id}: "${n}"`));
+    expect(bad).toEqual([]);
+  });
+
+  it('וא"ו של מילה עברית אינה מפרידה, וא"ו חיבור כן', () => {
+    expect(estimateFood('גלידת וניל 100 גרם', foods).lines).toHaveLength(1);
+    expect(estimateFood('לחם וגבינה', foods).lines).toHaveLength(2);
+    expect(estimateFood('יוגורט פרו ואוכמניות', foods).lines).toHaveLength(2);
+  });
+});

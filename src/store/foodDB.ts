@@ -66,6 +66,10 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'homebread', names: ['לחם ביתי'], per100: [265, 8, 49, 3.5], unit: 'unit', unitGrams: 85, unitLabel: 'פרוסה', def: 2, src: 'תווית' },
   { id: 'challah', names: ['חלה', 'בריוש'], per100: [290, 9, 50, 5.5], unit: 'unit', unitGrams: 40, unitLabel: 'פרוסה', def: 2, src: 'USDA' },
   { id: 'rice', names: ['אורז'], per100: [130, 2.7, 28, 0.3], unit: 'g', def: 150, src: 'USDA' },
+  // אורז שהתבשל בתוך הבשר סופג את השומן והרוטב — ~פי 1.35 מאורז לבן מבושל במים.
+  // הכינוי המורכב ארוך מ'אורז' ולכן גובר במטצ'ר. אין כינוי שמכיל ' עם ':
+  // estimateFood מפצל את הסגמנט על 'עם' עוד לפני המטצ'ר, ולכן כינוי כזה לא יכול להיתפס.
+  { id: 'rice_meat', names: ['אורז מהתבשיל', 'אורז בתנור', 'אורז מהסיר', 'אורז בתוך הבשר', 'מילוי אורז', 'אורז שומני'], per100: [175, 4, 29, 5], unit: 'g', def: 150, gout: 'ok', src: 'הערכה' },
   { id: 'pasta', names: ['פסטה', 'אטריות', 'נודל'], per100: [157, 5.8, 31, 0.9], unit: 'g', def: 150, src: 'USDA' },
   // unit (לא g): כותבים "2 תפוחי אדמה" = 2 יחידות. משקל מפורש ("200 גרם") עדיין גובר דרך parseQty.
   { id: 'potato', names: ['תפוח אדמה', 'תפוחי אדמה', 'תפו"א', 'תפוא'], per100: [87, 1.9, 20, 0.1], unit: 'unit', unitGrams: 150, unitLabel: 'יח', def: 1, src: 'USDA' },
@@ -338,7 +342,9 @@ export function estimateFood(text: string, foods: FoodItem[]): FoodEstimate {
   const total = { kcal: 0, p: 0, c: 0, f: 0 };
   // מפריד: פסיק/נקודה/שורה, וגם מילת החיבור "ו" (הו' תמיד תחילית — נבלעת עם המפריד).
   // "או" לא מפריד — הוא "או" (אותה מנה בשני שמות), כדי לא לספור כפול.
-  const segments = (text || '').split(/[\n,.·;]+|\s+ו|\s+עם\s+/).map(s => s.trim()).filter(s => s.length > 1);
+  // חריג לוא"ו החיבור: מילים עבריות שמתחילות בוא"ו הן מעטות, ובלעדיהן "גלידת וניל"
+  // נחתך ל"גלידת" + "ניל" והכינוי המלא לא נתפס לעולם.
+  const segments = (text || '').split(/[\n,.·;]+|\s+ו(?!ניל|ופל|יטמין|רוד|רק\s)|\s+עם\s+/).map(s => s.trim()).filter(s => s.length > 1);
 
   for (const seg of segments) {
     const hits = findHits(seg, foods);
