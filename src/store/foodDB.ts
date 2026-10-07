@@ -48,6 +48,21 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'tofu', names: ['טופו'], per100: [76, 8, 1.9, 4.8], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
   { id: 'turkey', names: ['חזה הודו', 'שניצל הודו', 'הודו'], per100: [135, 29, 0, 1], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
   { id: 'milk', names: ['חלב'], per100: [60, 3.4, 4.7, 3.3], unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'milk1', names: ['חלב 1%', 'חלב דל שומן', 'חלב רזה'], per100: [42, 3.4, 5, 1], unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'USDA' },
+  // תחליפי חלב: חלב סויה הוא היחיד עם חלבון אמיתי. 'חלב שקדים' ארוך מ'שקדים' ולכן גובר.
+  { id: 'soymilk', names: ['חלב סויה', 'סויה'], per100: [33, 2.9, 1.5, 1.8], unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'almondmilk', names: ['חלב שקדים', 'חלב שיבולת שועל', 'חלב קוקוס'], per100: [20, 0.6, 1.5, 1.4], unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'ricotta', names: ['ריקוטה'], per100: [138, 11, 5, 8], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
+  // זרעים: מקור שומן וסיבים, לא מקור חלבון. ~30 קק"ל לכל גרם חלבון — גרוע מחמאת בוטנים.
+  { id: 'chia', names: ['זרעי צ\'יה', 'זרעי צ׳יה', 'צ\'יה', 'צ׳יה', 'צייה'], per100: [486, 16.5, 42, 31], unit: 'unit', unitGrams: 12, unitLabel: 'כף', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'flax', names: ['זרעי פשתן', 'פשתן'], per100: [534, 18, 29, 42], unit: 'unit', unitGrams: 10, unitLabel: 'כף', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'hempseed', names: ['זרעי המפ', 'זרעי קנבוס', 'המפ'], per100: [553, 32, 8.7, 49], unit: 'unit', unitGrams: 10, unitLabel: 'כף', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'cocoa', names: ['אבקת קקאו', 'קקאו'], per100: [228, 20, 58, 14], unit: 'unit', unitGrams: 5, unitLabel: 'כפית', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'silkentofu', names: ['טופו משי'], per100: [55, 5, 2, 3], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
+  // שייק חלבון ביתי — המתכון שאבי אישר: 250 ג' יוגורט יווני + 150 מ"ל חלב 1%
+  // + כף חמאת בוטנים + כפית קקאו = 328 קק"ל · 38 ח'. הכינוי ארוך מ'שייק חלבון'
+  // (שהוא אבקת ווי) ולכן גובר — אחרת השייק הביתי נספר כסקופ אבקה.
+  { id: 'homeshake', names: ['שייק חלבון ביתי', 'משקה חלבון ביתי', 'שייק ביתי', 'השייק שלי'], per100: [78, 9, 5.7, 2.9], unit: 'unit', unitGrams: 420, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'הערכה' },
   { id: 'skyr', names: ['יוגורט יווני', 'סקיר', 'יווני'], per100: [63, 11, 4, 0.2], unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
   { id: 'shakshuka', names: ['שקשוקה'], per100: [95, 6, 4, 6], unit: 'g', def: 250, gout: 'ok', src: 'הערכה' },
   { id: 'steak', names: ['סטייק', 'סטיק', 'אנטריקוט', 'בשר בקר', 'בקר'], per100: [271, 25, 0, 19], unit: 'g', def: 150, gout: 'high', src: 'USDA' },

@@ -548,3 +548,53 @@ describe('כינויים חייבים להיות ניתנים-לתפיסה', () 
     expect(estimateFood('יוגורט פרו ואוכמניות', foods).lines).toHaveLength(2);
   });
 });
+
+describe('משקה חלבון ביתי', () => {
+  const name = (t: string) => estimateFood(t, foods).lines[0].name;
+  const line = (t: string) => estimateFood(t, foods).lines[0];
+  const ratio = (id: string) => {
+    const f = foods.find(x => x.id === id)!;
+    return f.per100[0] / f.per100[1];        // קק"ל לכל גרם חלבון
+  };
+
+  it('זרעים ואגוזים הם מקור שומן, לא מקור חלבון', () => {
+    // זו כל הסיבה שחמאת בוטנים אינה הבסיס הנכון לשייק בחיטוב.
+    expect(ratio('skyr')).toBeLessThan(6);          // יוגורט יווני — הטוב שבאוכל אמיתי
+    expect(ratio('peanutbutter')).toBeGreaterThan(20);
+    expect(ratio('chia')).toBeGreaterThan(ratio('peanutbutter'));   // צ'יה גרועה מחמאת בוטנים
+    expect(ratio('flax')).toBeGreaterThan(ratio('peanutbutter'));
+    expect(ratio('almondmilk')).toBeGreaterThan(30);  // חלב שקדים = מים בטעם
+  });
+
+  it('השייק הביתי אינו סקופ אבקה', () => {
+    expect(name('שייק חלבון ביתי')).toBe('שייק חלבון ביתי');
+    expect(name('שייק ביתי')).toBe('שייק חלבון ביתי');
+    expect(name('משקה חלבון ביתי')).toBe('שייק חלבון ביתי');
+    expect(name('שייק חלבון')).toBe('אבקת חלבון');     // הקנוי נשאר הקנוי
+    expect(name('סקופ')).toBe('אבקת חלבון');
+  });
+
+  it('מספרי השייק תואמים את המתכון שהורכב', () => {
+    const l = line('שייק חלבון ביתי');
+    expect(l.macro[0]).toBeGreaterThanOrEqual(320);   // ~328 קק"ל
+    expect(l.macro[0]).toBeLessThanOrEqual(336);
+    expect(l.macro[1]).toBeGreaterThanOrEqual(36);    // ~38 ח'
+  });
+
+  it('רכיבי השייק מזוהים אחד-אחד, כולל חלב 1%', () => {
+    const r = estimateFood('יוגורט יווני 250 גרם, חלב 1% 150 מל, כף חמאת בוטנים, כפית קקאו', foods);
+    expect(r.notInDB).toEqual([]);
+    expect(r.lines).toHaveLength(4);
+    expect(r.lines[1].name).toBe('חלב 1%');
+    expect(r.lines[1].macro[0]).toBe(63);             // ה-'1' של 1% לא נקרא ככמות
+    expect(r.total.kcal).toBe(326);                   // תואם את הפריט המורכב
+  });
+
+  it('חלב 1% לא בולע את חלב 3%, וחלב שקדים לא את השקדים', () => {
+    expect(name('חלב')).toBe('חלב');
+    expect(name('כוס חלב')).toBe('חלב');
+    expect(name('חלב שקדים')).toBe('חלב שקדים');
+    expect(name('שקדים')).toBe('שקדים');
+    expect(name('חלב סויה')).toBe('חלב סויה');
+  });
+});
