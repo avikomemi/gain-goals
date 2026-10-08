@@ -354,19 +354,25 @@ describe('קראנץ בוטנים', () => {
 });
 
 // תור המאכלים שלא זוהו — נגזר מהיומן, מרפא את עצמו
+// פריט-בדיקה שלעולם לא ייכנס למסד. בעבר השתמשנו במאכלים אמיתיים (קולורבי,
+// אמנון) — והם נבלעו ברגע שהמסד גדל, ושברו בדיקות שלא היו קשורות לשינוי.
+// חשוב: אסור שיכיל מילת FILLER. הגרסה הראשונה הייתה 'מאכל-בדיקה-שלא-קיים',
+// ו'שלא' מכיל את 'של' — ולכן המילה נוקתה והפריט לא דווח כלל.
+const SENTINEL = 'מאכל-בדיקה';
+
 describe('ממתינים למסד', () => {
   const d = (back: number) => new Date(Date.now() - back * 864e5).toISOString().slice(0, 10);
 
   it('אוסף מה שלא זוהה, ומדלג על מה שכן', () => {
-    const q = unknownFoods([{ date: d(1), text: 'חזה עוף 200 גרם, דג אמנון' }], foods);
+    const q = unknownFoods([{ date: d(1), text: 'חזה עוף 200 גרם, ' + SENTINEL }], foods);
     expect(q).toHaveLength(1);
-    expect(q[0].text).toContain('אמנון');
+    expect(q[0].text).toContain(SENTINEL);
   });
 
   it('מאחד חזרות וסופר ימים', () => {
     const q = unknownFoods([
-      { date: d(3), text: 'דג אמנון' },
-      { date: d(1), text: 'דג אמנון' },
+      { date: d(3), text: SENTINEL },
+      { date: d(1), text: SENTINEL },
     ], foods);
     expect(q).toHaveLength(1);
     expect(q[0].times).toBe(2);
@@ -384,7 +390,7 @@ describe('ממתינים למסד', () => {
   });
 
   it('מכבד את טווח התאריכים', () => {
-    const entries = [{ date: d(40), text: 'דג אמנון' }];
+    const entries = [{ date: d(40), text: SENTINEL }];
     expect(unknownFoods(entries, foods, d(21))).toHaveLength(0);
     expect(unknownFoods(entries, foods, d(60))).toHaveLength(1);
   });
@@ -666,4 +672,36 @@ describe('נס קפה עם חלב — לא כוס חלב', () => {
     expect(r.lines.map(l => l.name)).toEqual(['חזה עוף']);
     expect(r.notInDB).toEqual(['פירה']);           // חייב להגיע להילה
   });
+});
+
+describe('אמנון ודגים לבנים', () => {
+  const name = (t: string) => estimateFood(t, foods).lines[0].name;
+  const ratio = (id: string) => { const f = foods.find(x => x.id === id)!; return f.per100[0] / f.per100[1]; };
+
+  it('האמנון מזוהה בכל הניסוחים', () => {
+    for (const t of ['פילה אמנון', 'אמנון', 'טילפיה', 'מושט']) expect(name(t)).toBe('פילה אמנון');
+    expect(estimateFood('פילה אמנון 200 גרם', foods).total.kcal).toBe(192);
+    expect(estimateFood('2 פילה אמנון', foods).total.p).toBe(80);
+  });
+
+  it('היחס שלו טוב מחזה עוף ומאבקת חלבון', () => {
+    expect(ratio('tilapia')).toBeLessThan(ratio('chicken'));
+    expect(ratio('tilapia')).toBeLessThan(ratio('whey'));
+  });
+
+  it('דגים לבנים נוספים נכנסו, ואין כינוי "דג" בודד', () => {
+    for (const t of ['דניס', 'לברק', 'בורי', 'פילה דג', 'דג לבן']) expect(name(t)).toBe('פילה דג');
+    // 'דג' כתת-מחרוזת היה הופך דגני בוקר לדג.
+    expect(estimateFood('דגני בוקר', foods).lines).toHaveLength(0);
+  });
+
+  it('לא בולע את הטונה ואת הסלמון', () => {
+    expect(name('טונה')).toBe('טונה');
+    expect(name('סלמון')).toBe('סלמון');
+  });
+});
+
+it('פריט-הבדיקה אכן לא במסד — וחייב להישאר כך', () => {
+  expect(estimateFood(SENTINEL, foods).lines).toHaveLength(0);
+  expect(estimateFood(SENTINEL, foods).notInDB).toHaveLength(1);
 });
