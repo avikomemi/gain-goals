@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore, today, daysAgo } from '../store/store';
-import { alerts, nextSteps, nextRoutine, weeklyAvgWeights, lastWaist, streakWeeksNoInjuryStop, currentWeekWorkouts, sleepAdvice, weeklyReviewDue, reviewDigest } from '../store/adi';
+import { alerts, nextSteps, nextRoutine, weeklyAvgWeights, lastWaist, streakWeeksNoInjuryStop, currentWeekWorkouts, weekSessions, sleepAdvice, weeklyReviewDue, reviewDigest } from '../store/adi';
 import { PROGRAM } from '../data/program';
 import { PulseRing, Alerts, heDate } from '../components/bits';
 
@@ -40,7 +40,15 @@ export default function Dashboard() {
       )}
 
       <div className="ringwrap">
-        <PulseRing done={currentWeekWorkouts(db)} total={3} />
+        <div>
+          <PulseRing done={currentWeekWorkouts(db)} total={3} />
+          {/* הפילוח גלוי: אחרת 'שלושה אימונים' נראה כמו טעות כשאחד מהם קרב מגע. */}
+          {(() => { const w = weekSessions(db); return w.krav > 0 ? (
+            <div className="micro" style={{ textAlign: 'center', marginTop: 4 }}>
+              {w.abc} ABC · {w.krav} 🥊
+            </div>
+          ) : null; })()}
+        </div>
         <div style={{ flex: 1 }}>
           <div className="row"><span className="k">משקל · ממוצע שבועי</span>
             <span className="v num">{cur ? cur.avg : '—'} <small>ק"ג</small>{' '}

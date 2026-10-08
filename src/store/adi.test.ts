@@ -1,7 +1,7 @@
 // הסקירה השבועית — מתי היא נדרשת ואיזה שבוע היא מסכמת
 import { describe, expect, it } from 'vitest';
 import { hydrate, weekStartOf, today } from './store';
-import { weeklyReviewDue, reviewedWeek, reviewDigest, nextSteps, nextRoutine } from './adi';
+import { weeklyReviewDue, reviewedWeek, reviewDigest, nextSteps, nextRoutine, weekSessions, currentWeekWorkouts } from './adi';
 
 const day = (back: number) => new Date(Date.now() - back * 864e5).toISOString().slice(0, 10);
 const withData = (extra = {}) => hydrate({
@@ -59,5 +59,34 @@ describe('סבב ABC מול אימון הפיזיו', () => {
 
   it('רק אימוני פיזיו — הסבב מתחיל מ-A', () => {
     expect(rot(['P', 'P'])).toBe('A');
+  });
+});
+
+describe('ספירת האימונים השבועית', () => {
+  // עוגנים לתחילת השבוע הנוכחי ולא ל"לפני N ימים": אחרת הבדיקה נשברת
+  // כשמריצים אותה בתחילת שבוע, כי התאריכים גולשים לשבוע הקודם.
+  const inWeek = (offset: number) => {
+    const t = new Date(weekStartOf(today()) + 'T00:00:00Z');
+    t.setUTCDate(t.getUTCDate() + offset);
+    return t.toISOString().slice(0, 10);
+  };
+  const d = inWeek;
+
+  it('קרב מגע נספר כאימון', () => {
+    const db = withData({
+      workouts: [{ date: d(1), routine: 'A', exercises: [] }, { date: d(4), routine: 'B', exercises: [] }],
+      krav: [{ date: d(2), min: 80, intensity: 1, tags: [] }],
+    } as never);
+    const w = weekSessions(db);
+    expect(w.abc).toBe(2);
+    expect(w.krav).toBe(1);
+    expect(w.total).toBe(3);
+    expect(currentWeekWorkouts(db)).toBe(3);   // היה 2 — הקרב מגע לא נספר
+  });
+
+  it('לא נופל כשאין קרב מגע בכלל', () => {
+    const db = withData({ workouts: [{ date: d(0), routine: 'A', exercises: [] }], krav: [] } as never);
+    expect(currentWeekWorkouts(db)).toBe(1);
+    expect(weekSessions(db).krav).toBe(0);
   });
 });

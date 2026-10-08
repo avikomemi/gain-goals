@@ -23,9 +23,18 @@ export function weeklyAvgWeights(db: DB, weeks = 6): { week: string; avg: number
     .slice(-weeks);
 }
 
-export function currentWeekWorkouts(db: DB): number {
+// קרב מגע הוא אימון. הוא ישב רק ב-db.krav, ולכן שבוע של A + קרב מגע + B
+// הוצג כ-2 מתוך 3. מפרידים את הפילוח כדי שהודעות שמדברות על סבב ABC
+// ימשיכו לדבר על ABC בלבד.
+export function weekSessions(db: DB): { abc: number; krav: number; total: number } {
   const wk = weekStartOf(today());
-  return db.workouts.filter(w => weekStartOf(w.date) === wk).length;
+  const abc = db.workouts.filter(w => weekStartOf(w.date) === wk).length;
+  const krav = (db.krav || []).filter(k => weekStartOf(k.date) === wk).length;
+  return { abc, krav, total: abc + krav };
+}
+
+export function currentWeekWorkouts(db: DB): number {
+  return weekSessions(db).total;
 }
 
 export function lastWaist(db: DB): number | null {
