@@ -705,3 +705,32 @@ it('פריט-הבדיקה אכן לא במסד — וחייב להישאר כך'
   expect(estimateFood(SENTINEL, foods).lines).toHaveLength(0);
   expect(estimateFood(SENTINEL, foods).notInDB).toHaveLength(1);
 });
+
+describe('יוגורט ים תיכוני 6.5% — לא יווני 0%', () => {
+  const name = (t: string) => estimateFood(t, foods).lines[0].name;
+  const ratio = (id: string) => { const f = foods.find(x => x.id === id)!; return f.per100[0] / f.per100[1]; };
+
+  it('פריט נפרד — לא נבלע לתוך "יוגורט יווני"', () => {
+    expect(name('יוגורט ים תיכוני')).toBe('יוגורט ים תיכוני');
+    expect(name('ים תיכוני')).toBe('יוגורט ים תיכוני');
+    expect(name('יוגורט יווני')).toBe('יוגורט יווני');
+    expect(name('סקיר')).toBe('יוגורט יווני');
+  });
+
+  it('מהתווית: 100 גרם = 117 קק"ל · 10 חלבון, מנה 200 = 234 · 20', () => {
+    const l = estimateFood('יוגורט ים תיכוני 100 גרם', foods).lines[0];
+    expect(l.macro[0]).toBe(117);
+    expect(l.macro[1]).toBe(10);
+    const m = estimateFood('יוגורט ים תיכוני 200 גרם', foods).lines[0];
+    expect(m.macro[0]).toBe(234);
+    expect(m.macro[1]).toBe(20);
+  });
+
+  it('החלבון טוב כמו ביווני, היחס גרוע פי שניים — זה השומן', () => {
+    const full = foods.find(f => f.id === 'greekfull')!;
+    const lean = foods.find(f => f.id === 'skyr')!;
+    expect(full.per100[1]).toBeGreaterThanOrEqual(9);          // חלבון אמיתי, 10 מול 11
+    expect(ratio('greekfull')).toBeGreaterThan(2 * ratio('skyr'));
+    expect(ratio('greekfull')).toBeGreaterThan(ratio('multiyog'));  // אפילו מהמולטי
+  });
+});
