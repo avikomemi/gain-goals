@@ -762,7 +762,8 @@ describe('פד תאי, פולקע, ועוגיית שוקולד', () => {
 
   it('פולקע נספר כשוק עוף', () => {
     for (const t of ['פולקע', 'פולקעס', 'פולקה']) expect(name(t)).toBe('פולקע');
-    expect(estimateFood('3 פולקע', foods).total.p).toBe(65);
+    expect(estimateFood('3 פולקע', foods).total.kcal).toBe(486);   // שוק, לא כרע
+    expect(estimateFood('3 פולקע', foods).total.p).toBe(61);
   });
 
   it('הארוחה המלאה — אפס פריטים לא מזוהים', () => {
