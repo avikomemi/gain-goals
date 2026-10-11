@@ -734,3 +734,40 @@ describe('יוגורט ים תיכוני 6.5% — לא יווני 0%', () => {
     expect(ratio('greekfull')).toBeGreaterThan(ratio('multiyog'));  // אפילו מהמולטי
   });
 });
+
+describe('פד תאי, פולקע, ועוגיית שוקולד', () => {
+  const name = (t: string) => estimateFood(t, foods).lines[0].name;
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+
+  it('עוגיית שוקולד היא עוגייה — לא עוגייה ועוד חפיסת שוקולד', () => {
+    const r = estimateFood('שתי עוגיות שוקולד', foods);
+    expect(r.lines).toHaveLength(1);              // היו 2: 'עוגיות' + 'שוקולד'
+    expect(r.lines[0].name).toBe('עוגיות');       // אותו פריט, בלי השוקולד הנוסף
+    expect(r.total.kcal).toBe(188);               // היה 322 — 134 קק"ל רפאים
+  });
+
+  it('השוקולד והעוגייה הרגילים לא נפגעו', () => {
+    expect(name('שוקולד')).toBe('שוקולד חלב');
+    expect(name('שוקולד מריר')).toBe('שוקולד מריר');
+    expect(name('עוגיות')).toBe('עוגיות');
+    expect(name('עוגיות תמרים')).toBe('עוגיות תמרים');
+  });
+
+  it('פד תאי אינו אטריות', () => {
+    for (const t of ['פד תאי', 'פאד תאי', 'פד צאי']) expect(name(t)).toBe('פד תאי');
+    expect(kcal('פד תאי 250 גרם')).toBe(450);
+    expect(name('אטריות')).toBe('פסטה');
+    expect(name('פסטה')).toBe('פסטה');
+  });
+
+  it('פולקע נספר כשוק עוף', () => {
+    for (const t of ['פולקע', 'פולקעס', 'פולקה']) expect(name(t)).toBe('פולקע');
+    expect(estimateFood('3 פולקע', foods).total.p).toBe(65);
+  });
+
+  it('הארוחה המלאה — אפס פריטים לא מזוהים', () => {
+    const r = estimateFood('נס קפה, נס קפה, 250 גרם פד צאי, 230 גרם אורז, 3 פולקע, שתי עוגיות שוקולד', foods);
+    expect(r.notInDB).toEqual([]);
+    expect(r.total.kcal).toBeGreaterThan(1400);   // דווח 681 לפני התיקון
+  });
+});
