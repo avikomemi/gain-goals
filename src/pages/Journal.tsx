@@ -6,6 +6,7 @@ import { getGoals } from '../store/goals';
 import { flexMissing } from '../store/review';
 import MealBuilder from '../components/MealBuilder';
 import WaterCard from '../components/WaterCard';
+import ToeCard from '../components/ToeCard';
 import { stepsKcal } from '../store/adi';
 import { supabase } from '../store/cloud';
 import { routineLabel } from '../data/program';
@@ -259,6 +260,7 @@ export default function Journal() {
 
         <div className="h-sec">💧 מים · היום</div>
         <WaterCard />
+        <ToeCard />
 
         <div className="h-sec">🍽️ יומן אוכל · היום {foodToday && '✓'}</div>
         <div className="card">

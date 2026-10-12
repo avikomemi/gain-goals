@@ -21,6 +21,9 @@ export interface Review { weekStart: string; stress: number; decision: string; c
 export interface WaterDay { date: string; ml?: number }
 // מבחני גמישות (בסיס + חודשי) — נעה. אצבעות-רצפה/כתף בס"מ (שלילי=עברת/חפיפה), סקוואט בשניות.
 export interface FlexEntry { date: string; fingerFloor?: number; squatSec?: number; shoulderR?: number; shoulderL?: number }
+// כאב הבוהן (גאוט/בוניון) — מדידה יומית 0-10. אבי, 12.10.26: "כמעט תמיד יש לי כאב",
+// ולכן דיווח-אירוע לא מספיק: צריך מגמה. 0 הוא ערך תקף, לא "לא דיווח".
+export interface ToeEntry { date: string; level: number; note?: string }
 
 export interface Calib {
   waist: boolean; bp: boolean; firstWeight: boolean; flexTests: boolean;
@@ -31,7 +34,7 @@ export interface Calib {
 export interface DB {
   weights: WeightEntry[]; waists: WaistEntry[]; workouts: WorkoutLog[];
   injuries: Injury[]; krav: KravLog[]; food: FoodLog[]; reviews: Review[];
-  water: WaterDay[]; bp: BpEntry[]; flex: FlexEntry[]; calib: Calib;
+  water: WaterDay[]; bp: BpEntry[]; flex: FlexEntry[]; toe: ToeEntry[]; calib: Calib;
   orders: { A?: string[]; B?: string[]; C?: string[]; P?: string[] };
   foods?: FoodItem[]; // מסד תזונה אישי (ערכים פר-100-גרם) — נזרע מ-SEED_FOODS, גדל עם הזמן
   restSec?: number; // ברירת-מחדל גלובלית לזמן מנוחה (שניות) — נפילה לתרגילים שלא הוגדרו פרטנית
@@ -47,7 +50,7 @@ export interface DB {
 
 const EMPTY: DB = {
   weights: [], waists: [], workouts: [], injuries: [], krav: [], food: [], reviews: [], water: [], bp: [],
-  flex: [],
+  flex: [], toe: [],
   calib: { waist: false, bp: false, firstWeight: false, flexTests: false, runs: { A: 0, B: 0, C: 0 }, done: false },
   orders: {},
 };
@@ -65,7 +68,7 @@ export function hydrate(raw: any): DB {
     weights: arr(raw?.weights), waists: arr(raw?.waists), workouts: arr(raw?.workouts),
     injuries: arr(raw?.injuries), krav: arr(raw?.krav), food: arr(raw?.food),
     reviews: arr(raw?.reviews), water: arr(raw?.water), bp: arr(raw?.bp),
-    sleep: arr(raw?.sleep), steps: arr(raw?.steps), flex: arr(raw?.flex),
+    sleep: arr(raw?.sleep), steps: arr(raw?.steps), flex: arr(raw?.flex), toe: arr(raw?.toe),
     calib: { ...EMPTY.calib, ...(raw?.calib || {}), runs: { ...EMPTY.calib.runs, ...(raw?.calib?.runs || {}) } },
     orders: raw?.orders && typeof raw.orders === 'object' ? raw.orders : {},
   };

@@ -3,6 +3,7 @@ import { DB, WorkoutLog, weekStartOf, today, daysAgo } from './store';
 import { PROGRAM } from '../data/program';
 import { estimateFood, mergeFoods } from './foodDB';
 import { getGoals } from './goals';
+import { toeAvg, toeTrend, toeStreak, toeCoverage, toeToday } from './toe';
 
 export interface Alert { from: string; text: string; sev: 'warn' | 'info' }
 
@@ -110,6 +111,29 @@ export function direction(db: DB, exId: string, area?: string): { dir: Direction
   return { dir: 'keep', why: 'ממשיכים באותו עומס — בסיס יציב' };
 }
 
+/* ---------- הבוהן ---------- */
+// התרעה אחת לכל היותר, הקשה שבהן. עדיף התרעה ממוקדת על שלוש.
+export function toeAlerts(db: DB): Alert[] {
+  const seen = toeCoverage(db, 7);
+  if (!seen) {
+    // רק אחרי שיש היסטוריה — לא מציקים למי שרק התחיל
+    return db.toe.length ? [{ from: 'ד"ר ארז', text: 'שבוע בלי דיווח על הבוהן. בלי המספר היומי אין מגמה, ובלי מגמה אין מה להראות לרופא.', sev: 'info' }] : [];
+  }
+  const streak = toeStreak(db, 5);
+  if (streak >= 3) return [{ from: 'ד"ר ארז', text: `${streak} ימים רצופים בכאב 5+. זה כבר לא רקע — תיאום ביקורת אצל רופא המעקב, ובינתיים אפס עומס קדמי על כף הרגל.`, sev: 'warn' }];
+
+  const t = toeTrend(db);
+  if (t && t.delta >= 1.5) return [{ from: 'ד"ר ארז', text: `הכאב בבוהן עלה מ-${t.prev} ל-${t.now} בשבוע. בקבוק מים היום, ורז מוריד בעיטות מהקרב מגע עד שזה יורד.`, sev: 'warn' }];
+  if (t && t.delta <= -1.5) return [{ from: 'ד"ר ארז', text: `הכאב בבוהן ירד מ-${t.prev} ל-${t.now}. מה שעשית בשבוע האחרון עובד — תשמור על זה.`, sev: 'info' }];
+
+  const avg = toeAvg(db, 30);
+  if (avg !== null && avg >= 4 && toeCoverage(db, 30) >= 14)
+    return [{ from: 'ד"ר ארז', text: `ממוצע ${avg}/10 לאורך חודש. זה בסיס גבוה מדי לכאב רציף — שווה לשאול את הרופא אם החומצה האורית ביעד ואם המינון מכויל.`, sev: 'warn' }];
+
+  if (!toeToday(db)) return [{ from: 'ד"ר ארז', text: 'לא דיווחת היום על הבוהן. שנייה אחת ביומן — 0 זה גם תשובה.', sev: 'info' }];
+  return [];
+}
+
 /* ---------- alerts ---------- */
 export function alerts(db: DB): Alert[] {
   const out: Alert[] = [];
@@ -129,6 +153,10 @@ export function alerts(db: DB): Alert[] {
   if (waterMl2d < 500 && startOf(db) <= daysAgo(2)) {
     out.push({ from: 'ד"ר ארז', text: 'כמעט בלי מים במונה יומיים. עם גאוט זה לא מותרות — כוס אחת עכשיו, ולחץ "+ כוס" ביומן.', sev: 'warn' });
   }
+  // הבוהן — מגמה, לא אירוע. דיווח-אירוע בודד לא אומר כלום אצל מישהו שהכאב
+  // אצלו כמעט תמיד נוכח; מה שמשנה הוא לאן זה הולך לאורך שבועות.
+  out.push(...toeAlerts(db));
+
   // pain repeat
   const wk = weekStartOf(today());
   const areas = new Map<string, number>();
