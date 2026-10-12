@@ -118,7 +118,7 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'oliveoil', names: ['שמן זית', 'שמן'], per100: [884, 0, 0, 100], unit: 'unit', unitGrams: 13.5, unitLabel: 'כף', def: 1, src: 'USDA' },
   { id: 'peanutbutter', names: ['חמאת בוטנים'], per100: [588, 25, 20, 50], unit: 'unit', unitGrams: 16, unitLabel: 'כף', def: 1, src: 'USDA' },
   { id: 'honey', names: ['דבש'], per100: [304, 0.3, 82, 0], unit: 'unit', unitGrams: 7, unitLabel: 'כפית', def: 1, gout: 'ok', src: 'USDA' },   // כפית = 7 גר'; "כף דבש" מומר ל-3 כפיות
-  { id: 'nuts', names: ['שקדים', 'אגוזים', 'קשיו', 'בוטנים', 'פיסטוק', 'שקד', 'אגוז'], per100: [579, 21, 22, 50], unit: 'g', def: 28, src: 'USDA' },
+  { id: 'nuts', names: ['שקדים', 'אגוזים', 'קשיו', 'בוטנים', 'פיסטוק', 'שקד', 'אגוז', 'פיצוחים', 'פיצוח', 'גרעינים', 'גרעיני חמניה'], per100: [579, 21, 22, 50], unit: 'g', def: 28, src: 'USDA' },
   // פקאן ומלך שמנוניים בהרבה מהשקד (691/654 מול 579) — שם ספציפי גובר על 'אגוז' הכללי
   { id: 'pecan', names: ['אגוזי פקאן', 'אגוז פקאן', 'פקאנים', 'פקאן'], per100: [691, 9.2, 14, 72], unit: 'g', def: 28, gout: 'ok', src: 'USDA' },
   { id: 'walnut', names: ['אגוזי מלך', 'אגוז מלך'], per100: [654, 15, 14, 65], unit: 'g', def: 28, gout: 'ok', src: 'USDA' },
@@ -160,6 +160,7 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'loquat', names: ['שסק'], per100: [47, 0.4, 12, 0.2], unit: 'unit', unitGrams: 15, unitLabel: 'יח', def: 4, src: 'USDA' },
 
   // ---- ירקות (מדף מלא) ----
+  { id: 'onion', names: ['בצל סגול', 'בצל ירוק', 'בצל'], per100: [40, 1.1, 9, 0.1], unit: 'g', def: 50, gout: 'ok', src: 'USDA' },
   { id: 'cucumber', names: ['מלפפון'], per100: [15, 0.7, 3.6, 0.1], unit: 'g', def: 100, src: 'USDA' },
   { id: 'carrot', names: ['גזר'], per100: [41, 0.9, 10, 0.2], unit: 'g', def: 100, src: 'USDA' },
   { id: 'pepper', names: ['פלפל'], per100: [31, 1, 6, 0.3], unit: 'g', def: 100, src: 'USDA' },
@@ -253,7 +254,7 @@ export function mergeFoods(userFoods: FoodItem[] | undefined): FoodItem[] {
 export interface FoodLine { name: string; qty: number; qtyLabel: string; macro: [number, number, number, number] }
 export interface FoodEstimate { lines: FoodLine[]; total: { kcal: number; p: number; c: number; f: number }; notInDB: string[] }
 
-const FILLER = ['עם', 'של', 'ללא', 'בלי', 'סוכר', 'מלח', 'קינמון', 'וניל', 'נענע', 'מנטה', 'קרח', 'כורכום', 'תמצית', 'שמן', 'בבוקר', 'בערב', 'בצהריים', 'קופסא', 'קופסה', 'גרם', 'גר', "ג'", 'כוס', 'בקבוק', 'מים', 'קצת', 'הרבה', 'ועוד', 'גדול', 'קטן'];
+const FILLER = ['עם', 'של', 'ללא', 'בלי', 'סוכר', 'מלח', 'קינמון', 'וניל', 'נענע', 'מנטה', 'קרח', 'כורכום', 'תמצית', 'שמן', 'בבוקר', 'בערב', 'בצהריים', 'קופסא', 'קופסה', 'גרם', 'גר', "ג'", 'כוס', 'בקבוק', 'מים', 'קצת', 'הרבה', 'ועוד', 'גדול', 'קטן', 'שומן', 'שמן זית', 'לימון'];
 
 // מספרים במילים — "שתי במבות", "חביתה משתי ביצים". סדר: הארוך קודם (שתיים לפני שתי).
 const WORD_NUM: Record<string, number> = {
@@ -388,7 +389,7 @@ export function estimateFood(text: string, foods: FoodItem[]): FoodEstimate {
   // ' עם ' הוא מפריד (ראו למטה), ולכן "נס קפה עם חלב" נחתך ל"נס קפה" + "חלב"
   // וה'חלב' נספר ככוס מלאה. מכווצים את הצירוף הזה — ורק אותו — לפני הפיצול.
   const t = (text || '').replace(/קפה(?:\s+שחור)?\s+עם\s+חלב/g, 'קפה בחלב');
-  const segments = t.split(/[\n,.·;]+|\s+ו(?!ניל|ופל|יטמין|רוד|רק\s)|\s+עם\s+/).map(s => s.trim()).filter(s => s.length > 1);
+  const segments = t.split(/[\n,·;]+|\.(?!\d)|\s+ו(?!ניל|ופל|יטמין|רוד|רק\s)|\s+עם\s+/).map(s => s.trim()).filter(s => s.length > 1);
 
   for (const seg of segments) {
     const hits = findHits(seg, foods);

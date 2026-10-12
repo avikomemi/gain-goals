@@ -772,3 +772,31 @@ describe('פד תאי, פולקע, ועוגיית שוקולד', () => {
     expect(r.total.kcal).toBeGreaterThan(1400);   // דווח 681 לפני התיקון
   });
 });
+
+describe('סריקת היומן — מה שהילה לא מכירה', () => {
+  it('נקודה בין ספרות אינה מפרידה', () => {
+    // "משקה חלבון 1.5% שומן" נחתך ל"משקה חלבון 1" + "5% שומן", והשארית
+    // נחתה בתור של הילה כמאכל לא מוכר. נקודה אחרי ספרה היא עשרוני, לא סוף משפט.
+    const r = estimateFood('משקה חלבון 1.5% שומן', foods);
+    expect(r.notInDB).toEqual([]);
+    expect(r.lines).toHaveLength(1);
+    expect(r.lines[0].name).toBe('משקה חלבון');
+  });
+
+  it('נקודה שמסיימת משפט עדיין מפרידה', () => {
+    expect(estimateFood('במבה 80 גרם. 3 עוגיות תמרים', foods).lines).toHaveLength(2);
+    expect(estimateFood('חביתה.חצי כפית דבש', foods).lines).toHaveLength(2);
+  });
+
+  it('פיצוחים, בצל ולימון נכנסו', () => {
+    expect(estimateFood('125 גרם פיצוחים', foods).lines[0].name).toBe('שקדים');
+    expect(estimateFood('125 גרם פיצוחים', foods).total.kcal).toBe(724);
+    expect(estimateFood('בצל סגול', foods).lines[0].name).toBe('בצל סגול');
+    expect(estimateFood('סלט ירקות עם לימון', foods).notInDB).toEqual([]);
+  });
+
+  it("'שומן' הוא תיאור ולא מאכל", () => {
+    expect(estimateFood('גבינה לבנה 5% שומן', foods).notInDB).toEqual([]);
+    expect(estimateFood('יוגורט מולטי 3% שומן', foods).notInDB).toEqual([]);
+  });
+});
