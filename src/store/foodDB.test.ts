@@ -1,6 +1,6 @@
 // רגרסיה לפרסר התזונה של הילה. מה שנשבר כאן = הילה מציגה לאבי מספר לא נכון.
 import { describe, expect, it } from 'vitest';
-import { estimateFood, mergeFoods, unknownFoods, FoodItem } from './foodDB';
+import { estimateFood, mergeFoods, unknownFoods, FoodItem, partialMatches} from './foodDB';
 import { hilaReview } from './hila';
 
 const foods: FoodItem[] = mergeFoods(undefined);
@@ -798,5 +798,62 @@ describe('סריקת היומן — מה שהילה לא מכירה', () => {
   it("'שומן' הוא תיאור ולא מאכל", () => {
     expect(estimateFood('גבינה לבנה 5% שומן', foods).notInDB).toEqual([]);
     expect(estimateFood('יוגורט מולטי 3% שומן', foods).notInDB).toEqual([]);
+  });
+});
+
+describe('תור "זוהה חלקית" — מה שנתפס, אבל לא נכון', () => {
+  const name = (t: string) => estimateFood(t, foods).lines[0]?.name;
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+
+  it("'חלבון' אינו כוס חלב", () => {
+    // 'חלב' יושב בתוך 'חלבון'. כל משפט עם המילה "חלבון" הוסיף 144 קק"ל רפאים.
+    expect(estimateFood('חלבון', foods).lines).toHaveLength(0);
+    expect(estimateFood('הרבה חלבון', foods).lines).toHaveLength(0);
+    expect(name('משקה חלבון')).toBe('משקה חלבון');   // הפריטים האמיתיים לא נפגעו
+    expect(name('אבקת חלבון')).toBe('אבקת חלבון');
+    expect(name('כוס חלב')).toBe('חלב');
+    expect(kcal('חלב 200 מל')).toBe(120);
+  });
+
+  it('נקניקיות אינן נתח עוף', () => {
+    expect(name('4 נקניקיות פרגית')).toBe('נקניקיות');
+    expect(kcal('4 נקניקיות פרגית')).toBe(500);     // היה 990 — 600 גרם חזה
+    expect(name('נקניק')).toBe('נקניקיות');
+    expect(name('פרגית')).toBe('חזה עוף');          // לא נבלע
+  });
+
+  it('מרק עוף הוא מרק, וכרע היא כרע', () => {
+    expect(name('מרק עוף')).toBe('מרק עוף');
+    expect(kcal('מרק עוף')).toBe(120);              // היה 248 — 150 גרם חזה
+    expect(name('מרק ירקות')).toBe('מרק ירקות');
+    expect(name('שני כרעי עוף')).toBe('ירך עוף');
+    expect(name('כרע עוף')).toBe('ירך עוף');
+  });
+
+  it('התור מדרג לפי כמה מהמקטע לא הובן', () => {
+    const lean = foods.filter(f => f.id !== 'vegroast');   // כאילו 'ירקות בתנור' לא היה במסד
+    const q = partialMatches([{ date: '2026-10-07', text: 'קישואים בתנור 250 גרם' }], lean);
+    expect(q).toHaveLength(1);
+    expect(q[0].matched).toBe('קישוא');
+    expect(q[0].coverage).toBeLessThan(0.6);
+  });
+
+  it('מילות כמות אינן נחשבות פער', () => {
+    // "שתי ביצים" מובן במלואו — 'שתי' היא כמות, לא שם של מאכל.
+    expect(partialMatches([{ date: '2026-10-07', text: 'שתי ביצים' }], foods)).toEqual([]);
+    expect(partialMatches([{ date: '2026-10-07', text: 'שלוש פרוסות לחם' }], foods)).toEqual([]);
+  });
+
+  it('מילת הכנה כן מסומנת — וזו הכוונה, גם במחיר התרעות שווא', () => {
+    // 'קשות' בביצה לא משנה כלום, 'בתנור' בקישוא שינה פי חמישה. התור לא יודע
+    // להבדיל, ולכן הוא רשימה לבדיקה בשיקול דעת — לא התרעה לאבי.
+    const q = partialMatches([{ date: '2026-10-07', text: 'שתי ביצים קשות' }], foods);
+    expect(q).toHaveLength(1);
+    expect(q[0].matched).toBe('ביצה');
+  });
+
+  it('מה שלא זוהה כלל אינו נכנס לתור הזה', () => {
+    const q = partialMatches([{ date: '2026-10-07', text: SENTINEL }], foods);
+    expect(q).toEqual([]);        // מקומו ב-unknownFoods
   });
 });

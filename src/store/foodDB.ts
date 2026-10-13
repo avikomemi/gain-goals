@@ -45,8 +45,12 @@ export const SEED_FOODS: FoodItem[] = [
   // אין כינוי 'שוק' בודד: הוא תת-מחרוזת של 'שוקולד'.
   // פולקע = שוק עוף ('ההליקופטר') — הקטן, לא הכרע השלמה. שוק טיפוסי נותן
   // 70-85 גרם בשר+עור מבושל בלי העצם; 75 הוא האמצע.
+  // נקניקיית עוף/הודו — לא נתח עוף. בלי זה "4 נקניקיות פרגית" נספר כ-600 גרם חזה.
+  { id: 'sausage', names: ['נקניקיות', 'נקניקייה', 'נקניקיה', 'נקניק', 'נקניקיות פרגית', 'נקניקיות עוף', 'נקניקיות הודו'], per100: [250, 14, 2, 21], unit: 'unit', unitGrams: 50, unitLabel: 'יח', def: 2, gout: 'high', src: 'USDA' },
+  // מרק עוף הוא ציר עם ירקות, לא 150 גרם חזה.
+  { id: 'chickensoup', names: ['מרק עוף', 'ציר עוף', 'מרק קניידלך'], per100: [40, 3, 3, 1.5], unit: 'g', def: 300, gout: 'ok', src: 'USDA' },
   { id: 'drumstick', names: ['פולקע', 'פולקעס', 'פולקה'], per100: [216, 27, 0, 11], unit: 'unit', unitGrams: 75, unitLabel: 'יח', def: 2, gout: 'ok', src: 'USDA' },
-  { id: 'chicken_thigh', names: ['ירך עוף', 'ירכיים', 'ירך', 'שוק עוף', 'שוקיים', 'כרעיים', 'כרע עוף', 'רביע עוף', 'עוף בתנור', 'עוף צלוי', 'עוף אפוי'], per100: [232, 23, 0, 15], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
+  { id: 'chicken_thigh', names: ['ירך עוף', 'ירכיים', 'ירך', 'שוק עוף', 'שוקיים', 'כרעיים', 'כרעי עוף', 'כרעי', 'כרע עוף', 'כרע', 'רביע עוף', 'עוף בתנור', 'עוף צלוי', 'עוף אפוי'], per100: [232, 23, 0, 15], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
   { id: 'whey', names: ['אבקת חלבון', 'שייק חלבון', 'וויי', 'פרוטאין', 'סקופ'], per100: [380, 75, 8, 6], unit: 'unit', unitGrams: 30, unitLabel: 'מנה', def: 1, gout: 'ok', src: 'תווית' },
   // משקה חלבון מוכן (מולר פרוטאין וכו', 1.5% שומן): בקבוק 400 מ"ל = 25 גר' חלבון. per100 = פר 100 מ"ל, הערכה.
   { id: 'proteindrink', names: ['משקה חלבון', 'מולר פרוטאין', 'müller protein'], per100: [51, 6.3, 3, 1.5], unit: 'unit', unitGrams: 400, unitLabel: 'בקבוק', def: 1, gout: 'ok', src: 'הערכה' },
@@ -339,11 +343,28 @@ interface Hit { food: FoodItem; start: number; end: number }
 
 // כל המאכלים שמופיעים בסגמנט אחד — לא רק אחד. "חזה עוף 200 גרם שעועית ירוקה 100 גרם"
 // זה שני מאכלים גם בלי פסיק ביניהם. חפיפה → השם הספציפי מנצח ("שעועית ירוקה" לא "שעועית").
+// פיצול הטקסט למקטעים. מוגדר פעם אחת — גם estimateFood וגם partialMatches משתמשים בו,
+// ואסור שהם יתפצלו אחרת זה מזה.
+// 'נס קפה עם חלב' הוא פריט אחד, אבל ' עם ' הוא מפריד — מכווצים לפני הפיצול.
+export const normalize = (text: string): string => (text || '').replace(/קפה(?:\s+שחור)?\s+עם\s+חלב/g, 'קפה בחלב');
+
+export function splitSegments(t: string): string[] {
+  return t.split(/[\n,·;]+|\.(?!\d)|\s+ו(?!ניל|ופל|יטמין|רוד|רק\s)|\s+עם\s+/).map(x => x.trim()).filter(x => x.length > 1);
+}
+
+// כינוי שיושב בתוך מילה עברית אחרת לגמרי. אי אפשר לדרוש גבול מילה גורף —
+// ההתאמה לפי הכלה היא מה שמאפשר 'קישוא' לתפוס 'קישואים'. רשימה מפורשת וקצרה.
+const ALIAS_TRAPS: { alias: string; inside: RegExp }[] = [
+  { alias: 'חלב', inside: /^חלבו[נן]/ },   // "משקה חלבון" → כוס חלב של 144 קק"ל
+];
+
 function findHits(seg: string, foods: FoodItem[]): Hit[] {
   const all: Hit[] = [];
   for (const f of foods) for (const a of f.names) {
     const i = seg.indexOf(a);
-    if (i !== -1) all.push({ food: f, start: i, end: i + a.length });
+    if (i === -1) continue;
+    if (ALIAS_TRAPS.some(t => t.alias === a && t.inside.test(seg.slice(i)))) continue;
+    all.push({ food: f, start: i, end: i + a.length });
   }
   all.sort((x, y) => (y.end - y.start) - (x.end - x.start)); // הארוך (הספציפי) ראשון
   const kept: Hit[] = [];
@@ -388,8 +409,8 @@ export function estimateFood(text: string, foods: FoodItem[]): FoodEstimate {
   // נחתך ל"גלידת" + "ניל" והכינוי המלא לא נתפס לעולם.
   // ' עם ' הוא מפריד (ראו למטה), ולכן "נס קפה עם חלב" נחתך ל"נס קפה" + "חלב"
   // וה'חלב' נספר ככוס מלאה. מכווצים את הצירוף הזה — ורק אותו — לפני הפיצול.
-  const t = (text || '').replace(/קפה(?:\s+שחור)?\s+עם\s+חלב/g, 'קפה בחלב');
-  const segments = t.split(/[\n,·;]+|\.(?!\d)|\s+ו(?!ניל|ופל|יטמין|רוד|רק\s)|\s+עם\s+/).map(s => s.trim()).filter(s => s.length > 1);
+  const t = normalize(text);
+  const segments = splitSegments(t);
 
   for (const seg of segments) {
     const hits = findHits(seg, foods);
@@ -422,6 +443,71 @@ export interface UnknownFood {
   firstSeen: string;   // התאריך הראשון שבו הופיע
   lastSeen: string;
   times: number;       // בכמה ימים שונים הופיע — מה שחוזר, דחוף יותר
+}
+
+// מילים שמתארות כמות או כלי קיבול — לא שם של מאכל. בלעדיהן "שתי ביצים קשות"
+// נראה כאילו הפרסר הבין 42% ממנו, בזמן שהוא הבין את כל מה שחשוב.
+const QTY_WORDS = [
+  ...Object.keys(WORD_NUM),
+  'פרוסה', 'פרוסת', 'פרוסות', 'קערית', 'קעריות', 'קערה', 'גביע', 'גביעים',
+  'מנה', 'מנות', 'כפית', 'כפיות', 'כף', 'כפות', 'יחידה', 'יחידות', 'חתיכה', 'חתיכות',
+  'חצי', 'רבע', 'שליש', 'שלם', 'שלמה', 'אחת', 'אחד', 'בערך', 'כמו',
+];
+
+export interface PartialMatch {
+  text: string;        // המקטע כפי שנכתב
+  matched: string;     // מה שהפרסר תפס בתוכו
+  coverage: number;    // איזה חלק מהמקטע הובן, 0-1
+  firstSeen: string;
+  lastSeen: string;
+  times: number;
+}
+
+/**
+ * מקטעים שהפרסר הבין רק חלקית. זה הסוג המסוכן של פער: "קישואים בתנור" נתפס
+ * כ"קישוא" (17 קק"ל במקום 95), "ירך עוף" נתפס כ"עוף" (חזה, 165 במקום 232).
+ * הם לא מופיעים ב-unknownFoods, כי משהו כן נתפס — ולכן אף אחד לא יודע עליהם.
+ * המדד: כמה מאותיות המקטע נבלעו בכינוי שנתפס. מתעלמים ממילות מילוי וממספרים,
+ * כי "200 גרם" הוא כמות ולא שם של מאכל.
+ */
+export function partialMatches(
+  entries: { date: string; text?: string }[] | undefined,
+  foods: FoodItem[],
+  since?: string,
+  threshold = 0.6,
+): PartialMatch[] {
+  const byText = new Map<string, PartialMatch>();
+  for (const e of entries || []) {
+    if (!e?.date || !e.text?.trim()) continue;
+    if (since && e.date < since) continue;
+    for (const seg of splitSegments(normalize(e.text))) {
+      const hits = findHits(seg, foods);
+      if (!hits.length) continue;                       // זה כבר בתור הלא-מזוהים
+      // כמה אותיות עבריות "אמיתיות" יש במקטע. מילות כמות ויחידה אינן שם של
+      // מאכל — "שתי פרוסות לחם" הוא לחם, ובלי הסינון הזה כל כמות נראית כפער.
+      const meaningful = seg.split(/\s+/)
+        .filter(w => !FILLER.some(g => w.includes(g)) && !/^\d+['"%]?$/.test(w)
+                  && !QTY_WORDS.some(g => w === g || w === 'ו' + g || w === 'מ' + g))
+        .join('').replace(/[^֐-׿]/g, '').length;
+      if (meaningful < 4) continue;                     // מילה אחת קצרה — אין מה לפספס
+      const taken = hits.reduce((n, h) => n + seg.slice(h.start, h.end).replace(/[^֐-׿]/g, '').length, 0);
+      const coverage = Math.min(1, taken / meaningful);
+      if (coverage >= threshold) continue;
+      const text = seg.length > 40 ? seg.slice(0, 40) + '…' : seg;
+      const matched = hits.map(h => h.food.names[0]).join(' + ');
+      const key = text + '|' + matched;
+      const cur = byText.get(key);
+      if (cur) {
+        cur.times += 1;
+        if (e.date < cur.firstSeen) cur.firstSeen = e.date;
+        if (e.date > cur.lastSeen) cur.lastSeen = e.date;
+      } else {
+        byText.set(key, { text, matched, coverage: Math.round(coverage * 100) / 100, firstSeen: e.date, lastSeen: e.date, times: 1 });
+      }
+    }
+  }
+  // הכי פחות מובן קודם — שם הסיכון לטעות הגדולה
+  return [...byText.values()].sort((a, b) => a.coverage - b.coverage || b.times - a.times);
 }
 
 export function unknownFoods(
