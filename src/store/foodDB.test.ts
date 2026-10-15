@@ -857,3 +857,28 @@ describe('תור "זוהה חלקית" — מה שנתפס, אבל לא נכון
     expect(q).toEqual([]);        // מקומו ב-unknownFoods
   });
 });
+
+describe('קרקרים ופריכיות — מהתווית', () => {
+  const name = (t: string) => estimateFood(t, foods).lines[0].name;
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+
+  it('מזוהים, ובמנה שעל התווית', () => {
+    expect(name('קרקר')).toBe('קרקר');
+    expect(name('3 קרקרים')).toBe('קרקר');
+    expect(kcal('3 קרקרים')).toBe(114);        // מנה 28.8 ג' מהתווית
+    expect(name('פריכיות')).toBe('פריכיות');
+    expect(kcal('5 פריכיות')).toBe(146);       // 7.6 ג' ליחידה
+  });
+
+  it('הם יבשים — פי 1.5 מלחם לאותו משקל', () => {
+    expect(kcal('קרקר 100 גרם')).toBe(396);
+    expect(kcal('פריכיות 100 גרם')).toBe(383);
+    expect(kcal('לחם 100 גרם')).toBe(247);
+  });
+
+  it('לא בולעים את הלחם ולא נבלעים בו', () => {
+    expect(name('לחם')).toBe('פרוסת לחם');
+    expect(name('פרוסת לחם')).toBe('פרוסת לחם');
+    expect(kcal('שתי פרוסות לחם כוסמין')).toBe(148);
+  });
+});
