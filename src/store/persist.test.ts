@@ -19,6 +19,10 @@ const physio = (date: string): WorkoutLog => ({
 /** בדיוק מה שקורה מול Supabase: העמודה היא jsonb, כלומר JSON round-trip */
 const roundTrip = (db: DB): DB => hydrate(JSON.parse(JSON.stringify(db)));
 
+// חלון הסקירה נמדד מהיום אחורה, ולכן תאריך קבוע בפיקסצ'ר יוצא ממנו ברגע
+// שהזמן עובר. הבדיקה נשברה ב-15.10 כי 21 יום אחורה נחתו בדיוק על 24.9.
+const daysBack = (n: number) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+
 describe('אימון הפיזיו נשמר', () => {
   const base = hydrate({ startDate: '2026-09-01', weights: [{ date: '2026-09-20', kg: 90 }] });
 
@@ -45,9 +49,9 @@ describe('אימון הפיזיו נשמר', () => {
 
 describe('אימון הפיזיו נספר בסטטיסטיקה', () => {
   const db = roundTrip(hydrate({
-    startDate: '2026-09-01',
-    weights: [{ date: '2026-09-20', kg: 90 }],
-    workouts: [physio('2026-09-24'), physio('2026-09-25')],
+    startDate: daysBack(45),
+    weights: [{ date: daysBack(25), kg: 90 }],
+    workouts: [physio(daysBack(5)), physio(daysBack(4))],   // בתוך חלון ה-21 יום, תמיד
   }));
 
   it('נספר כאימון בסקירה', () => {
