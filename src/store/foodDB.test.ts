@@ -882,3 +882,20 @@ describe('קרקרים ופריכיות — מהתווית', () => {
     expect(kcal('שתי פרוסות לחם כוסמין')).toBe(148);
   });
 });
+
+describe('סלט יווני אינו יוגורט יווני', () => {
+  it('נספר כפריט אחד, לא כסלט ועוד גביע יוגורט', () => {
+    const r = estimateFood('סלט יווני', foods);
+    expect(r.lines).toHaveLength(1);              // היו 2: 'סלט ירקות' + 'יוגורט יווני'
+    expect(r.lines[0].name).toBe('סלט יווני');
+    expect(r.total.p).toBeLessThan(12);           // היו 19 גרם חלבון שלא היו שם
+  });
+
+  it('לא בולע את היוגורט ואת הסלט הרגיל', () => {
+    expect(estimateFood('יוגורט יווני', foods).lines[0].name).toBe('יוגורט יווני');
+    expect(estimateFood('יווני', foods).lines[0].name).toBe('יוגורט יווני');
+    expect(estimateFood('סקיר', foods).lines[0].name).toBe('יוגורט יווני');
+    expect(estimateFood('סלט ירקות', foods).lines[0].name).toBe('סלט ירקות');
+    expect(estimateFood('סלט', foods).lines[0].name).toBe('סלט ירקות');
+  });
+});
