@@ -904,7 +904,7 @@ describe('ספגטי בולונז', () => {
   const name = (t: string) => estimateFood(t, foods).lines[0].name;
   it('המנה כולה, לא רק הפסטה', () => {
     for (const t of ['ספגטי בולונז', 'פסטה בולונז', 'בולונז']) expect(name(t)).toBe('ספגטי בולונז');
-    expect(estimateFood('ספגטי בולונז', foods).total.kcal).toBe(560);   // צלחת 400 ג'
+    expect(estimateFood('ספגטי בולונז', foods).total.kcal).toBe(448);   // צלחת מרק מלאה, 320 ג'
     expect(foods.find(f => f.id === 'bolognese')!.gout).toBe('high');    // בשר בקר
   });
   it('לא בולע את הפסטה הרגילה', () => {
