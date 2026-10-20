@@ -914,3 +914,25 @@ describe('ספגטי בולונז', () => {
     expect(name('פד תאי')).toBe('פד תאי');
   });
 });
+
+describe('משולש פיצה', () => {
+  const name = (t: string) => estimateFood(t, foods).lines[0].name;
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+
+  it('נספר לפי משולש', () => {
+    expect(name('משולש פיצה')).toBe('משולש פיצה');
+    expect(name('פיצה')).toBe('משולש פיצה');
+    expect(kcal('משולש פיצה')).toBe(333);
+    expect(kcal('2 משולשי פיצה')).toBe(665);
+  });
+
+  it('טעמי הביסלי לא מקבלים פיצה בתוספת', () => {
+    // 'ביסלי פיצה' מכיל גם 'ביסלי' וגם 'פיצה' — שני כינויים נפרדים.
+    const r = estimateFood('ביסלי פיצה', foods);
+    expect(r.lines).toHaveLength(1);
+    expect(r.lines[0].name).toBe('ביסלי');
+    expect(r.total.kcal).toBe(266);
+    expect(name('ביסלי גריל')).toBe('ביסלי');
+    expect(name('ביסלי')).toBe('ביסלי');
+  });
+});
