@@ -915,6 +915,36 @@ describe('ספגטי בולונז', () => {
   });
 });
 
+describe('קפה לבן', () => {
+  const name = (t: string) => estimateFood(t, foods).lines[0].name;
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+
+  it('רוב הכוס הוא חלב', () => {
+    expect(name('קפה לבן')).toBe('קפה לבן');
+    expect(name('נס לבן')).toBe('קפה לבן');
+    expect(kcal('קפה לבן')).toBe(93);
+  });
+
+  it('שאר סוגי הקפה לא נפגעים', () => {
+    expect(name('קפה')).toBe('קפה שחור');
+    expect(kcal('קפה שחור')).toBe(5);
+    expect(kcal('קפה בחלב')).toBe(35);     // נס עם טיפת חלב
+    expect(kcal('קפה הפוך')).toBe(90);
+  });
+
+  it('התור השני תפס את זה לפני שהפריט נוסף', () => {
+    // 'קפה' לבד מכסה 3 מ-6 אותיות. unknownFoods לא רואה כלום כי משהו כן נתפס.
+    const e = [{ date: '2026-10-22', text: 'קפה לבן' }];
+    const before = foods.filter(f => f.id !== 'coffee_white');
+    expect(unknownFoods(e, before)).toEqual([]);
+    const p = partialMatches(e, before);
+    expect(p).toHaveLength(1);
+    expect(p[0].matched).toBe('קפה שחור');
+    expect(p[0].coverage).toBe(0.5);
+    expect(partialMatches(e, foods)).toEqual([]);   // אחרי ההוספה — נקי
+  });
+});
+
 describe('המבורגר', () => {
   const name = (t: string) => estimateFood(t, foods).lines[0].name;
   const kcal = (t: string) => estimateFood(t, foods).total.kcal;

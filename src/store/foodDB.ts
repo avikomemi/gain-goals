@@ -290,6 +290,9 @@ export const SEED_FOODS: FoodItem[] = [
   // נס קפה עם טיפת חלב ~50 מ"ל. בלי הפריט הזה ה'חלב' נספר ככוס מלאה —
   // 144 קק"ל במקום 35, ואבי שותה 3-5 כאלה ביום.
   { id: 'coffee_splash', names: ['קפה בחלב', 'נס קפה בחלב', 'נס בחלב', 'קפה חלב', 'נס קפה חלב'], per100: [12, 0.6, 0.9, 0.6], unit: 'unit', unitGrams: 290, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'הערכה' },
+  // "קפה לבן" הוא בעיקר חלב, לא כמו נס עם טיפה. 250 מ"ל: 150 חלב 3% ו-100 קפה.
+  // בלי הפריט נתפס רק 'קפה' והכוס נספרה כ-5 קק"ל — 88 שנעלמו בכל כוס.
+  { id: 'coffee_white', names: ['קפה לבן', 'נס לבן'], per100: [37, 2, 2.8, 2], unit: 'unit', unitGrams: 250, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'הערכה' },
   { id: 'coffeemilk', names: ['קפה הפוך', 'הפוך', 'קפוצ\'ינו', 'לאטה'], per100: [45, 2.4, 3.4, 1.6], unit: 'unit', unitGrams: 200, unitLabel: 'כוס', def: 1, src: 'הערכה' },
   { id: 'cola', names: ['קולה', 'קוקה', 'ספרייט', 'פאנטה'], per100: [42, 0, 10.6, 0], unit: 'unit', unitGrams: 330, unitLabel: 'פחית', def: 1, src: 'USDA' },
   { id: 'coladiet', names: ['זירו', 'דיאט', 'לייט'], per100: [0.4, 0, 0, 0], unit: 'unit', unitGrams: 330, unitLabel: 'פחית', def: 1, src: 'USDA' },
