@@ -915,6 +915,33 @@ describe('ספגטי בולונז', () => {
   });
 });
 
+describe('המבורגר', () => {
+  const name = (t: string) => estimateFood(t, foods).lines[0].name;
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+
+  it('קציצה לבד מול מנה שלמה', () => {
+    expect(name('המבורגר')).toBe('המבורגר');
+    expect(name('בורגר')).toBe('המבורגר');
+    expect(kcal('המבורגר 250 גרם')).toBe(663);
+    for (const t of ['מנת המבורגר', 'המבורגר במסעדה', 'המבורגר מהמעשנה'])
+      expect(name(t)).toBe('מנת המבורגר');
+    expect(kcal('מנת המבורגר')).toBe(1728);   // קציצה + לחמנייה + אייולי + שני סוגי צ'יפס
+  });
+
+  it("'לחם' ו'בטטה' לא נבלעים בכינויים החדשים", () => {
+    expect(name('לחם')).toBe('פרוסת לחם');
+    expect(name('לחמנייה')).toBe('לחמנייה');
+    expect(name('בטטה')).toBe('בטטה');
+    expect(name("צ'יפס")).toBe("צ'יפס");
+    expect(name("צ'יפס בטטה")).toBe("צ'יפס בטטה");
+  });
+
+  it('בקר במסעדה מסומן גאוט גבוה', () => {
+    for (const id of ['burger', 'burger_meal'])
+      expect(foods.find(f => f.id === id)!.gout).toBe('high');
+  });
+});
+
 describe('משולש פיצה', () => {
   const name = (t: string) => estimateFood(t, foods).lines[0].name;
   const kcal = (t: string) => estimateFood(t, foods).total.kcal;
