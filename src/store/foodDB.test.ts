@@ -565,7 +565,9 @@ describe('משקה חלבון ביתי', () => {
 
   it('זרעים ואגוזים הם מקור שומן, לא מקור חלבון', () => {
     // זו כל הסיבה שחמאת בוטנים אינה הבסיס הנכון לשייק בחיטוב.
-    expect(ratio('skyr')).toBeLessThan(6);          // יוגורט יווני — הטוב שבאוכל אמיתי
+    expect(ratio('skyr')).toBeLessThan(6);          // סקיר — הטוב שבאוכל אמיתי, אך לא במדף
+    expect(ratio('cottage')).toBeLessThan(9);       // קוטג' — הטוב שבמה שכן קיים
+    expect(ratio('cottage')).toBeLessThan(ratio('greekfull'));   // ולפני היווני 6.5%
     expect(ratio('peanutbutter')).toBeGreaterThan(20);
     expect(ratio('chia')).toBeGreaterThan(ratio('peanutbutter'));   // צ'יה גרועה מחמאת בוטנים
     expect(ratio('flax')).toBeGreaterThan(ratio('peanutbutter'));
@@ -582,20 +584,20 @@ describe('משקה חלבון ביתי', () => {
 
   it('מספרי השייק תואמים את המתכון שהורכב', () => {
     const l = line('שייק חלבון ביתי');
-    expect(l.macro[0]).toBeGreaterThanOrEqual(345);   // ~353 קק"ל
-    expect(l.macro[0]).toBeLessThanOrEqual(360);
+    expect(l.macro[0]).toBeGreaterThanOrEqual(425);   // ~433 קק"ל על בסיס קוטג'
+    expect(l.macro[0]).toBeLessThanOrEqual(440);
     expect(l.macro[1]).toBeGreaterThanOrEqual(36);    // ~38 ח'
   });
 
   it('המתכון המפורט מסתכם כמו הפריט המורכב', () => {
-    const r = estimateFood('יוגורט יווני 250 גרם, חלב 150 מל, כף חמאת בוטנים, כפית קקאו', foods);
+    const r = estimateFood('קוטג 250 גרם, חלב 150 מל, כף חמאת בוטנים, כפית קקאו', foods);
     expect(r.notInDB).toEqual([]);
-    expect(r.total.kcal).toBe(353);
+    expect(r.total.kcal).toBe(433);
     expect(Math.abs(r.total.kcal - line('שייק חלבון ביתי').macro[0])).toBeLessThanOrEqual(2);
   });
 
   it('רכיבי השייק מזוהים אחד-אחד, כולל חלב 1%', () => {
-    const r = estimateFood('יוגורט יווני 250 גרם, חלב 1% 150 מל, כף חמאת בוטנים, כפית קקאו', foods);
+    const r = estimateFood('קוטג 250 גרם, חלב 1% 150 מל, כף חמאת בוטנים, כפית קקאו', foods);
     expect(r.notInDB).toEqual([]);
     expect(r.lines).toHaveLength(4);
     expect(r.lines[1].name).toBe('חלב 1%');
@@ -613,27 +615,27 @@ describe('משקה חלבון ביתי', () => {
 
 describe('תפריט השייקים — כל הגרסאות מתפרסרות', () => {
   const RECIPES: [string, string][] = [
-    ['שוקולד-תמר',  'יוגורט יווני 250 גרם, חלב 1% 150 מל, כפית קקאו, תמר אחד, קינמון'],
-    ['פירות יער',   'יוגורט יווני 250 גרם, פירות יער 100 גרם, חלב 1% 150 מל'],
-    ['תות-דבש',     'יוגורט יווני 250 גרם, תות 150 גרם, חלב 1% 150 מל, כפית דבש'],
-    ['וניל-קינמון', 'יוגורט יווני 250 גרם, חלב 1% 150 מל, כפית דבש, קינמון, וניל'],
-    ['בוטנים',      'יוגורט יווני 250 גרם, חלב 1% 150 מל, כף חמאת בוטנים, כפית קקאו'],
-    ['אייס-קפה',    'יוגורט יווני 250 גרם, קפה שחור, כפית קקאו, קרח'],
-    ['מלוח',        'יוגורט יווני 250 גרם, מלפפון 100 גרם, מלח, נענע, קרח'],
+    ['שוקולד-תמר',  'קוטג 250 גרם, חלב 1% 150 מל, כפית קקאו, תמר אחד, קינמון'],
+    ['פירות יער',   'קוטג 250 גרם, פירות יער 100 גרם, חלב 1% 150 מל'],
+    ['תות-דבש',     'קוטג 250 גרם, תות 150 גרם, חלב 1% 150 מל, כפית דבש'],
+    ['וניל-קינמון', 'קוטג 250 גרם, חלב 1% 150 מל, כפית דבש, קינמון, וניל'],
+    ['בוטנים',      'קוטג 250 גרם, חלב 1% 150 מל, כף חמאת בוטנים, כפית קקאו'],
+    ['אייס-קפה',    'קוטג 250 גרם, קפה שחור, כפית קקאו, קרח'],
+    ['מלוח',        'קוטג 250 גרם, מלפפון 100 גרם, מלח, נענע, קרח'],
   ];
 
   it.each(RECIPES)('%s — אפס פריטים לא מזוהים, 29+ גרם חלבון', (_label, text) => {
     const r = estimateFood(text, foods);
     expect(r.notInDB).toEqual([]);              // אחרת זה נוחת בתור של הילה
     expect(r.total.p).toBeGreaterThanOrEqual(29);
-    expect(r.total.kcal).toBeLessThan(340);     // כל התפריט בתוך התקציב
+    expect(r.total.kcal).toBeLessThan(410);     // התקציב על בסיס קוטג', לא סקיר
   });
 
   it('תבלינים ללא קלוריות אינם נחשבים "מאכל לא מוכר"', () => {
     // 'קינמון'/'וניל'/'נענע'/'קרח' ב-FILLER ולא כפריט של 0 קק"ל:
     // אחרת כל שייק היה מציף את תור "הילה לא מכירה".
     for (const w of ['קינמון', 'וניל', 'נענע', 'מנטה', 'קרח', 'כורכום']) {
-      expect(estimateFood(`יוגורט יווני 250 גרם, ${w}`, foods).notInDB).toEqual([]);
+      expect(estimateFood(`קוטג 250 גרם, ${w}`, foods).notInDB).toEqual([]);
     }
   });
 
@@ -706,15 +708,15 @@ it('פריט-הבדיקה אכן לא במסד — וחייב להישאר כך'
   expect(estimateFood(SENTINEL, foods).notInDB).toHaveLength(1);
 });
 
-describe('יוגורט ים תיכוני 6.5% — לא יווני 0%', () => {
+describe('יוגורט יווני 6.5% — לא סקיר 0.2%', () => {
   const name = (t: string) => estimateFood(t, foods).lines[0].name;
   const ratio = (id: string) => { const f = foods.find(x => x.id === id)!; return f.per100[0] / f.per100[1]; };
 
-  it('פריט נפרד — לא נבלע לתוך "יוגורט יווני"', () => {
-    expect(name('יוגורט ים תיכוני')).toBe('יוגורט ים תיכוני');
-    expect(name('ים תיכוני')).toBe('יוגורט ים תיכוני');
-    expect(name('יוגורט יווני')).toBe('יוגורט יווני');
-    expect(name('סקיר')).toBe('יוגורט יווני');
+  it('פריט נפרד — לא נבלע לתוך "סקיר"', () => {
+    expect(name('יוגורט ים תיכוני')).toBe('יוגורט יווני');
+    expect(name('ים תיכוני')).toBe('יוגורט יווני');
+    expect(name('יוגורט יווני')).toBe('יוגורט יווני');   // ה-6.5% — זה מה שבמקרר
+    expect(name('סקיר')).toBe('סקיר');                   // 0.2%, פריט נפרד שלא במדף
   });
 
   it('מהתווית: 100 גרם = 117 קק"ל · 10 חלבון, מנה 200 = 234 · 20', () => {
@@ -894,7 +896,7 @@ describe('סלט יווני אינו יוגורט יווני', () => {
   it('לא בולע את היוגורט ואת הסלט הרגיל', () => {
     expect(estimateFood('יוגורט יווני', foods).lines[0].name).toBe('יוגורט יווני');
     expect(estimateFood('יווני', foods).lines[0].name).toBe('יוגורט יווני');
-    expect(estimateFood('סקיר', foods).lines[0].name).toBe('יוגורט יווני');
+    expect(estimateFood('סקיר', foods).lines[0].name).toBe('סקיר');
     expect(estimateFood('סלט ירקות', foods).lines[0].name).toBe('סלט ירקות');
     expect(estimateFood('סלט', foods).lines[0].name).toBe('סלט ירקות');
   });
@@ -912,6 +914,137 @@ describe('ספגטי בולונז', () => {
     expect(name('פסטה')).toBe('פסטה');
     expect(name('אטריות')).toBe('פסטה');
     expect(name('פד תאי')).toBe('פד תאי');
+  });
+});
+
+describe('כוס של מאכל שנמדד בכפות', () => {
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+  const label = (t: string) => estimateFood(t, foods).lines[0].qtyLabel;
+
+  it('כוס היא 240 מ"ל, לא כף אחת', () => {
+    // הטעות שהייתה כאן: "חצי כוס טחינה" נספרה ככף אחת, 89 במקום 714.
+    expect(kcal('חצי כוס טחינה')).toBe(714);
+    expect(label('חצי כוס טחינה')).toBe('8 כפות');
+    expect(kcal('כוס טחינה')).toBe(1428);
+    expect(kcal('חצי כוס חומוס')).toBe(212);
+    expect(kcal('חצי כוס קקאו')).toBe(274);     // כפית של 5 ג' → 24 כפיות
+  });
+
+  it('הכף והכפית עצמן לא נפגעו', () => {
+    expect(kcal('טחינה')).toBe(179);            // ברירת המחדל: 2 כפות
+    expect(kcal('2 כפות טחינה')).toBe(179);
+    expect(kcal('כף טחינה')).toBe(89);
+    expect(kcal('כפית טחינה')).toBe(30);
+  });
+
+  it('פריטים שהיחידה שלהם כוס לא נגעו בהם', () => {
+    expect(kcal('כוס חלב')).toBe(144);
+    expect(kcal('כוס קפה')).toBe(5);
+    expect(kcal('שייק חלבון ביתי')).toBe(434);
+  });
+
+  it('לא unknownFoods ולא partialMatches רואים כמות שגויה', () => {
+    // זו מחלקה שלישית של טעות: המאכל נתפס נכון והכמות לא. שני התורים עיוורים
+    // לה — 'כוס' ב-FILLER והכיסוי יוצא מלא. לכן הכיסוי כאן הוא בדיקה, לא תור.
+    const e = [{ date: '2026-10-23', text: 'חצי כוס טחינה' }];
+    expect(unknownFoods(e, foods)).toEqual([]);
+    expect(partialMatches(e, foods)).toEqual([]);
+  });
+});
+
+describe('שייק טחינה', () => {
+  const name = (t: string) => estimateFood(t, foods).lines[0].name;
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+
+  it('כוס אחת ושתיים', () => {
+    for (const t of ['שייק טחינה', 'שייק פירות טחינה', 'שייק פירות על טחינה', 'שייק על טחינה'])
+      expect(name(t)).toBe('שייק טחינה');
+    expect(kcal('שייק טחינה')).toBe(308);
+    expect(kcal('2 כוסות שייק טחינה')).toBe(615);
+  });
+
+  it('הקנקן מתחלק ל-4 כוסות, והכוס מסתכמת כמו הפריט', () => {
+    const jug = estimateFood('חצי כוס טחינה, 4 בננות, 4 תמרים, מים', foods);
+    expect(jug.notInDB).toEqual([]);            // 'בננות' ברבים — היה בתור של הילה
+    expect(jug.total.kcal).toBe(1231);          // בסיס מים: 360 פחות מאותו קנקן בחלב
+    const cup = estimateFood('שייק טחינה', foods).total.kcal;
+    expect(Math.abs(jug.total.kcal / 4 - cup)).toBeLessThanOrEqual(3);
+  });
+
+  it('לא נבלע לתוך השייק הביתי ולא לתוך אבקת חלבון', () => {
+    expect(name('שייק חלבון ביתי')).toBe('שייק חלבון ביתי');
+    expect(name('שייק חלבון')).toBe('אבקת חלבון');
+    expect(name('טחינה')).toBe('טחינה');
+  });
+
+  it('זה משקה שומן, לא משקה חלבון', () => {
+    const ratio = (id: string) => {
+      const f = foods.find(x => x.id === id)!;
+      return f.per100[0] / f.per100[1];
+    };
+    expect(ratio('tahinishake')).toBeGreaterThan(30);
+    expect(ratio('tahinishake')).toBeGreaterThan(ratio('homeshake') * 3);
+  });
+});
+
+describe('קפה לבן', () => {
+  const name = (t: string) => estimateFood(t, foods).lines[0].name;
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+
+  it('אבקה ומים רותחים בלבד — הכוס אפסית', () => {
+    expect(name('קפה לבן')).toBe('קפה לבן');
+    expect(kcal('קפה לבן')).toBe(5);
+    // 300-360 ל-100 גרם זה האבקה היבשה, והיא נשארת בפילטר. אין פריט חלב:
+    // "קפה לבן בחלב" הוא לא משקה שקיים, ופריט כזה היה מזמין דיווח שגוי.
+    expect(foods.filter(f => f.names.some(n => n.includes('קפה לבן')))).toHaveLength(1);
+  });
+
+  it('שאר סוגי הקפה לא נפגעים', () => {
+    expect(name('קפה')).toBe('קפה שחור');
+    expect(kcal('קפה שחור')).toBe(5);
+    expect(kcal('קפה בחלב')).toBe(35);     // נס עם טיפת חלב
+    expect(kcal('קפה עם חלב')).toBe(35);
+    expect(kcal('קפה הפוך')).toBe(90);
+  });
+
+  it('התור השני תפס את זה לפני שהפריט נוסף', () => {
+    // 'קפה' לבד מכסה 3 מ-6 אותיות. unknownFoods לא רואה כלום כי משהו כן נתפס,
+    // והערך שדווח היה של קפה שחור. במקרה הזה הוא יצא נכון במקרה.
+    const e = [{ date: '2026-10-22', text: 'קפה לבן' }];
+    const before = foods.filter(f => f.id !== 'coffee_white');
+    expect(unknownFoods(e, before)).toEqual([]);
+    const p = partialMatches(e, before);
+    expect(p).toHaveLength(1);
+    expect(p[0].matched).toBe('קפה שחור');
+    expect(p[0].coverage).toBe(0.5);
+    expect(partialMatches(e, foods)).toEqual([]);   // אחרי ההוספה — נקי
+  });
+});
+
+describe('המבורגר', () => {
+  const name = (t: string) => estimateFood(t, foods).lines[0].name;
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+
+  it('קציצה לבד מול מנה שלמה', () => {
+    expect(name('המבורגר')).toBe('המבורגר');
+    expect(name('בורגר')).toBe('המבורגר');
+    expect(kcal('המבורגר 250 גרם')).toBe(663);
+    for (const t of ['מנת המבורגר', 'המבורגר במסעדה', 'המבורגר מהמעשנה'])
+      expect(name(t)).toBe('מנת המבורגר');
+    expect(kcal('מנת המבורגר')).toBe(1580);   // קציצה + לחמנייה + אייולי + מנת צ'יפס
+  });
+
+  it("'לחם' ו'בטטה' לא נבלעים בכינויים החדשים", () => {
+    expect(name('לחם')).toBe('פרוסת לחם');
+    expect(name('לחמנייה')).toBe('לחמנייה');
+    expect(name('בטטה')).toBe('בטטה');
+    expect(name("צ'יפס")).toBe("צ'יפס");
+    expect(name("צ'יפס בטטה")).toBe("צ'יפס בטטה");
+  });
+
+  it('בקר במסעדה מסומן גאוט גבוה', () => {
+    for (const id of ['burger', 'burger_meal'])
+      expect(foods.find(f => f.id === id)!.gout).toBe('high');
   });
 });
 
