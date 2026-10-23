@@ -959,17 +959,16 @@ describe('שייק טחינה', () => {
   it('כוס אחת ושתיים', () => {
     for (const t of ['שייק טחינה', 'שייק פירות טחינה', 'שייק פירות על טחינה', 'שייק על טחינה'])
       expect(name(t)).toBe('שייק טחינה');
-    expect(kcal('שייק טחינה')).toBe(400);
-    expect(kcal('2 כוסות שייק טחינה')).toBe(801);
+    expect(kcal('שייק טחינה')).toBe(308);
+    expect(kcal('2 כוסות שייק טחינה')).toBe(615);
   });
 
   it('הקנקן מתחלק ל-4 כוסות, והכוס מסתכמת כמו הפריט', () => {
-    const jug = estimateFood('חצי כוס טחינה, 4 בננות, חלב 600 מל, 4 תמרים', foods);
+    const jug = estimateFood('חצי כוס טחינה, 4 בננות, 4 תמרים, מים', foods);
     expect(jug.notInDB).toEqual([]);            // 'בננות' ברבים — היה בתור של הילה
-    expect(jug.total.kcal).toBe(1591);
+    expect(jug.total.kcal).toBe(1231);          // בסיס מים: 360 פחות מאותו קנקן בחלב
     const cup = estimateFood('שייק טחינה', foods).total.kcal;
     expect(Math.abs(jug.total.kcal / 4 - cup)).toBeLessThanOrEqual(3);
-    expect(estimateFood('2 כוסות שייק טחינה', foods).total.kcal).toBe(801);
   });
 
   it('לא נבלע לתוך השייק הביתי ולא לתוך אבקת חלבון', () => {
