@@ -917,6 +917,40 @@ describe('ספגטי בולונז', () => {
   });
 });
 
+describe('שייק טחינה', () => {
+  const name = (t: string) => estimateFood(t, foods).lines[0].name;
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+
+  it('כוס אחת ושתיים', () => {
+    for (const t of ['שייק טחינה', 'שייק פירות טחינה', 'שייק פירות על טחינה', 'שייק על טחינה'])
+      expect(name(t)).toBe('שייק טחינה');
+    expect(kcal('שייק טחינה')).toBe(400);
+    expect(kcal('2 כוסות שייק טחינה')).toBe(801);
+  });
+
+  it('המתכון המפורט מסתכם כמו הפריט המורכב', () => {
+    const r = estimateFood('בננה, 2 כפות טחינה, חלב 150 מל, תמר אחד', foods);
+    expect(r.notInDB).toEqual([]);
+    expect(r.total.kcal).toBe(399);
+    expect(Math.abs(r.total.kcal - estimateFood('שייק טחינה', foods).total.kcal)).toBeLessThanOrEqual(2);
+  });
+
+  it('לא נבלע לתוך השייק הביתי ולא לתוך אבקת חלבון', () => {
+    expect(name('שייק חלבון ביתי')).toBe('שייק חלבון ביתי');
+    expect(name('שייק חלבון')).toBe('אבקת חלבון');
+    expect(name('טחינה')).toBe('טחינה');
+  });
+
+  it('זה משקה שומן, לא משקה חלבון', () => {
+    const ratio = (id: string) => {
+      const f = foods.find(x => x.id === id)!;
+      return f.per100[0] / f.per100[1];
+    };
+    expect(ratio('tahinishake')).toBeGreaterThan(30);
+    expect(ratio('tahinishake')).toBeGreaterThan(ratio('homeshake') * 3);
+  });
+});
+
 describe('קפה לבן', () => {
   const name = (t: string) => estimateFood(t, foods).lines[0].name;
   const kcal = (t: string) => estimateFood(t, foods).total.kcal;
