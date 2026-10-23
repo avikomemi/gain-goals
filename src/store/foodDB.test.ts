@@ -917,6 +917,41 @@ describe('ספגטי בולונז', () => {
   });
 });
 
+describe('כוס של מאכל שנמדד בכפות', () => {
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+  const label = (t: string) => estimateFood(t, foods).lines[0].qtyLabel;
+
+  it('כוס היא 240 מ"ל, לא כף אחת', () => {
+    // הטעות שהייתה כאן: "חצי כוס טחינה" נספרה ככף אחת, 89 במקום 714.
+    expect(kcal('חצי כוס טחינה')).toBe(714);
+    expect(label('חצי כוס טחינה')).toBe('8 כפות');
+    expect(kcal('כוס טחינה')).toBe(1428);
+    expect(kcal('חצי כוס חומוס')).toBe(212);
+    expect(kcal('חצי כוס קקאו')).toBe(274);     // כפית של 5 ג' → 24 כפיות
+  });
+
+  it('הכף והכפית עצמן לא נפגעו', () => {
+    expect(kcal('טחינה')).toBe(179);            // ברירת המחדל: 2 כפות
+    expect(kcal('2 כפות טחינה')).toBe(179);
+    expect(kcal('כף טחינה')).toBe(89);
+    expect(kcal('כפית טחינה')).toBe(30);
+  });
+
+  it('פריטים שהיחידה שלהם כוס לא נגעו בהם', () => {
+    expect(kcal('כוס חלב')).toBe(144);
+    expect(kcal('כוס קפה')).toBe(5);
+    expect(kcal('שייק חלבון ביתי')).toBe(434);
+  });
+
+  it('לא unknownFoods ולא partialMatches רואים כמות שגויה', () => {
+    // זו מחלקה שלישית של טעות: המאכל נתפס נכון והכמות לא. שני התורים עיוורים
+    // לה — 'כוס' ב-FILLER והכיסוי יוצא מלא. לכן הכיסוי כאן הוא בדיקה, לא תור.
+    const e = [{ date: '2026-10-23', text: 'חצי כוס טחינה' }];
+    expect(unknownFoods(e, foods)).toEqual([]);
+    expect(partialMatches(e, foods)).toEqual([]);
+  });
+});
+
 describe('שייק טחינה', () => {
   const name = (t: string) => estimateFood(t, foods).lines[0].name;
   const kcal = (t: string) => estimateFood(t, foods).total.kcal;
@@ -928,11 +963,13 @@ describe('שייק טחינה', () => {
     expect(kcal('2 כוסות שייק טחינה')).toBe(801);
   });
 
-  it('המתכון המפורט מסתכם כמו הפריט המורכב', () => {
-    const r = estimateFood('בננה, 2 כפות טחינה, חלב 150 מל, תמר אחד', foods);
-    expect(r.notInDB).toEqual([]);
-    expect(r.total.kcal).toBe(399);
-    expect(Math.abs(r.total.kcal - estimateFood('שייק טחינה', foods).total.kcal)).toBeLessThanOrEqual(2);
+  it('הקנקן מתחלק ל-4 כוסות, והכוס מסתכמת כמו הפריט', () => {
+    const jug = estimateFood('חצי כוס טחינה, 4 בננות, חלב 600 מל, 4 תמרים', foods);
+    expect(jug.notInDB).toEqual([]);            // 'בננות' ברבים — היה בתור של הילה
+    expect(jug.total.kcal).toBe(1591);
+    const cup = estimateFood('שייק טחינה', foods).total.kcal;
+    expect(Math.abs(jug.total.kcal / 4 - cup)).toBeLessThanOrEqual(3);
+    expect(estimateFood('2 כוסות שייק טחינה', foods).total.kcal).toBe(801);
   });
 
   it('לא נבלע לתוך השייק הביתי ולא לתוך אבקת חלבון', () => {

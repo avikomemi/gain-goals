@@ -122,12 +122,13 @@ export const SEED_FOODS: FoodItem[] = [
   // מנה 200 ג' = 7 כפות (27.5 ג' בכף). אין כינוי 'יוגורט יווני 6.5':
   // הנקודה ב-6.5 היא מפריד, והכינוי לא היה נתפס לעולם.
   { id: 'greekfull', names: ['יוגורט יווני', 'יוגורט ים תיכוני', 'ים תיכוני', 'יוגורט מלא', 'יוגורט שמן', 'יווני'], per100: [117, 10, 4.5, 6.5], unit: 'g', def: 200, gout: 'ok', src: 'תווית' },
-  // שייק פירות על טחינה: בננה + 2 כפות טחינה + 150 מ"ל חלב 3% + תמר = 399 קק"ל · 11 ח'.
-  // שתי הכפות הן ברירת המחדל של פריט הטחינה, וכאן הן 179 מתוך 399 — כף אחת
-  // פחות או יותר מזיזה 90 קק"ל לכוס. המרכיב השולט הוא הטחינה, לא הפירות.
+  // שייק פירות על טחינה, לכוס אחת. הקנקן כפי שאבי מכין אותו: חצי כוס טחינה
+  // (120 ג'), 4 בננות, 600 מ"ל חלב 3' ו-4 תמרים = 1591 קק"ל ל-4 כוסות, כלומר
+  // 398 ו-11.5 ח' לכוס. חצי כוס טחינה מתחלקת ל-2 כפות בכוס, והן 179 מתוך 398:
+  // המרכיב השולט הוא הטחינה ולא הפירות, וכף אחת פחות או יותר מזיזה 90 לכוס.
   // 36 קק"ל לגרם חלבון: זה משקה שומן עם פירות, לא משקה חלבון. בחיטוב הוא
   // יקר פי ארבעה מהשייק על קוטג' לאותו גרם חלבון.
-  { id: 'tahinishake', names: ['שייק טחינה', 'שייק פירות טחינה', 'שייק פירות על טחינה', 'שייק על טחינה'], per100: [130, 3.6, 15.3, 7], unit: 'unit', unitGrams: 308, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'הערכה' },
+  { id: 'tahinishake', names: ['שייק טחינה', 'שייק פירות טחינה', 'שייק פירות על טחינה', 'שייק על טחינה'], per100: [130, 3.7, 15.3, 7], unit: 'unit', unitGrams: 308, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'הערכה' },
   { id: 'shakshuka', names: ['שקשוקה'], per100: [95, 6, 4, 6], unit: 'g', def: 250, gout: 'ok', src: 'הערכה' },
   { id: 'steak', names: ['סטייק', 'סטיק', 'אנטריקוט', 'בשר בקר', 'בקר'], per100: [271, 25, 0, 19], unit: 'g', def: 150, gout: 'high', src: 'USDA' },
   // קבב = בשר אדום → דגל גאוט. 'קבבונים' חייב להיות כינוי נפרד: 'קבבון' נגמר בנו"ן סופית
@@ -196,7 +197,7 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'coleslaw', names: ['קולסלאו', 'כרוב במיונז'], per100: [150, 1, 13, 11], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
   { id: 'tomato', names: ['עגבנייה', 'עגבניה', 'עגבניות'], per100: [18, 0.9, 3.9, 0.2], unit: 'unit', unitGrams: 120, unitLabel: 'יח', def: 1, src: 'USDA' },
   { id: 'apple', names: ['תפוח עץ', 'תפוח '], per100: [52, 0.3, 14, 0.2], unit: 'unit', unitGrams: 180, unitLabel: 'יח', def: 1, src: 'USDA' },
-  { id: 'banana', names: ['בננה'], per100: [89, 1.1, 23, 0.3], unit: 'unit', unitGrams: 120, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'banana', names: ['בננה', 'בננות'], per100: [89, 1.1, 23, 0.3], unit: 'unit', unitGrams: 120, unitLabel: 'יח', def: 1, src: 'USDA' },
   { id: 'date', names: ['תמר', 'תמרים'], per100: [282, 2.5, 75, 0.4], unit: 'unit', unitGrams: 8, unitLabel: 'יח', def: 3, src: 'USDA' },
   { id: 'blueberry', names: ['אוכמניות', 'אוכמנית', 'בלוברי'], per100: [57, 0.7, 14, 0.3], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
 
@@ -342,8 +343,15 @@ const UNIT_WORD = /פרוס|כפות|כפית|כף|כוס|קערי|קערה|צל
 // נספרה ככף שלמה (89 קק"ל במקום 30), ו"כף דבש" ככפית (21 במקום 64).
 const TBSP = /(?:^|\s)[מובכלה]?(?:כף|כפות)(?=\s|$)/;
 const TSP = /(?:^|\s)[מובכלה]?(?:כפית|כפיות)(?=\s|$)/;
+// כוס של מאכל שנמדד בכפות היא 240 מ"ל, לא כף אחת. "חצי כוס טחינה" היא 120 גרם
+// ו-714 קק"ל, ולא כף אחת ו-89 — פער של 625 בדיווח אחד. זו מחלקה שלישית של
+// טעות שקטה: המאכל נתפס נכון והכמות לא, ולכן לא unknownFoods ולא partialMatches
+// רואים אותה — 'כוס' יושבת ב-FILLER והכיסוי יוצא מלא.
+const CUP = /(?:^|\s)[מובכלה]?(?:כוס|כוסות|ספל)(?=\s|$)/;
+const CUP_ML = 240;
 const isSpoon = (f: FoodItem) => f.unitLabel === 'כף' || f.unitLabel === 'כפית';
 function spoonScale(seg: string, food: FoodItem): number {
+  if (isSpoon(food) && food.unitGrams && CUP.test(seg)) return CUP_ML / food.unitGrams;
   if (food.unitLabel === 'כף' && TSP.test(seg)) return 1 / 3;
   if (food.unitLabel === 'כפית' && TBSP.test(seg)) return 3;
   return 1;
@@ -356,7 +364,7 @@ const WORD_NUM_RE = new RegExp(`(?:^|\\s)[מובכלה]?(${Object.keys(WORD_NUM)
 function parseQty(seg: string, food: FoodItem, nameAt = -1): { qty: number; grams: boolean } {
   // כשנכתבה כף או כפית במפורש, היחידה הטבעית היא כף אחת — לא מנת ברירת-המחדל.
   // "כף טחינה" זו כף אחת, גם אם מנת ברירת-המחדל של טחינה היא שתי כפות.
-  const spoonNamed = isSpoon(food) && (TSP.test(seg) || TBSP.test(seg));
+  const spoonNamed = isSpoon(food) && (TSP.test(seg) || TBSP.test(seg) || CUP.test(seg));
   const r = parseQtyRaw(seg, food, nameAt, spoonNamed ? 1 : food.def);
   // "200 גרם" זה משקל מפורש — גודל הכף לא רלוונטי לו
   return r.grams ? r : { qty: r.qty * spoonScale(seg, food), grams: false };
