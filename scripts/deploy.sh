@@ -17,6 +17,10 @@ npm run build
 echo "→ dist → docs"
 rm -rf docs
 cp -r dist docs
+# vite לא מייצר את .nojekyll, ו-rm -rf מוחק אותו. בלעדיו GitHub Pages מריץ
+# Jekyll על התיקייה ומתעלם מקבצים שמתחילים בקו תחתון. הוא נמחק כבר פעם אחת
+# בדיוק כך, ולכן הוא נוצר כאן מחדש בכל פריסה ולא נשמר ביד.
+touch docs/.nojekyll
 
 echo "→ commit + push"
 git add -A
