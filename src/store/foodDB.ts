@@ -290,12 +290,10 @@ export const SEED_FOODS: FoodItem[] = [
   // נס קפה עם טיפת חלב ~50 מ"ל. בלי הפריט הזה ה'חלב' נספר ככוס מלאה —
   // 144 קק"ל במקום 35, ואבי שותה 3-5 כאלה ביום.
   { id: 'coffee_splash', names: ['קפה בחלב', 'נס קפה בחלב', 'נס בחלב', 'קפה חלב', 'נס קפה חלב'], per100: [12, 0.6, 0.9, 0.6], unit: 'unit', unitGrams: 290, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'הערכה' },
-  // "קפה לבן" הוא תערובת קלייה בהירה, לרוב עם תירס או חיטה קלויים. באבקה היבשה
-  // יש 300-360 ל-100 גרם, אבל האבקה לא נאכלת: מבשלים ומסננים, והכוס עצמה כמעט
-  // אפסית כמו קפה שחור. מה שקובע הוא מה שמוסיפים — ולכן שני פריטים ולא אחד.
+  // "קפה לבן" הוא תערובת קלייה בהירה, לרוב עם תירס או חיטה קלויים, ושותים אותה
+  // עם מים רותחים בלבד. באבקה היבשה יש 300-360 ל-100 גרם, אבל האבקה לא נאכלת:
+  // מבשלים ומסננים, והכוס עצמה אפסית. אין גרסת חלב — זה לא משקה שקיים.
   { id: 'coffee_white', names: ['קפה לבן'], per100: [2, 0.1, 0, 0], unit: 'unit', unitGrams: 250, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'הערכה' },
-  // 250 מ"ל שבהם 150 חלב 3%. הפער בין שני הפריטים הוא 88 קק"ל לכוס.
-  { id: 'coffee_white_milk', names: ['קפה לבן בחלב'], per100: [37, 2, 2.8, 2], unit: 'unit', unitGrams: 250, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'הערכה' },
   { id: 'coffeemilk', names: ['קפה הפוך', 'הפוך', 'קפוצ\'ינו', 'לאטה'], per100: [45, 2.4, 3.4, 1.6], unit: 'unit', unitGrams: 200, unitLabel: 'כוס', def: 1, src: 'הערכה' },
   { id: 'cola', names: ['קולה', 'קוקה', 'ספרייט', 'פאנטה'], per100: [42, 0, 10.6, 0], unit: 'unit', unitGrams: 330, unitLabel: 'פחית', def: 1, src: 'USDA' },
   { id: 'coladiet', names: ['זירו', 'דיאט', 'לייט'], per100: [0.4, 0, 0, 0], unit: 'unit', unitGrams: 330, unitLabel: 'פחית', def: 1, src: 'USDA' },
@@ -408,9 +406,7 @@ interface Hit { food: FoodItem; start: number; end: number }
 // פיצול הטקסט למקטעים. מוגדר פעם אחת — גם estimateFood וגם partialMatches משתמשים בו,
 // ואסור שהם יתפצלו אחרת זה מזה.
 // 'נס קפה עם חלב' הוא פריט אחד, אבל ' עם ' הוא מפריד — מכווצים לפני הפיצול.
-export const normalize = (text: string): string => (text || '')
-  .replace(/קפה\s+לבן\s+עם\s+חלב/g, 'קפה לבן בחלב')
-  .replace(/קפה(?:\s+שחור)?\s+עם\s+חלב/g, 'קפה בחלב');
+export const normalize = (text: string): string => (text || '').replace(/קפה(?:\s+שחור)?\s+עם\s+חלב/g, 'קפה בחלב');
 
 export function splitSegments(t: string): string[] {
   return t.split(/[\n,·;]+|\.(?!\d)|\s+ו(?!ניל|ופל|יטמין|רוד|רק\s)|\s+עם\s+/).map(x => x.trim()).filter(x => x.length > 1);

@@ -919,18 +919,12 @@ describe('קפה לבן', () => {
   const name = (t: string) => estimateFood(t, foods).lines[0].name;
   const kcal = (t: string) => estimateFood(t, foods).total.kcal;
 
-  it('הכוס המסוננת כמעט אפסית, כמו קפה שחור', () => {
+  it('אבקה ומים רותחים בלבד — הכוס אפסית', () => {
     expect(name('קפה לבן')).toBe('קפה לבן');
     expect(kcal('קפה לבן')).toBe(5);
-  });
-
-  it('החלב הוא מה שמוסיף, והוא פריט נפרד', () => {
-    expect(name('קפה לבן בחלב')).toBe('קפה לבן בחלב');
-    expect(kcal('קפה לבן בחלב')).toBe(93);
-    // ' עם ' הוא מפריד, אז בלי ה-normalize הצירוף נחתך ל'קפה לבן' + 'חלב'
-    // והחלב נספר ככוס מלאה של 144.
-    expect(name('קפה לבן עם חלב')).toBe('קפה לבן בחלב');
-    expect(kcal('קפה לבן עם חלב')).toBe(93);
+    // 300-360 ל-100 גרם זה האבקה היבשה, והיא נשארת בפילטר. אין פריט חלב:
+    // "קפה לבן בחלב" הוא לא משקה שקיים, ופריט כזה היה מזמין דיווח שגוי.
+    expect(foods.filter(f => f.names.some(n => n.includes('קפה לבן')))).toHaveLength(1);
   });
 
   it('שאר סוגי הקפה לא נפגעים', () => {
@@ -942,9 +936,10 @@ describe('קפה לבן', () => {
   });
 
   it('התור השני תפס את זה לפני שהפריט נוסף', () => {
-    // 'קפה' לבד מכסה 3 מ-6 אותיות. unknownFoods לא רואה כלום כי משהו כן נתפס.
+    // 'קפה' לבד מכסה 3 מ-6 אותיות. unknownFoods לא רואה כלום כי משהו כן נתפס,
+    // והערך שדווח היה של קפה שחור. במקרה הזה הוא יצא נכון במקרה.
     const e = [{ date: '2026-10-22', text: 'קפה לבן' }];
-    const before = foods.filter(f => f.id !== 'coffee_white' && f.id !== 'coffee_white_milk');
+    const before = foods.filter(f => f.id !== 'coffee_white');
     expect(unknownFoods(e, before)).toEqual([]);
     const p = partialMatches(e, before);
     expect(p).toHaveLength(1);
