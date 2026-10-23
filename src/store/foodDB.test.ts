@@ -919,23 +919,32 @@ describe('קפה לבן', () => {
   const name = (t: string) => estimateFood(t, foods).lines[0].name;
   const kcal = (t: string) => estimateFood(t, foods).total.kcal;
 
-  it('רוב הכוס הוא חלב', () => {
+  it('הכוס המסוננת כמעט אפסית, כמו קפה שחור', () => {
     expect(name('קפה לבן')).toBe('קפה לבן');
-    expect(name('נס לבן')).toBe('קפה לבן');
-    expect(kcal('קפה לבן')).toBe(93);
+    expect(kcal('קפה לבן')).toBe(5);
+  });
+
+  it('החלב הוא מה שמוסיף, והוא פריט נפרד', () => {
+    expect(name('קפה לבן בחלב')).toBe('קפה לבן בחלב');
+    expect(kcal('קפה לבן בחלב')).toBe(93);
+    // ' עם ' הוא מפריד, אז בלי ה-normalize הצירוף נחתך ל'קפה לבן' + 'חלב'
+    // והחלב נספר ככוס מלאה של 144.
+    expect(name('קפה לבן עם חלב')).toBe('קפה לבן בחלב');
+    expect(kcal('קפה לבן עם חלב')).toBe(93);
   });
 
   it('שאר סוגי הקפה לא נפגעים', () => {
     expect(name('קפה')).toBe('קפה שחור');
     expect(kcal('קפה שחור')).toBe(5);
     expect(kcal('קפה בחלב')).toBe(35);     // נס עם טיפת חלב
+    expect(kcal('קפה עם חלב')).toBe(35);
     expect(kcal('קפה הפוך')).toBe(90);
   });
 
   it('התור השני תפס את זה לפני שהפריט נוסף', () => {
     // 'קפה' לבד מכסה 3 מ-6 אותיות. unknownFoods לא רואה כלום כי משהו כן נתפס.
     const e = [{ date: '2026-10-22', text: 'קפה לבן' }];
-    const before = foods.filter(f => f.id !== 'coffee_white');
+    const before = foods.filter(f => f.id !== 'coffee_white' && f.id !== 'coffee_white_milk');
     expect(unknownFoods(e, before)).toEqual([]);
     const p = partialMatches(e, before);
     expect(p).toHaveLength(1);
