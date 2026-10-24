@@ -255,6 +255,13 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'greenbeans', names: ['שעועית ירוקה', 'שעועית ירוק'], per100: [31, 1.8, 7, 0.2], unit: 'g', def: 100, src: 'USDA' },
   { id: 'peas', names: ['אפונה'], per100: [81, 5, 14, 0.4], unit: 'g', def: 100, src: 'USDA' },
   { id: 'okra', names: ['במיה'], per100: [33, 1.9, 7, 0.2], unit: 'g', def: 100, src: 'USDA' },
+  { id: 'sesame', names: ['שומשום', 'זרעי שומשום'], per100: [573, 17.7, 23, 50], unit: 'unit', unitGrams: 9, unitLabel: 'כף', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'garlic', names: ['שיני שום', 'שן שום', 'שום'], per100: [149, 6.4, 33, 0.5], unit: 'unit', unitGrams: 3, unitLabel: 'שן', def: 2, gout: 'ok', src: 'USDA' },
+  // רוטב פטריות-בצל-שום, מוקפץ: 100 ג' פטריות, 50 בצל, 2 שיני שום ו-1.5 כף
+  // שמן זית. 234 קק"ל, שמהם 177 הם השמן. הירקות עצמם הם 57 — כלומר הרוטב
+  // הזה הוא בעיקר שמן, גם כשאין בו שמנת, וזה המספר שקל להחמיץ.
+  // אין כינוי 'רוטב פטריות ובצל': ' ו' הוא מפריד והכינוי היה קוד מת.
+  { id: 'mushroomsauce', names: ['רוטב פטריות', 'רוטב פטריות שום', 'רוטב פטריות מוקפץ'], per100: [130, 2.4, 4.4, 11.5], unit: 'g', def: 180, gout: 'ok', src: 'הערכה' },
   { id: 'mushroom', names: ['פטריות', 'פטרייה', 'פטרי'], per100: [22, 3.1, 3.3, 0.3], unit: 'g', def: 100, src: 'USDA' },
   { id: 'artichoke', names: ['ארטישוק'], per100: [47, 3.3, 11, 0.2], unit: 'g', def: 100, src: 'USDA' },
   { id: 'asparagus', names: ['אספרגוס'], per100: [20, 2.2, 3.9, 0.1], unit: 'g', def: 100, src: 'USDA' },
@@ -442,6 +449,10 @@ export function splitSegments(t: string): string[] {
 const ALIAS_TRAPS: { alias: string; inside: RegExp }[] = [
   { alias: 'חלב', inside: /^חלבו[נן]/ },                 // "משקה חלבון" → כוס חלב של 144 קק"ל
   { alias: 'שייק פירות', inside: /^שייק פירות\s+יער/ },   // "שייק פירות יער" → שייק הטחינה
+  // 'שומן' מכיל 'שום' ולכן "חלב 3% שומן" הוסיף שיני שום. החריג בודק קדימה בלבד,
+  // ולכן הוא לא עוזר ב'שומשום': שם ההתאמה נופלת על שלוש האותיות האחרונות (מ"ם
+  // סופית), ואין מה לבדוק אחריהן. הפתרון שם הוא פריט 'שומשום' שגובר באורך.
+  { alias: 'שום', inside: /^שומ[ןנ]/ },
 ];
 
 function findHits(seg: string, foods: FoodItem[]): Hit[] {

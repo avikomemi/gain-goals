@@ -917,6 +917,36 @@ describe('ספגטי בולונז', () => {
   });
 });
 
+describe("רוטב פטריות, שום ושומשום", () => {
+  const name = (t: string) => estimateFood(t, foods).lines[0].name;
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+
+  it('הרוטב הוא בעיקר שמן, גם בלי שמנת', () => {
+    expect(kcal('רוטב פטריות')).toBe(234);
+    // הירקות עצמם הם 51 מתוך 234 — השאר שמן.
+    expect(kcal('פטריות') + kcal('בצל') + kcal('שום')).toBeLessThan(60);
+    expect(kcal('ניוקי ברוטב פטריות')).toBe(564);
+  });
+
+  it("'שום' לא נתפס בתוך 'שומן'", () => {
+    // בלי החריג, "חלב 3% שומן" הוסיף שיני שום בשקט.
+    const r = estimateFood('חלב 3% שומן', foods);
+    expect(r.lines).toHaveLength(1);
+    expect(r.lines[0].name).toBe('חלב');
+    expect(kcal('חלב 3% שומן')).toBe(144);
+  });
+
+  it("'שומשום' הוא פריט, ולכן הוא גובר על 'שום' שבתוכו", () => {
+    // כאן החריג לא עוזר: המ"ם הסופית מציבה את ההתאמה בסוף המילה ואין מה
+    // לבדוק אחריה. מה שמציל את זה הוא ההתאמה הארוכה.
+    const r = estimateFood('שומשום', foods);
+    expect(r.lines).toHaveLength(1);
+    expect(r.lines[0].name).toBe('שומשום');
+    expect(name('שום')).toBe('שיני שום');
+    expect(name('זרעי שומשום')).toBe('שומשום');
+  });
+});
+
 describe('ניוקי', () => {
   const name = (t: string) => estimateFood(t, foods).lines[0].name;
   const kcal = (t: string) => estimateFood(t, foods).total.kcal;
