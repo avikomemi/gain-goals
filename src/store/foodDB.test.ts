@@ -917,6 +917,25 @@ describe('ספגטי בולונז', () => {
   });
 });
 
+describe('ניוקי', () => {
+  const name = (t: string) => estimateFood(t, foods).lines[0].name;
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+
+  it('מנה עיקרית של 200 גרם', () => {
+    for (const t of ['ניוקי', 'נוקי', 'גנוקי', 'ניוקים']) expect(name(t)).toBe('ניוקי');
+    expect(kcal('ניוקי')).toBe(330);
+    expect(kcal('ניוקי 300 גרם')).toBe(495);
+  });
+
+  it('לא נבלע בפסטה ולא בולע אותה', () => {
+    expect(name('פסטה')).toBe('פסטה');
+    expect(name('קוסקוס')).toBe('קוסקוס');
+    const g = foods.find(f => f.id === 'gnocchi')!;
+    const p = foods.find(f => f.id === 'pasta')!;
+    expect(g.per100[0]).toBeGreaterThan(p.per100[0]);   // קמח + תפו"א + ביצה
+  });
+});
+
 describe('כוס של מאכל שנמדד בכפות', () => {
   const kcal = (t: string) => estimateFood(t, foods).total.kcal;
   const label = (t: string) => estimateFood(t, foods).lines[0].qtyLabel;

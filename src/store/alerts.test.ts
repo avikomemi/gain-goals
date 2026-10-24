@@ -28,8 +28,9 @@ describe('הילה מתריעה על קלוריות', () => {
   });
 
   it('מתריעה כשעברת את היעד היומי', () => {
-    // יעד ברירת המחדל 1900 — 1200 גרם חזה עוף עוברים אותו בבירור
-    const db = base({ food: [{ date: day(0), text: 'חזה עוף 1200 גרם' }] });
+    // יעד מפורש ולא ברירת המחדל: הבדיקה הזאת נשברה כשהיעד עלה מ-1900 ל-2150
+    // והכמות שהייתה כאן הפסיקה לחרוג. מה שנבדק הוא ההתרעה, לא גובה היעד.
+    const db = base({ food: [{ date: day(0), text: 'חזה עוף 1200 גרם' }], goals: { kcal: 1500 } });
     const a = from(db, 'הילה');
     expect(a.length).toBeGreaterThan(0);
     expect(a[0].sev).toBe('warn');
@@ -57,7 +58,7 @@ describe('הילה מתריעה על קלוריות', () => {
 
   it('היעד נלקח מהיעדים של אבי, לא מקבוע בקוד', () => {
     const food = [{ date: day(0), text: 'חזה עוף 800 גרם' }];   // ~1320 קק"ל
-    expect(from(base({ food }), 'הילה')).toHaveLength(0);               // מתחת ל-1900
+    expect(from(base({ food }), 'הילה')).toHaveLength(0);               // מתחת ל-2150
     expect(from(base({ food, goals: { kcal: 1200 } }), 'הילה').length).toBeGreaterThan(0);
   });
 });
