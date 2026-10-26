@@ -947,6 +947,26 @@ describe("רוטב פטריות, שום ושומשום", () => {
   });
 });
 
+describe('מילקשייק', () => {
+  const name = (t: string) => estimateFood(t, foods).lines[0].name;
+  const kcal = (t: string) => estimateFood(t, foods).total.kcal;
+
+  it('הגרסה הביתית: גלידה וחלב', () => {
+    for (const x of ['מילקשייק', 'מילק שייק']) expect(name(x)).toBe('מילקשייק');
+    expect(kcal('מילקשייק')).toBe(378);
+    const parts = estimateFood('גלידה 130 גרם, חלב 180 מל', foods);
+    expect(Math.abs(parts.total.kcal - kcal('מילקשייק'))).toBeLessThanOrEqual(2);
+  });
+
+  it("לא מתנגש ב'שייק' של השייקים האחרים", () => {
+    // 'שייק' לבד אינו כינוי, ולכן 'מילקשייק' לא בולע ולא נבלע.
+    expect(name('שייק פירות')).toBe('שייק פירות');
+    expect(name('שייק חלבון ביתי')).toBe('שייק חלבון ביתי');
+    expect(name('שייק חלבון')).toBe('אבקת חלבון');
+    expect(name('גלידה')).toBe('גלידה');
+  });
+});
+
 describe('ניוקי', () => {
   const name = (t: string) => estimateFood(t, foods).lines[0].name;
   const kcal = (t: string) => estimateFood(t, foods).total.kcal;
