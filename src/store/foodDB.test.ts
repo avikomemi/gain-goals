@@ -947,6 +947,39 @@ describe("רוטב פטריות, שום ושומשום", () => {
   });
 });
 
+describe('צלחת בשרים: אסאדו ותפוחי אדמה בתנור', () => {
+  const name = (x: string) => estimateFood(x, foods).lines[0].name;
+  const kcal = (x: string) => estimateFood(x, foods).total.kcal;
+
+  it("'צלעות בקר' גובר על 'בקר'", () => {
+    for (const x of ['אסאדו', 'שפונדרה', 'צלעות בקר', 'צלעות קצרות', 'פלאנקן'])
+      expect(name(x)).toBe('אסאדו');
+    expect(name('בקר')).toBe('סטייק');
+    expect(name('אנטריקוט')).toBe('סטייק');
+    // הצלע הקצרה שמנה בהרבה מאנטריקוט — 90 קק"ל ל-100 גרם הפרש
+    const rib = foods.find(f => f.id === 'shortrib')!;
+    const steak = foods.find(f => f.id === 'steak')!;
+    expect(rib.per100[0] - steak.per100[0]).toBeGreaterThan(80);
+    expect(rib.gout).toBe('high');
+  });
+
+  it("'תפוחי אדמה בתנור' גובר על 'תפוחי אדמה'", () => {
+    for (const x of ['תפוחי אדמה בתנור', 'תפוחי אדמה צלויים', 'תפוחי אדמה קטנים'])
+      expect(name(x)).toBe('תפוחי אדמה בתנור');
+    expect(name('תפוחי אדמה')).toBe('תפוח אדמה');
+    expect(name('תפוח אדמה')).toBe('תפוח אדמה');
+    expect(kcal('תפוחי אדמה בתנור')).toBe(300);   // 200 ג'
+  });
+
+  it('הצלחת כולה מתפרסרת, בלי שום פריט בתור של הילה', () => {
+    const r = estimateFood('אנטריקוט 200 גרם, אסאדו 110 גרם, 4 קבבונים, תפוחי אדמה בתנור 270 גרם, סלט ירקות 200 גרם', foods);
+    expect(r.notInDB).toEqual([]);
+    expect(r.lines).toHaveLength(5);
+    expect(r.total.kcal).toBe(1923);
+    expect(r.total.p).toBe(110);
+  });
+});
+
 describe('מילקשייק', () => {
   const name = (t: string) => estimateFood(t, foods).lines[0].name;
   const kcal = (t: string) => estimateFood(t, foods).total.kcal;
