@@ -980,6 +980,36 @@ describe('צלחת בשרים: אסאדו ותפוחי אדמה בתנור', () 
   });
 });
 
+describe("עוגות: 'עוגת' אינו 'עוגה'", () => {
+  const name = (x: string) => estimateFood(x, foods).lines[0].name;
+  const kcal = (x: string) => estimateFood(x, foods).total.kcal;
+
+  it('עוגת ביסקוויטים — פריט משלו, פרוסה של 100 גרם', () => {
+    for (const x of ['עוגת ביסקוויטים', 'עוגת ביסקוויט', 'עוגת הביסקוויטים'])
+      expect(name(x)).toBe('עוגת ביסקוויטים');
+    expect(kcal('עוגת ביסקוויטים')).toBe(420);
+    expect(name('ביסקוויט')).toBe('עוגיות');      // ביסקוויט בודד הוא עוגייה
+    expect(kcal('3 ביסקוויטים')).toBe(282);
+  });
+
+  it('"עוגת X" היא עוגה ולא המילוי', () => {
+    // תי"ו מול ה"א: 'עוגת' לא הכיל את 'עוגה', ולכן "עוגת שוקולד" נספרה
+    // כחפיסת שוקולד של 134 במקום פרוסת עוגה של 304.
+    for (const x of ['עוגת שוקולד', 'עוגת גבינה', 'עוגת תפוחים', 'עוגת לימון', 'עוגה'])
+      expect(name(x)).toBe('מאפה מתוק');
+    for (const x of ['עוגת שוקולד', 'עוגת גבינה', 'עוגת תפוחים'])
+      expect(estimateFood(x, foods).lines).toHaveLength(1);   // לא עוגה + מילוי
+    expect(kcal('עוגת שוקולד')).toBe(304);
+  });
+
+  it('המילויים עצמם לא נפגעו', () => {
+    expect(name('שוקולד')).toBe('שוקולד חלב');
+    expect(name('גבינה')).toBe('גבינה לבנה');
+    expect(name('עוגיות')).toBe('עוגיות');
+    expect(name('מאפה')).toBe('מאפה מתוק');
+  });
+});
+
 describe('מילקשייק', () => {
   const name = (t: string) => estimateFood(t, foods).lines[0].name;
   const kcal = (t: string) => estimateFood(t, foods).total.kcal;
