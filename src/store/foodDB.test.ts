@@ -1010,6 +1010,31 @@ describe("עוגות: 'עוגת' אינו 'עוגה'", () => {
   });
 });
 
+describe('גרגרי חומוס מהתווית', () => {
+  const est = (x: string) => estimateFood(x, foods).total;
+
+  it('קופסה שלמה = 280 גרם מסונן, 21 גרם חלבון', () => {
+    // החזית מצהירה 21 גרם חלבון בקופסה, והתווית 7.5 ל-100 גרם מסונן.
+    // 21/7.5 = 280 גרם, וזו הבדיקה שהמספרים עקביים עם עצמם.
+    const can = est('גרגרי חומוס 280 גרם');
+    expect(can.p).toBe(21);
+    expect(can.kcal).toBe(367);
+    expect(est('גרגרי חומוס 140 גרם').kcal).toBe(183);   // חצי קופסה
+  });
+
+  it('ערך התווית החליף את ה-USDA', () => {
+    const f = foods.find(x => x.id === 'chickpeas')!;
+    expect(f.src).toBe('תווית');
+    expect(f.per100[0]).toBe(131);          // היה 164 (מבושל מיבש) — המשומר לח יותר
+    expect(f.gout).toBe('ok');              // פורינים צמחיים
+  });
+
+  it("'חומוס' הממרח נשאר נפרד מהגרגרים", () => {
+    expect(estimateFood('חומוס', foods).lines[0].name).toBe('חומוס');
+    expect(estimateFood('גרגרי חומוס', foods).lines[0].name).toBe('גרגרי חומוס');
+  });
+});
+
 describe('מילקשייק', () => {
   const name = (t: string) => estimateFood(t, foods).lines[0].name;
   const kcal = (t: string) => estimateFood(t, foods).total.kcal;
