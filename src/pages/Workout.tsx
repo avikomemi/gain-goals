@@ -18,12 +18,14 @@ function orderedExercises(r: RoutineDef, saved?: string[]) {
   return out;
 }
 
+import { clampReps, sanitizeWeight, parseWeight, stepWeight, fmtWeight } from '../store/num';
+
 const LIVE_KEY = 'fitlog-live';           // מצב אימון חי — מקומי בלבד, לא מסונכרן לענן
 const LIVE_MAX_AGE = 6 * 60 * 60 * 1000;  // אימון שנשמר לפני יותר מ-6 שעות לא משוחזר (כנראה ננטש)
 const REST_PRESETS = [60, 90, 120];
 // סעיף 3 — מספר שאפשר גם להקליד ידנית (לא רק +/−); שקוף, יושב בין הכפתורים
 const NUM_INPUT: React.CSSProperties = { width: 46, minWidth: 0, textAlign: 'center', background: 'transparent', border: 0, fontSize: 19, fontWeight: 900, fontVariantNumeric: 'tabular-nums', letterSpacing: '-.02em', padding: 0, color: 'inherit' };
-const clampNum = (raw: string, max = 999) => Math.min(max, Math.max(0, parseInt(raw.replace(/[^0-9]/g, ''), 10) || 0));
+const clampNum = clampReps;   // חזרות ושניות — שלמים. משקל עובר דרך parseWeight.
 // סולם צבע למאמץ (RPE): ירוק=קל → אדום בוהק=כואב מאוד (סעיף 3)
 const RPE_COLOR: Record<number, string> = { 6: '#16a34a', 7: '#65a30d', 8: '#d97706', 9: '#ea580c', 10: '#d81f2a' };
 const PHASES_PERSIST: Phase[] = ['warmup', 'live', 'flex', 'injury'];
@@ -77,6 +79,9 @@ export default function Workout() {
 
   const restSec = db.restSec ?? 90;
   const [soundBlocked, setSoundBlocked] = useState(false); // הצלצול לא הצליח לנגן — מציגים הסבר במקום להשתתק
+  // טיוטת המשקל בזמן הקלדה. בלי זה "17." נקרא כ-17 והנקודה נמחקת מתחת
+  // לאצבע לפני שמספיקים להקליד את ה-5.
+  const [wDraft, setWDraft] = useState<{ si: number; raw: string } | null>(null);
 
   // צלצול + עדכון מצב הצליל (כדי שנדע להגיד לאבי "הצליל חסום" ולא סתם לשתוק)
   const ring = () => { void ringBell().then(ok => setSoundBlocked(!ok)); };
@@ -446,12 +451,14 @@ export default function Workout() {
                     </span>
                   ) : (
                     <span style={{ display: 'flex', alignItems: 'center' }}>
-                      <button onClick={() => setLogAt(e => { e.sets[si].weight = Math.max(0, (e.sets[si].weight || 0) - 1); })}>−</button>
-                      <input className="num" inputMode="numeric" value={s.weight ?? 0} aria-label='משקל (ק"ג)'
+                      <button onClick={() => { setWDraft(null); setLogAt(e => { e.sets[si].weight = stepWeight(e.sets[si].weight, -1); }); }}>−</button>
+                      <input className="num" inputMode="decimal" aria-label='משקל (ק"ג)'
+                        value={wDraft?.si === si ? wDraft.raw : fmtWeight(s.weight ?? 0)}
                         onFocus={ev => ev.currentTarget.select()}
-                        onChange={ev => { const v = clampNum(ev.target.value); setLogAt(e => { e.sets[si].weight = v; }); }}
-                        style={NUM_INPUT} />
-                      <button onClick={() => setLogAt(e => { e.sets[si].weight = (e.sets[si].weight || 0) + 1; })}>+</button>
+                        onBlur={() => setWDraft(null)}
+                        onChange={ev => { const raw = sanitizeWeight(ev.target.value); setWDraft({ si, raw }); const v = parseWeight(raw); setLogAt(e => { e.sets[si].weight = v; }); }}
+                        style={{ ...NUM_INPUT, width: 38, fontSize: 15 }} />
+                      <button onClick={() => { setWDraft(null); setLogAt(e => { e.sets[si].weight = stepWeight(e.sets[si].weight, 1); }); }}>+</button>
                       <button title="משקל גוף בלבד" style={{ marginInlineStart: 4 }} onClick={() => setLogAt(e => { e.sets[si].bw = true; })}>⚖️</button>
                     </span>
                   )}

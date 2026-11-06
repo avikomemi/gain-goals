@@ -11,6 +11,7 @@ import { stepsKcal } from '../store/adi';
 import { supabase } from '../store/cloud';
 import { routineLabel } from '../data/program';
 import { workoutMinutes, workoutKcal } from '../store/effort';
+import { clampReps, sanitizeWeight, parseWeight, stepWeight, fmtWeight } from '../store/num';
 
 /* ---------- ממתינים למסד ----------
    כל מה שהילה לא זיהתה ביומן של 21 הימים האחרונים, במקום אחד.
@@ -408,10 +409,12 @@ export default function Journal() {
 
 /* ================= Workout editor (סעיף 2) ================= */
 const EDIT_NUM: React.CSSProperties = { width: 46, minWidth: 0, textAlign: 'center', background: 'transparent', border: 0, fontSize: 19, fontWeight: 900, fontVariantNumeric: 'tabular-nums', letterSpacing: '-.02em', padding: 0, color: 'inherit' };
-const editClamp = (raw: string, max = 999) => Math.min(max, Math.max(0, parseInt(raw.replace(/[^0-9]/g, ''), 10) || 0));
+const editClamp = clampReps;   // חזרות — שלמים. משקל עובר דרך parseWeight.
 
 function WorkoutEditor({ w, onSave, onDelete, onCancel }: { w: WorkoutLog; onSave: (exs: ExLog[]) => void; onDelete: () => void; onCancel: () => void }) {
   const [ex, setEx] = useState<ExLog[]>(() => structuredClone(w.exercises));
+  // טיוטת המשקל בזמן הקלדה — ראו ההערה ב-store/num.ts
+  const [wDraft, setWDraft] = useState<{ i: number; si: number; raw: string } | null>(null);
   const setAt = (i: number, fn: (e: ExLog) => void) => setEx(list => { const c = structuredClone(list); fn(c[i]); return c; });
   const weighted = (s: ExLog['sets'][number]) => s.weight !== undefined || s.bw;
 
@@ -451,12 +454,14 @@ function WorkoutEditor({ w, onSave, onDelete, onCancel }: { w: WorkoutLog; onSav
                     </span>
                   ) : (
                     <span style={{ display: 'flex', alignItems: 'center' }}>
-                      <button onClick={() => setAt(i, x => { x.sets[si].weight = Math.max(0, (x.sets[si].weight || 0) - 1); })}>−</button>
-                      <input className="num" inputMode="numeric" value={s.weight ?? 0} aria-label='משקל (ק"ג)'
+                      <button onClick={() => { setWDraft(null); setAt(i, x => { x.sets[si].weight = stepWeight(x.sets[si].weight, -1); }); }}>−</button>
+                      <input className="num" inputMode="decimal" aria-label='משקל (ק"ג)'
+                        value={wDraft?.i === i && wDraft?.si === si ? wDraft.raw : fmtWeight(s.weight ?? 0)}
                         onFocus={ev => ev.currentTarget.select()}
-                        onChange={ev => { const v = editClamp(ev.target.value); setAt(i, x => { x.sets[si].weight = v; }); }}
-                        style={EDIT_NUM} />
-                      <button onClick={() => setAt(i, x => { x.sets[si].weight = (x.sets[si].weight || 0) + 1; })}>+</button>
+                        onBlur={() => setWDraft(null)}
+                        onChange={ev => { const raw = sanitizeWeight(ev.target.value); setWDraft({ i, si, raw }); const v = parseWeight(raw); setAt(i, x => { x.sets[si].weight = v; }); }}
+                        style={{ ...EDIT_NUM, width: 38, fontSize: 15 }} />
+                      <button onClick={() => { setWDraft(null); setAt(i, x => { x.sets[si].weight = stepWeight(x.sets[si].weight, 1); }); }}>+</button>
                       <button title="משקל גוף בלבד" style={{ marginInlineStart: 4 }} onClick={() => setAt(i, x => { x.sets[si].bw = true; })}>⚖️</button>
                     </span>
                   )}
