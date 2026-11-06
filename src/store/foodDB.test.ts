@@ -1035,6 +1035,30 @@ describe('גרגרי חומוס מהתווית', () => {
   });
 });
 
+describe('סלטי מסעדה — שם הסלט גובר על "סלט"', () => {
+  const name = (x: string) => estimateFood(x, foods).lines[0].name;
+  const est = (x: string) => estimateFood(x, foods).total;
+
+  it('לא נופלים יותר ל"סלט ירקות" של 50', () => {
+    // זו הטעות השקטה: 'סלט ניסואז' תפס רק את 'סלט' וצלחת של 551 נספרה כ-50.
+    expect(name('סלט ניסואז')).toBe('סלט ניסואז');
+    expect(est('סלט ניסואז').kcal).toBe(551);
+    expect(est('סלט ניסואז').p).toBe(34);     // טונה + ביצה — החלבון היחיד בתפריט
+    expect(name('סלט קיסר')).toBe('סלט קיסר');
+    expect(est('סלט קיסר').p).toBe(12);       // רוטב וקרוטונים, כמעט בלי חלבון
+    expect(name('סלט ים תיכוני')).toBe('סלט ים תיכוני');
+  });
+
+  it('לא בולעים את מה שהיה קודם', () => {
+    expect(name('סלט ירקות')).toBe('סלט ירקות');
+    expect(name('סלט')).toBe('סלט ירקות');
+    expect(name('סלט יווני')).toBe('סלט יווני');
+    // 'סלט ים תיכוני' ארוך מ'ים תיכוני' שהוא היוגורט — שניהם במסד
+    expect(name('ים תיכוני')).toBe('יוגורט יווני');
+    expect(name('יוגורט ים תיכוני')).toBe('יוגורט יווני');
+  });
+});
+
 describe('מילקשייק', () => {
   const name = (t: string) => estimateFood(t, foods).lines[0].name;
   const kcal = (t: string) => estimateFood(t, foods).total.kcal;
