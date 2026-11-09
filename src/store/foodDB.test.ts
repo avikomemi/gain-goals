@@ -180,14 +180,14 @@ describe('פריט-יחידה עם מספר גדול', () => {
 
 describe('מיזוג המאגר', () => {
   it('פריט-זרע מתעדכן גם אם כבר קיים אצל המשתמש (אחרת תיקונים לא מגיעים למכשיר)', () => {
-    const stale: FoodItem = { id: 'white5', names: ['לבנה 5'], per100: [98, 9, 4.3, 5], unit: 'g', def: 100 };
+    const stale: FoodItem = { id: 'white5', names: ['לבנה 5'], per100: [98, 9, 4.3, 5], sugar: 4, fiber: 0, unit: 'g', def: 100 };
     const merged = mergeFoods([stale]);
     const white = merged.find(f => f.id === 'white5')!;
     expect(white.names).toContain('גבינה');          // הכינוי החדש הגיע
     expect(estimateFood('גבינה 125 גרם', merged).lines).toHaveLength(1);
   });
   it('מאכל שאבי הוסיף בעצמו נשמר', () => {
-    const mine: FoodItem = { id: 'my-thing', names: ['התבשיל של אשתי'], per100: [200, 10, 20, 8], unit: 'g', def: 300 };
+    const mine: FoodItem = { id: 'my-thing', names: ['התבשיל של אשתי'], per100: [200, 10, 20, 8], sugar: 3, fiber: 2, unit: 'g', def: 300 };
     expect(mergeFoods([mine]).find(f => f.id === 'my-thing')).toEqual(mine);
   });
 });
@@ -1056,6 +1056,39 @@ describe('סלטי מסעדה — שם הסלט גובר על "סלט"', () => {
     // 'סלט ים תיכוני' ארוך מ'ים תיכוני' שהוא היוגורט — שניהם במסד
     expect(name('ים תיכוני')).toBe('יוגורט יווני');
     expect(name('יוגורט ים תיכוני')).toBe('יוגורט יווני');
+  });
+});
+
+describe('סוכר וסיבים', () => {
+  const est = (x: string) => estimateFood(x, foods).total;
+
+  it('שניהם חלק מהפחמימות ולא תוספת להן', () => {
+    // סוכר + סיבים לא יכולים לעלות על סך הפחמימות — זה אילוץ פיזי, והבדיקה
+    // הזאת תפסה ארבעה פריטים שבהם הערכים לא הסתדרו עם עצמם.
+    const bad = foods
+      .filter(f => f.sugar + f.fiber > f.per100[2] + 0.5)
+      .map(f => `${f.id}: ${f.sugar}+${f.fiber} > ${f.per100[2]}`);
+    expect(bad).toEqual([]);
+  });
+
+  it('אין ערכים שליליים או חסרים', () => {
+    const bad = foods.filter(f => !(f.sugar >= 0) || !(f.fiber >= 0)).map(f => f.id);
+    expect(bad).toEqual([]);
+  });
+
+  it('מספרים מהתווית ומ-USDA', () => {
+    expect(est('קולה').sugar).toBe(35);              // פחית — כמעט כל הפחמימות
+    expect(est('3 תמרים').sugar).toBe(15);
+    expect(est('גרגרי חומוס 280 גרם').sugar).toBe(0);  // מהתווית: אפס סוכר
+    expect(est('גרגרי חומוס 280 גרם').fiber).toBe(11);
+    expect(est('חזה עוף 200 גרם').sugar).toBe(0);
+    expect(est('חזה עוף 200 גרם').fiber).toBe(0);
+  });
+
+  it('פריטים קטנים נצברים במקום להתעגל לאפס', () => {
+    // עיגול פר-שורה היה הופך עשרים פריטים של 0.4 גר' סיבים לאפס.
+    const many = Array(10).fill('מלפפון 50 גרם').join(', ');
+    expect(est(many).fiber).toBeGreaterThan(0);
   });
 });
 

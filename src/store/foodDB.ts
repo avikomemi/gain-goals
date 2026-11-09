@@ -35,6 +35,10 @@ export interface FoodItem {
   id: string;
   names: string[];                              // כינויים בעברית — התאמה לפי הכלה; הכי ספציפי מנצח
   per100: [number, number, number, number];     // קק"ל, חלבון, פחמ', שומן — פר 100 גר' (או 100 מ"ל למשקאות)
+  sugar: number;                                 // סוכר (גר' ל-100) — חלק מהפחמימות, לא תוספת להן
+  fiber: number;                                 // סיבים (גר' ל-100) — גם הם חלק מהפחמימות
+  // השניים חובה ולא אופציונליים בכוונה: כך הקומפיילר מכריח כל מאכל חדש להצהיר
+  // עליהם. ערך חסר שנקרא כאפס הוא בדיוק הטעות השקטה שהמסד הזה נלחם בה.
   unit: 'g' | 'unit';                            // g = גרמים; unit = יחידה בדידה (ביצה/פיתה/כף/כוס)
   unitGrams?: number;                            // גרם ליחידה (לפריטי unit) — למתמטיקה ולתצוגה
   unitLabel?: string;                            // תווית יחידה: 'יח' | 'כף' | 'כוס' | 'פרוסה'
@@ -46,95 +50,95 @@ export interface FoodItem {
 // ~35 הקבועים של אבי. ערכים ממותגים ששלפנו מ-OFF מסומנים; השאר USDA/תווית מבוססים.
 export const SEED_FOODS: FoodItem[] = [
   // ---- חלבון / חלב ----
-  { id: 'pro', names: ['יוגורט פרו'], per100: [59, 9, 4, 1], unit: 'g', def: 200, gout: 'ok', src: 'תווית' }, // לא 'פרו' בודד — מתנגש עם "פרוסות"
-  { id: 'ski', names: ['גבינת סקי', 'סקי'], per100: [100, 6, 5, 5], unit: 'g', def: 150, gout: 'ok', src: 'הערכה' },
-  { id: 'cottage', names: ['קוטג'], per100: [95, 11, 1.5, 5], unit: 'g', def: 125, gout: 'ok', src: 'OFF' },
-  { id: 'white5', names: ['גבינה לבנה', 'לבנה 5', 'לבנה 3', 'לבנה 9', 'גבינה רזה', 'גבינה 5', 'גבינה 3', 'גבינה 9', 'גבינה'], per100: [98, 9, 4.3, 5], unit: 'g', def: 100, gout: 'ok', src: 'OFF' },
-  { id: 'bulgarit', names: ['גבינה בולגרית', 'גבינה צפתית', 'בולגרית', 'פטה', 'צפתית', 'פטא'], per100: [130, 11, 2, 9], unit: 'g', def: 50, gout: 'ok', src: 'תווית' },
-  { id: 'yellow', names: ['גבינה צהובה', 'צהובה', 'עמק', 'גאודה', 'מוצרלה', 'קשקבל'], per100: [350, 25, 1, 27], unit: 'g', def: 30, gout: 'ok', src: 'USDA' },
-  { id: 'egg', names: ['ביצה', 'ביצים', 'חביתה', 'אומלט'], per100: [143, 13, 0.7, 10], unit: 'unit', unitGrams: 50, unitLabel: 'ביצה', def: 2, gout: 'ok', src: 'USDA' },
+  { id: 'pro', names: ['יוגורט פרו'], per100: [59, 9, 4, 1], sugar: 3.4, fiber: 0, unit: 'g', def: 200, gout: 'ok', src: 'תווית' }, // לא 'פרו' בודד — מתנגש עם "פרוסות"
+  { id: 'ski', names: ['גבינת סקי', 'סקי'], per100: [100, 6, 5, 5], sugar: 4, fiber: 0, unit: 'g', def: 150, gout: 'ok', src: 'הערכה' },
+  { id: 'cottage', names: ['קוטג'], per100: [95, 11, 1.5, 5], sugar: 1.5, fiber: 0, unit: 'g', def: 125, gout: 'ok', src: 'OFF' },
+  { id: 'white5', names: ['גבינה לבנה', 'לבנה 5', 'לבנה 3', 'לבנה 9', 'גבינה רזה', 'גבינה 5', 'גבינה 3', 'גבינה 9', 'גבינה'], per100: [98, 9, 4.3, 5], sugar: 4, fiber: 0, unit: 'g', def: 100, gout: 'ok', src: 'OFF' },
+  { id: 'bulgarit', names: ['גבינה בולגרית', 'גבינה צפתית', 'בולגרית', 'פטה', 'צפתית', 'פטא'], per100: [130, 11, 2, 9], sugar: 2, fiber: 0, unit: 'g', def: 50, gout: 'ok', src: 'תווית' },
+  { id: 'yellow', names: ['גבינה צהובה', 'צהובה', 'עמק', 'גאודה', 'מוצרלה', 'קשקבל'], per100: [350, 25, 1, 27], sugar: 1, fiber: 0, unit: 'g', def: 30, gout: 'ok', src: 'USDA' },
+  { id: 'egg', names: ['ביצה', 'ביצים', 'חביתה', 'אומלט'], per100: [143, 13, 0.7, 10], sugar: 0, fiber: 0, unit: 'unit', unitGrams: 50, unitLabel: 'ביצה', def: 2, gout: 'ok', src: 'USDA' },
   // אבי ביקש גמישות: סלמון ושוקולד הם חלק מהתוכנית, לא חריגה ממנה — אז הם במאגר
-  { id: 'salmon', names: ['סלמון'], per100: [208, 22, 0, 13], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
+  { id: 'salmon', names: ['סלמון'], per100: [208, 22, 0, 13], sugar: 0, fiber: 0, unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
   // מוליפופ (מהתווית שאבי צילם): סוכריה 8.3 גר' = 25 קק"ל · 6 פחמ' · 10 מ"ג קפאין
-  { id: 'lollipop', names: ['סוכריה על מקל', 'סוכרייה על מקל', 'מוליפופ', 'mollipop'], per100: [301, 0, 72, 0], unit: 'unit', unitGrams: 8.3, unitLabel: 'סוכריה', def: 1, gout: 'ok', src: 'תווית' },
-  { id: 'darkchoc', names: ['שוקולד מריר'], per100: [598, 7.8, 46, 43], unit: 'g', def: 25, src: 'USDA' },
-  { id: 'choc', names: ['שוקולד חלב', 'שוקולד'], per100: [535, 7.6, 59, 30], unit: 'g', def: 25, src: 'USDA' },
+  { id: 'lollipop', names: ['סוכריה על מקל', 'סוכרייה על מקל', 'מוליפופ', 'mollipop'], per100: [301, 0, 72, 0], sugar: 72, fiber: 0, unit: 'unit', unitGrams: 8.3, unitLabel: 'סוכריה', def: 1, gout: 'ok', src: 'תווית' },
+  { id: 'darkchoc', names: ['שוקולד מריר'], per100: [598, 7.8, 46, 43], sugar: 24, fiber: 11, unit: 'g', def: 25, src: 'USDA' },
+  { id: 'choc', names: ['שוקולד חלב', 'שוקולד'], per100: [535, 7.6, 59, 30], sugar: 52, fiber: 3.4, unit: 'g', def: 25, src: 'USDA' },
   // מזונות נפח — הרבה שובע במעט קלוריות, הפתרון לרעב שמוביל לשטויות
-  { id: 'vegsoup', names: ['מרק ירקות', 'מרק צח'], per100: [35, 1.5, 6, 0.8], unit: 'g', def: 300, gout: 'ok', src: 'הערכה' },
-  { id: 'popcorn', names: ['פופקורן'], per100: [387, 13, 78, 4], unit: 'g', def: 30, src: 'USDA' },
-  { id: 'tuna', names: ['טונה'], per100: [116, 26, 0, 1], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
+  { id: 'vegsoup', names: ['מרק ירקות', 'מרק צח'], per100: [35, 1.5, 6, 0.8], sugar: 2.5, fiber: 1.2, unit: 'g', def: 300, gout: 'ok', src: 'הערכה' },
+  { id: 'popcorn', names: ['פופקורן'], per100: [387, 13, 78, 4], sugar: 0.5, fiber: 15, unit: 'g', def: 30, src: 'USDA' },
+  { id: 'tuna', names: ['טונה'], per100: [116, 26, 0, 1], sugar: 0, fiber: 0, unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
   // אמנון (טילפיה) — היחס הטוב ביותר במסד: 4.8 קק"ל לכל גרם חלבון, טוב מחזה עוף
   // ומאבקת חלבון. פורינים נמוכים-בינוניים, בניגוד לסרדינים/אנשובי. ערכים לדג נא,
   // כמו שאר המסד. פילה 'נתח גדול 7-9' (אונקיות) = ~200-255 גרם.
-  { id: 'tilapia', names: ['פילה אמנון', 'אמנון', 'טילפיה', 'מושט'], per100: [96, 20, 0, 1.7], unit: 'g', def: 200, gout: 'ok', src: 'USDA' },
+  { id: 'tilapia', names: ['פילה אמנון', 'אמנון', 'טילפיה', 'מושט'], per100: [96, 20, 0, 1.7], sugar: 0, fiber: 0, unit: 'g', def: 200, gout: 'ok', src: 'USDA' },
   // דגים לבנים נפוצים — כדי שלא ייפלו לתור של הילה. אין כינוי 'דג' בודד:
   // הוא תת-מחרוזת של 'דגנים'.
-  { id: 'whitefish', names: ['פילה דג', 'דג לבן', 'דניס', 'לברק', 'בורי', 'מוסר ים'], per100: [110, 20, 0, 3], unit: 'g', def: 200, gout: 'ok', src: 'USDA' },
-  { id: 'chicken', names: ['חזה עוף', 'עוף', 'פרגיות', 'פרגית', 'פרגי', 'שניצל'], per100: [165, 31, 0, 3.6], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
+  { id: 'whitefish', names: ['פילה דג', 'דג לבן', 'דניס', 'לברק', 'בורי', 'מוסר ים'], per100: [110, 20, 0, 3], sugar: 0, fiber: 0, unit: 'g', def: 200, gout: 'ok', src: 'USDA' },
+  { id: 'chicken', names: ['חזה עוף', 'עוף', 'פרגיות', 'פרגית', 'פרגי', 'שניצל'], per100: [165, 31, 0, 3.6], sugar: 0, fiber: 0, unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
   // ירך/שוק/כרעיים עם העור — פי ~1.4 קלוריות מחזה. 'ירך עוף' ארוך מ'עוף' ולכן גובר במטצ'ר.
   // אין כינוי 'שוק' בודד: הוא תת-מחרוזת של 'שוקולד'.
   // פולקע = שוק עוף ('ההליקופטר') — הקטן, לא הכרע השלמה. שוק טיפוסי נותן
   // 70-85 גרם בשר+עור מבושל בלי העצם; 75 הוא האמצע.
   // נקניקיית עוף/הודו — לא נתח עוף. בלי זה "4 נקניקיות פרגית" נספר כ-600 גרם חזה.
-  { id: 'sausage', names: ['נקניקיות', 'נקניקייה', 'נקניקיה', 'נקניק', 'נקניקיות פרגית', 'נקניקיות עוף', 'נקניקיות הודו'], per100: [250, 14, 2, 21], unit: 'unit', unitGrams: 50, unitLabel: 'יח', def: 2, gout: 'high', src: 'USDA' },
+  { id: 'sausage', names: ['נקניקיות', 'נקניקייה', 'נקניקיה', 'נקניק', 'נקניקיות פרגית', 'נקניקיות עוף', 'נקניקיות הודו'], per100: [250, 14, 2, 21], sugar: 2, fiber: 0, unit: 'unit', unitGrams: 50, unitLabel: 'יח', def: 2, gout: 'high', src: 'USDA' },
   // מרק עוף הוא ציר עם ירקות, לא 150 גרם חזה.
-  { id: 'chickensoup', names: ['מרק עוף', 'ציר עוף', 'מרק קניידלך'], per100: [40, 3, 3, 1.5], unit: 'g', def: 300, gout: 'ok', src: 'USDA' },
-  { id: 'drumstick', names: ['פולקע', 'פולקעס', 'פולקה'], per100: [216, 27, 0, 11], unit: 'unit', unitGrams: 75, unitLabel: 'יח', def: 2, gout: 'ok', src: 'USDA' },
-  { id: 'chicken_thigh', names: ['ירך עוף', 'ירכיים', 'ירך', 'שוק עוף', 'שוקיים', 'כרעיים', 'כרעי עוף', 'כרעי', 'כרע עוף', 'כרע', 'רביע עוף', 'עוף בתנור', 'עוף צלוי', 'עוף אפוי'], per100: [232, 23, 0, 15], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
-  { id: 'whey', names: ['אבקת חלבון', 'שייק חלבון', 'וויי', 'פרוטאין', 'סקופ'], per100: [380, 75, 8, 6], unit: 'unit', unitGrams: 30, unitLabel: 'מנה', def: 1, gout: 'ok', src: 'תווית' },
+  { id: 'chickensoup', names: ['מרק עוף', 'ציר עוף', 'מרק קניידלך'], per100: [40, 3, 3, 1.5], sugar: 1, fiber: 0.5, unit: 'g', def: 300, gout: 'ok', src: 'USDA' },
+  { id: 'drumstick', names: ['פולקע', 'פולקעס', 'פולקה'], per100: [216, 27, 0, 11], sugar: 0, fiber: 0, unit: 'unit', unitGrams: 75, unitLabel: 'יח', def: 2, gout: 'ok', src: 'USDA' },
+  { id: 'chicken_thigh', names: ['ירך עוף', 'ירכיים', 'ירך', 'שוק עוף', 'שוקיים', 'כרעיים', 'כרעי עוף', 'כרעי', 'כרע עוף', 'כרע', 'רביע עוף', 'עוף בתנור', 'עוף צלוי', 'עוף אפוי'], per100: [232, 23, 0, 15], sugar: 0, fiber: 0, unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
+  { id: 'whey', names: ['אבקת חלבון', 'שייק חלבון', 'וויי', 'פרוטאין', 'סקופ'], per100: [380, 75, 8, 6], sugar: 8, fiber: 0, unit: 'unit', unitGrams: 30, unitLabel: 'מנה', def: 1, gout: 'ok', src: 'תווית' },
   // משקה חלבון מוכן (מולר פרוטאין וכו', 1.5% שומן): בקבוק 400 מ"ל = 25 גר' חלבון. per100 = פר 100 מ"ל, הערכה.
-  { id: 'proteindrink', names: ['משקה חלבון', 'מולר פרוטאין', 'müller protein'], per100: [51, 6.3, 3, 1.5], unit: 'unit', unitGrams: 400, unitLabel: 'בקבוק', def: 1, gout: 'ok', src: 'הערכה' },
+  { id: 'proteindrink', names: ['משקה חלבון', 'מולר פרוטאין', 'müller protein'], per100: [51, 6.3, 3, 1.5], sugar: 2, fiber: 0, unit: 'unit', unitGrams: 400, unitLabel: 'בקבוק', def: 1, gout: 'ok', src: 'הערכה' },
   // ---- חלבון זול ודל-פורינים (הפתרון לשילוב גאוט + תקציב) ----
   // קטניות: הפורינים הצמחיים אינם מעלים סיכון גאוט, והחלבון הזול ביותר לשקל.
-  { id: 'lentils', names: ['עדשים כתומות', 'עדשים', 'מרק עדשים'], per100: [116, 9, 20, 0.4], unit: 'g', def: 200, gout: 'ok', src: 'USDA' }, // מבושל
+  { id: 'lentils', names: ['עדשים כתומות', 'עדשים', 'מרק עדשים'], per100: [116, 9, 20, 0.4], sugar: 1.8, fiber: 8, unit: 'g', def: 200, gout: 'ok', src: 'USDA' }, // מבושל
   // מהתווית (יחין, גרגירי חומוס בקופסה) — ל-100 גרם מסונן. היה כאן ערך USDA
   // של חומוס מבושל מיבש, 164 ל-100 גרם: המשומר לח יותר ב-25%, ועל קופסה
   // שלמה זה הפרש של 92 קק"ל. קופסה = 280 גרם מסונן (21 גרם חלבון חלקי 7.5).
   // פורינים צמחיים — לא מעלים גאוט. פרווה, ולכן עובד גם אחרי ארוחה בשרית.
-  { id: 'chickpeas', names: ['גרגרי חומוס', 'חומוס גרגרים', 'גרגירי חומוס'], per100: [131, 7.5, 19, 1.9], unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
-  { id: 'edamame', names: ['אדממה'], per100: [121, 12, 9, 5], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
-  { id: 'tofu', names: ['טופו'], per100: [76, 8, 1.9, 4.8], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
-  { id: 'turkey', names: ['חזה הודו', 'שניצל הודו', 'הודו'], per100: [135, 29, 0, 1], unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
-  { id: 'milk', names: ['חלב'], per100: [60, 3.4, 4.7, 3.3], unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'USDA' },
-  { id: 'milk1', names: ['חלב 1%', 'חלב דל שומן', 'חלב רזה'], per100: [42, 3.4, 5, 1], unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'chickpeas', names: ['גרגרי חומוס', 'חומוס גרגרים', 'גרגירי חומוס'], per100: [131, 7.5, 19, 1.9], sugar: 0, fiber: 4.1, unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
+  { id: 'edamame', names: ['אדממה'], per100: [121, 12, 9, 5], sugar: 2.2, fiber: 5, unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
+  { id: 'tofu', names: ['טופו'], per100: [76, 8, 1.9, 4.8], sugar: 0.6, fiber: 0.3, unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
+  { id: 'turkey', names: ['חזה הודו', 'שניצל הודו', 'הודו'], per100: [135, 29, 0, 1], sugar: 0, fiber: 0, unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
+  { id: 'milk', names: ['חלב'], per100: [60, 3.4, 4.7, 3.3], sugar: 4.7, fiber: 0, unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'milk1', names: ['חלב 1%', 'חלב דל שומן', 'חלב רזה'], per100: [42, 3.4, 5, 1], sugar: 5, fiber: 0, unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'USDA' },
   // תחליפי חלב: חלב סויה הוא היחיד עם חלבון אמיתי. 'חלב שקדים' ארוך מ'שקדים' ולכן גובר.
-  { id: 'soymilk', names: ['חלב סויה', 'סויה'], per100: [33, 2.9, 1.5, 1.8], unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'USDA' },
-  { id: 'almondmilk', names: ['חלב שקדים', 'חלב שיבולת שועל', 'חלב קוקוס'], per100: [20, 0.6, 1.5, 1.4], unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'USDA' },
-  { id: 'ricotta', names: ['ריקוטה'], per100: [138, 11, 5, 8], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
+  { id: 'soymilk', names: ['חלב סויה', 'סויה'], per100: [33, 2.9, 1.5, 1.8], sugar: 1, fiber: 0.4, unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'almondmilk', names: ['חלב שקדים', 'חלב שיבולת שועל', 'חלב קוקוס'], per100: [20, 0.6, 1.5, 1.4], sugar: 1, fiber: 0.3, unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'ricotta', names: ['ריקוטה'], per100: [138, 11, 5, 8], sugar: 5, fiber: 0, unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
   // זרעים: מקור שומן וסיבים, לא מקור חלבון. ~30 קק"ל לכל גרם חלבון — גרוע מחמאת בוטנים.
-  { id: 'chia', names: ['זרעי צ\'יה', 'זרעי צ׳יה', 'צ\'יה', 'צ׳יה', 'צייה'], per100: [486, 16.5, 42, 31], unit: 'unit', unitGrams: 12, unitLabel: 'כף', def: 1, gout: 'ok', src: 'USDA' },
-  { id: 'flax', names: ['זרעי פשתן', 'פשתן'], per100: [534, 18, 29, 42], unit: 'unit', unitGrams: 10, unitLabel: 'כף', def: 1, gout: 'ok', src: 'USDA' },
-  { id: 'hempseed', names: ['זרעי המפ', 'זרעי קנבוס', 'המפ'], per100: [553, 32, 8.7, 49], unit: 'unit', unitGrams: 10, unitLabel: 'כף', def: 1, gout: 'ok', src: 'USDA' },
-  { id: 'cocoa', names: ['אבקת קקאו', 'קקאו'], per100: [228, 20, 58, 14], unit: 'unit', unitGrams: 5, unitLabel: 'כפית', def: 1, gout: 'ok', src: 'USDA' },
-  { id: 'silkentofu', names: ['טופו משי'], per100: [55, 5, 2, 3], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
+  { id: 'chia', names: ['זרעי צ\'יה', 'זרעי צ׳יה', 'צ\'יה', 'צ׳יה', 'צייה'], per100: [486, 16.5, 42, 31], sugar: 0, fiber: 34, unit: 'unit', unitGrams: 12, unitLabel: 'כף', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'flax', names: ['זרעי פשתן', 'פשתן'], per100: [534, 18, 29, 42], sugar: 1.6, fiber: 27, unit: 'unit', unitGrams: 10, unitLabel: 'כף', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'hempseed', names: ['זרעי המפ', 'זרעי קנבוס', 'המפ'], per100: [553, 32, 8.7, 49], sugar: 1.5, fiber: 4, unit: 'unit', unitGrams: 10, unitLabel: 'כף', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'cocoa', names: ['אבקת קקאו', 'קקאו'], per100: [228, 20, 58, 14], sugar: 1.8, fiber: 33, unit: 'unit', unitGrams: 5, unitLabel: 'כפית', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'silkentofu', names: ['טופו משי'], per100: [55, 5, 2, 3], sugar: 0.6, fiber: 0.2, unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
   // שייק חלבון ביתי: 250 ג' קוטג' + 150 מ"ל חלב 3% + כף חמאת בוטנים + כפית קקאו
   // = 433 קק"ל · 38 ח'. הבסיס היה סקיר (353 קק"ל), אבל סקיר לא קיים במדף.
   // קוטג' מנצח את כל מה שכן קיים: 8.6 קק"ל לגרם חלבון מול 11.7 ביווני 6.5%
   // ומול מחיר כפול בפרו. חלב רגיל ולא 1%: ההפרש 27 קק"ל בלבד.
   // הכינוי ארוך מ'שייק חלבון' (שהוא אבקת ווי) ולכן גובר — אחרת נספר כסקופ אבקה.
-  { id: 'homeshake', names: ['שייק חלבון ביתי', 'משקה חלבון ביתי', 'שייק ביתי', 'השייק שלי'], per100: [103, 9, 4, 6.4], unit: 'unit', unitGrams: 421, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'הערכה' },
+  { id: 'homeshake', names: ['שייק חלבון ביתי', 'משקה חלבון ביתי', 'שייק ביתי', 'השייק שלי'], per100: [103, 9, 4, 6.4], sugar: 3.5, fiber: 1, unit: 'unit', unitGrams: 421, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'הערכה' },
   // 'סלט יווני' הכיל גם 'סלט' וגם 'יווני' — ונספר כסלט ועוד 150 ג' יוגורט יווני,
   // 95 קק"ל ו-17 גרם חלבון שלא היו שם. ירקות + פטה, בלי רוטב.
   // סלטי מסעדה שנפלו ל'סלט ירקות' של 50 קק"ל. שם הסלט חייב להיות ארוך מ'סלט',
   // אחרת צלחת של 550 נספרת כקערת ירקות — המאכל "זוהה", פשוט לא הנכון.
   // הוינגרט הוא המרכיב הגדול בכולם: 150-200 קק"ל שלא נראים בצלחת.
-  { id: 'salad_nicoise', names: ['סלט ניסואז', 'ניסואז'], per100: [145, 9, 8, 9], unit: 'unit', unitGrams: 380, unitLabel: 'מנה', def: 1, gout: 'ok', src: 'הערכה' },
+  { id: 'salad_nicoise', names: ['סלט ניסואז', 'ניסואז'], per100: [145, 9, 8, 9], sugar: 2, fiber: 2, unit: 'unit', unitGrams: 380, unitLabel: 'מנה', def: 1, gout: 'ok', src: 'הערכה' },
   // רוטב קיסר הוא מיונז, והקרוטונים לחם מטוגן. החלבון כמעט אפסי.
-  { id: 'salad_caesar', names: ['סלט קיסר', 'סלט הקיסרים'], per100: [193, 4, 10, 15], unit: 'unit', unitGrams: 300, unitLabel: 'מנה', def: 1, gout: 'ok', src: 'הערכה' },
+  { id: 'salad_caesar', names: ['סלט קיסר', 'סלט הקיסרים'], per100: [193, 4, 10, 15], sugar: 2, fiber: 1.5, unit: 'unit', unitGrams: 300, unitLabel: 'מנה', def: 1, gout: 'ok', src: 'הערכה' },
   // חציל קלוי סופג שמן, והבולגרית מוסיפה שומן ומלח. 'סלט ים תיכוני' ארוך
   // מ'ים תיכוני' (היוגורט) ולכן גובר עליו.
-  { id: 'salad_med', names: ['סלט ים תיכוני'], per100: [163, 4.5, 11, 11], unit: 'unit', unitGrams: 400, unitLabel: 'מנה', def: 1, gout: 'ok', src: 'הערכה' },
-  { id: 'greeksalad', names: ['סלט יווני'], per100: [95, 4, 4, 7], unit: 'g', def: 250, gout: 'ok', src: 'הערכה' },
+  { id: 'salad_med', names: ['סלט ים תיכוני'], per100: [163, 4.5, 11, 11], sugar: 4, fiber: 3.5, unit: 'unit', unitGrams: 400, unitLabel: 'מנה', def: 1, gout: 'ok', src: 'הערכה' },
+  { id: 'greeksalad', names: ['סלט יווני'], per100: [95, 4, 4, 7], sugar: 2.5, fiber: 1.5, unit: 'g', def: 250, gout: 'ok', src: 'הערכה' },
   // סקיר 0.2% לא קיים במדף שאבי קונה בו. הכינוי 'יוגורט יווני' הועבר מכאן
   // לפריט ה-6.5%, כי זה מה שבמקרר: עד עכשיו כל "יוגורט יווני" נספר 63 במקום
   // 117 — חסר של 54 ל-100 גרם, ובמנה של 250 זה 135 שנעלמו בשקט.
-  { id: 'skyr', names: ['סקיר'], per100: [63, 11, 4, 0.2], unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
+  { id: 'skyr', names: ['סקיר'], per100: [63, 11, 4, 0.2], sugar: 4, fiber: 0, unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
   // מהתווית שאבי צילם (גד): יוגורט ים תיכוני מחלב בקר מלא 6.5% שומן.
   // חלבון מצוין (10 ג'), אבל השומן מכפיל את הקלוריות מול יווני 0%:
   // 11.7 קק"ל לגרם חלבון מול 5.7. פריט נפרד — אסור שייבלע לתוך 'יוגורט יווני'.
   // מנה 200 ג' = 7 כפות (27.5 ג' בכף). אין כינוי 'יוגורט יווני 6.5':
   // הנקודה ב-6.5 היא מפריד, והכינוי לא היה נתפס לעולם.
-  { id: 'greekfull', names: ['יוגורט יווני', 'יוגורט ים תיכוני', 'ים תיכוני', 'יוגורט מלא', 'יוגורט שמן', 'יווני'], per100: [117, 10, 4.5, 6.5], unit: 'g', def: 200, gout: 'ok', src: 'תווית' },
+  { id: 'greekfull', names: ['יוגורט יווני', 'יוגורט ים תיכוני', 'ים תיכוני', 'יוגורט מלא', 'יוגורט שמן', 'יווני'], per100: [117, 10, 4.5, 6.5], sugar: 4.5, fiber: 0, unit: 'g', def: 200, gout: 'ok', src: 'תווית' },
   // שייק פירות על טחינה, לכוס אחת. הקנקן: חצי כוס טחינה (120 ג'), 4 בננות,
   // 4 תמרים ומים — 1231 קק"ל ל-4 כוסות, כלומר 308 ו-6.5 ח' לכוס.
   // חצי כוס טחינה מתחלקת ל-2 כפות בכוס, והן 179 מתוך 308: 58% מהמשקה הוא
@@ -143,217 +147,217 @@ export const SEED_FOODS: FoodItem[] = [
   // על בסיס מים אין כאן חלבון כמעט, והטחינה לא מספקת אותו.
   // 'שייק פירות' הוא השם שאבי משתמש בו, ולכן הוא הכינוי הראשי. יש לו חריג
   // ב-ALIAS_TRAPS מול "שייק פירות יער", שהוא גרסה בתפריט ולא המשקה הזה.
-  { id: 'tahinishake', names: ['שייק פירות', 'שייק טחינה', 'שייק פירות טחינה', 'שייק פירות על בסיס טחינה', 'שייק פירות על טחינה', 'שייק על טחינה'], per100: [123, 2.6, 15.9, 6.6], unit: 'unit', unitGrams: 250, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'הערכה' },
-  { id: 'shakshuka', names: ['שקשוקה'], per100: [95, 6, 4, 6], unit: 'g', def: 250, gout: 'ok', src: 'הערכה' },
-  { id: 'steak', names: ['סטייק', 'סטיק', 'אנטריקוט', 'בשר בקר', 'בקר'], per100: [271, 25, 0, 19], unit: 'g', def: 150, gout: 'high', src: 'USDA' },
+  { id: 'tahinishake', names: ['שייק פירות', 'שייק טחינה', 'שייק פירות טחינה', 'שייק פירות על בסיס טחינה', 'שייק פירות על טחינה', 'שייק על טחינה'], per100: [123, 2.6, 15.9, 6.6], sugar: 11, fiber: 2.5, unit: 'unit', unitGrams: 250, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'הערכה' },
+  { id: 'shakshuka', names: ['שקשוקה'], per100: [95, 6, 4, 6], sugar: 2.5, fiber: 1.5, unit: 'g', def: 250, gout: 'ok', src: 'הערכה' },
+  { id: 'steak', names: ['סטייק', 'סטיק', 'אנטריקוט', 'בשר בקר', 'בקר'], per100: [271, 25, 0, 19], sugar: 0, fiber: 0, unit: 'g', def: 150, gout: 'high', src: 'USDA' },
   // קבב = בשר אדום → דגל גאוט. 'קבבונים' חייב להיות כינוי נפרד: 'קבבון' נגמר בנו"ן סופית
   // ולכן אינו תת-מחרוזת של 'קבבונים'. קבבון טיפוסי ~50 ג' מבושל.
   // אסאדו/שפונדרה — צלע קצרה, הנתח השמן ביותר על הצלחת. 'צלעות בקר' ארוך
   // מ'בקר' ולכן גובר, אחרת הוא נספר כסטייק רזה יותר ב-90 קק"ל ל-100 גרם.
   // פורינים גבוהים כמו כל בקר, ועם שומן רווי כפול מאנטריקוט.
-  { id: 'shortrib', names: ['אסאדו', 'שפונדרה', 'צלעות בקר', 'צלעות קצרות', 'פלאנקן'], per100: [360, 15, 0, 33], unit: 'g', def: 150, gout: 'high', src: 'USDA' },
-  { id: 'kebab', names: ['קבבונים', 'קבבון', 'קבב'], per100: [265, 17, 3, 21], unit: 'unit', unitGrams: 50, unitLabel: 'יח', def: 2, gout: 'high', src: 'USDA' },
+  { id: 'shortrib', names: ['אסאדו', 'שפונדרה', 'צלעות בקר', 'צלעות קצרות', 'פלאנקן'], per100: [360, 15, 0, 33], sugar: 0, fiber: 0, unit: 'g', def: 150, gout: 'high', src: 'USDA' },
+  { id: 'kebab', names: ['קבבונים', 'קבבון', 'קבב'], per100: [265, 17, 3, 21], sugar: 1, fiber: 0.2, unit: 'unit', unitGrams: 50, unitLabel: 'יח', def: 2, gout: 'high', src: 'USDA' },
   // גרסת עוף/הודו — בלי דגל גאוט, ורזה בהרבה. נפרד כי ההבדל מהותי לאבי.
-  { id: 'kebab_poultry', names: ['קבבוני הודו', 'קבבוני עוף', 'קבב הודו', 'קבב עוף'], per100: [170, 20, 3, 9], unit: 'unit', unitGrams: 50, unitLabel: 'יח', def: 2, gout: 'ok', src: 'USDA' },
+  { id: 'kebab_poultry', names: ['קבבוני הודו', 'קבבוני עוף', 'קבב הודו', 'קבב עוף'], per100: [170, 20, 3, 9], sugar: 1, fiber: 0.2, unit: 'unit', unitGrams: 50, unitLabel: 'יח', def: 2, gout: 'ok', src: 'USDA' },
   // מהתווית שאבי צילם: גביע 200 גר' = 134 קק"ל · 10.4 חלבון · 6 שומן · 9.6 פחמ' (הכל לקטוז) · 500 מ"ג סידן
-  { id: 'bioyog', names: ['יוגורט ביו', 'ביו 3%'], per100: [67, 5.2, 4.8, 3], unit: 'unit', unitGrams: 200, unitLabel: 'גביע', def: 1, gout: 'ok', src: 'תווית' },
-  { id: 'multiyog', names: ['יוגורט מולטי', 'מולטי'], per100: [71, 6.5, 4.6, 3], unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
+  { id: 'bioyog', names: ['יוגורט ביו', 'ביו 3%'], per100: [67, 5.2, 4.8, 3], sugar: 4.8, fiber: 0, unit: 'unit', unitGrams: 200, unitLabel: 'גביע', def: 1, gout: 'ok', src: 'תווית' },
+  { id: 'multiyog', names: ['יוגורט מולטי', 'מולטי'], per100: [71, 6.5, 4.6, 3], sugar: 4.6, fiber: 0, unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
 
   // ---- פחמימות ----
-  { id: 'pita', names: ['פיתה', 'פיתת מחמצת', 'פיתה מחמצת', 'פיתת', 'פיתות'], per100: [275, 9, 55, 1.2], unit: 'unit', unitGrams: 60, unitLabel: 'פיתה', def: 1, src: 'USDA' },
+  { id: 'pita', names: ['פיתה', 'פיתת מחמצת', 'פיתה מחמצת', 'פיתת', 'פיתות'], per100: [275, 9, 55, 1.2], sugar: 5, fiber: 2.4, unit: 'unit', unitGrams: 60, unitLabel: 'פיתה', def: 1, src: 'USDA' },
   // מהתווית שאבי צילם (אסם, קרקר מקמח מלא 89%): 100 ג' = 396 קק"ל · 11.5 ח' ·
   // 10.6 סיבים · 400 מ"ג נתרן. מנה 28.8 ג' = ~3 יחידות, ולכן ~9.6 ג' ליחידה.
   // 396 ל-100 גרם מול 247 בלחם — הקרקר יבש, הלחם מכיל מים.
   // מהתווית שאבי צילם (פריכיות בוסמת 99.5% + מלח): 100 ג' = 383 קק"ל · 13.4 ח' ·
   // 9.3 סיבים · 210 מ"ג נתרן. יחידה = 7.6 ג' (29 קק"ל) — כמעט הכל אוויר.
-  { id: 'ricecake', names: ['פריכיות', 'פריכית'], per100: [383, 13.4, 70, 3.4], unit: 'unit', unitGrams: 7.6, unitLabel: 'יח', def: 3, gout: 'ok', src: 'תווית' },
-  { id: 'cracker', names: ['קרקר', 'קרקרים', 'קרוקר'], per100: [396, 11.5, 67.1, 6.7], unit: 'unit', unitGrams: 9.6, unitLabel: 'יח', def: 3, gout: 'ok', src: 'תווית' },
-  { id: 'bread', names: ['פרוסת לחם', 'לחם מלא', 'לחם', 'מחמצת', 'פרוסה'], per100: [247, 13, 41, 3.4], unit: 'unit', unitGrams: 30, unitLabel: 'פרוסה', def: 2, src: 'USDA' },
-  { id: 'homebread', names: ['לחם ביתי'], per100: [265, 8, 49, 3.5], unit: 'unit', unitGrams: 85, unitLabel: 'פרוסה', def: 2, src: 'תווית' },
-  { id: 'challah', names: ['חלה', 'בריוש'], per100: [290, 9, 50, 5.5], unit: 'unit', unitGrams: 40, unitLabel: 'פרוסה', def: 2, src: 'USDA' },
-  { id: 'rice', names: ['אורז'], per100: [130, 2.7, 28, 0.3], unit: 'g', def: 150, src: 'USDA' },
+  { id: 'ricecake', names: ['פריכיות', 'פריכית'], per100: [383, 13.4, 70, 3.4], sugar: 1, fiber: 3, unit: 'unit', unitGrams: 7.6, unitLabel: 'יח', def: 3, gout: 'ok', src: 'תווית' },
+  { id: 'cracker', names: ['קרקר', 'קרקרים', 'קרוקר'], per100: [396, 11.5, 67.1, 6.7], sugar: 4, fiber: 3, unit: 'unit', unitGrams: 9.6, unitLabel: 'יח', def: 3, gout: 'ok', src: 'תווית' },
+  { id: 'bread', names: ['פרוסת לחם', 'לחם מלא', 'לחם', 'מחמצת', 'פרוסה'], per100: [247, 13, 41, 3.4], sugar: 5, fiber: 4, unit: 'unit', unitGrams: 30, unitLabel: 'פרוסה', def: 2, src: 'USDA' },
+  { id: 'homebread', names: ['לחם ביתי'], per100: [265, 8, 49, 3.5], sugar: 4, fiber: 2.5, unit: 'unit', unitGrams: 85, unitLabel: 'פרוסה', def: 2, src: 'תווית' },
+  { id: 'challah', names: ['חלה', 'בריוש'], per100: [290, 9, 50, 5.5], sugar: 9, fiber: 2, unit: 'unit', unitGrams: 40, unitLabel: 'פרוסה', def: 2, src: 'USDA' },
+  { id: 'rice', names: ['אורז'], per100: [130, 2.7, 28, 0.3], sugar: 0.1, fiber: 0.4, unit: 'g', def: 150, src: 'USDA' },
   // אורז שהתבשל בתוך הבשר סופג את השומן והרוטב — ~פי 1.35 מאורז לבן מבושל במים.
   // הכינוי המורכב ארוך מ'אורז' ולכן גובר במטצ'ר. אין כינוי שמכיל ' עם ':
   // estimateFood מפצל את הסגמנט על 'עם' עוד לפני המטצ'ר, ולכן כינוי כזה לא יכול להיתפס.
-  { id: 'rice_meat', names: ['אורז מהתבשיל', 'אורז בתנור', 'אורז מהסיר', 'אורז בתוך הבשר', 'מילוי אורז', 'אורז שומני'], per100: [175, 4, 29, 5], unit: 'g', def: 150, gout: 'ok', src: 'הערכה' },
+  { id: 'rice_meat', names: ['אורז מהתבשיל', 'אורז בתנור', 'אורז מהסיר', 'אורז בתוך הבשר', 'מילוי אורז', 'אורז שומני'], per100: [175, 4, 29, 5], sugar: 0.3, fiber: 0.4, unit: 'g', def: 150, gout: 'ok', src: 'הערכה' },
   // אטריות אורז מוקפצות בשמן, ביצה, בוטנים וסוכר תמרהינדי. לא 'אטריות'.
   // המנה כולה: פסטה מבושלת + רוטב בשר בקר. 'ספגטי בולונז' ארוך מ'ספגטי' ולכן גובר,
   // אחרת צלחת שלמה נספרת כפסטה יבשה בלי הרוטב ובלי הבשר.
   // ברירת המחדל 320 ג' = צלחת מרק מלאה, הכלי שבו אבי מגיש.
   // משולש מפיצה משפחתית ~125 ג'. per100 של פיצת גבינה על בצק רגיל.
-  { id: 'pizza', names: ['משולש פיצה', 'משולשי פיצה', 'פיצה'], per100: [266, 11, 33, 10], unit: 'unit', unitGrams: 125, unitLabel: 'משולש', def: 1, gout: 'ok', src: 'USDA' },
-  { id: 'bolognese', names: ['ספגטי בולונז', 'פסטה בולונז', 'ספגטי בולונייז', 'בולונז', 'בולונייז', 'ספגטי ברוטב בשר'], per100: [140, 7, 17, 4.5], unit: 'g', def: 320, gout: 'high', src: 'הערכה' },
-  { id: 'burger', names: ['המבורגר', 'בורגר', 'קציצת המבורגר'], per100: [265, 19, 0, 21], unit: 'g', def: 180, gout: 'high', src: 'USDA' },
+  { id: 'pizza', names: ['משולש פיצה', 'משולשי פיצה', 'פיצה'], per100: [266, 11, 33, 10], sugar: 3.6, fiber: 2.3, unit: 'unit', unitGrams: 125, unitLabel: 'משולש', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'bolognese', names: ['ספגטי בולונז', 'פסטה בולונז', 'ספגטי בולונייז', 'בולונז', 'בולונייז', 'ספגטי ברוטב בשר'], per100: [140, 7, 17, 4.5], sugar: 3, fiber: 2, unit: 'g', def: 320, gout: 'high', src: 'הערכה' },
+  { id: 'burger', names: ['המבורגר', 'בורגר', 'קציצת המבורגר'], per100: [265, 19, 0, 21], sugar: 0, fiber: 0, unit: 'g', def: 180, gout: 'high', src: 'USDA' },
   // מנה שלמה במסעדה: קציצה 250 גרם נא, לחמנייה, אייולי ומנת צ'יפס אחת.
   // המשקל כאן הוא של מה שמגיע לצלחת — 500 גרם: הקציצה יורדת ל-205 גרם בצלייה
   // ומאבדת שומן שנוטף. החלבון לא הולך לאיבוד, רק מתרכז. הערכה מתפריט.
-  { id: 'burger_meal', names: ['מנת המבורגר', 'המבורגר במסעדה', 'המבורגר מהמעשנה'], per100: [316, 12, 22, 20], unit: 'unit', unitGrams: 500, unitLabel: 'מנה', def: 1, gout: 'high', src: 'הערכה' },
-  { id: 'bun', names: ['לחמנייה', 'לחמניה', 'לחמנית'], per100: [290, 9, 50, 5], unit: 'unit', unitGrams: 90, unitLabel: 'יח', def: 1, src: 'USDA' },
-  { id: 'sweetfries', names: ["צ'יפס בטטה", 'צ׳יפס בטטה', 'ציפס בטטה'], per100: [190, 2, 25, 9], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
-  { id: 'aioli', names: ['אייולי', 'איולי', 'אייולי שום'], per100: [680, 1, 3, 74], unit: 'g', def: 35, gout: 'ok', src: 'USDA' },
-  { id: 'padthai', names: ['פד תאי', 'פאד תאי', 'פד צאי', 'פאד צאי', 'פדתאי'], per100: [180, 8, 23, 6], unit: 'g', def: 250, gout: 'ok', src: 'הערכה' },
-  { id: 'pasta', names: ['פסטה', 'אטריות', 'נודל', 'ספגטי', 'ספגטני'], per100: [157, 5.8, 31, 0.9], unit: 'g', def: 150, src: 'USDA' },
+  { id: 'burger_meal', names: ['מנת המבורגר', 'המבורגר במסעדה', 'המבורגר מהמעשנה'], per100: [316, 12, 22, 20], sugar: 5, fiber: 2, unit: 'unit', unitGrams: 500, unitLabel: 'מנה', def: 1, gout: 'high', src: 'הערכה' },
+  { id: 'bun', names: ['לחמנייה', 'לחמניה', 'לחמנית'], per100: [290, 9, 50, 5], sugar: 6, fiber: 2, unit: 'unit', unitGrams: 90, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'sweetfries', names: ["צ'יפס בטטה", 'צ׳יפס בטטה', 'ציפס בטטה'], per100: [190, 2, 25, 9], sugar: 7, fiber: 3.5, unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
+  { id: 'aioli', names: ['אייולי', 'איולי', 'אייולי שום'], per100: [680, 1, 3, 74], sugar: 1, fiber: 0, unit: 'g', def: 35, gout: 'ok', src: 'USDA' },
+  { id: 'padthai', names: ['פד תאי', 'פאד תאי', 'פד צאי', 'פאד צאי', 'פדתאי'], per100: [180, 8, 23, 6], sugar: 6, fiber: 1.5, unit: 'g', def: 250, gout: 'ok', src: 'הערכה' },
+  { id: 'pasta', names: ['פסטה', 'אטריות', 'נודל', 'ספגטי', 'ספגטני'], per100: [157, 5.8, 31, 0.9], sugar: 0.6, fiber: 1.8, unit: 'g', def: 150, src: 'USDA' },
   // unit (לא g): כותבים "2 תפוחי אדמה" = 2 יחידות. משקל מפורש ("200 גרם") עדיין גובר דרך parseQty.
-  { id: 'potato', names: ['תפוח אדמה', 'תפוחי אדמה', 'תפו"א', 'תפוא'], per100: [87, 1.9, 20, 0.1], unit: 'unit', unitGrams: 150, unitLabel: 'יח', def: 1, src: 'USDA' },
-  { id: 'sweetpotato', names: ['בטטה'], per100: [90, 2, 21, 0.1], unit: 'unit', unitGrams: 130, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'potato', names: ['תפוח אדמה', 'תפוחי אדמה', 'תפו"א', 'תפוא'], per100: [87, 1.9, 20, 0.1], sugar: 0.8, fiber: 2.2, unit: 'unit', unitGrams: 150, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'sweetpotato', names: ['בטטה'], per100: [90, 2, 21, 0.1], sugar: 4.2, fiber: 3, unit: 'unit', unitGrams: 130, unitLabel: 'יח', def: 1, src: 'USDA' },
   // ניוקי ארוז, כפי שנמכר ומבושל — הוא כבר לח ולא סופג מים כמו פסטה יבשה.
   // גבוה מפסטה (157) כי יש בו קמח, תפוח אדמה ולרוב ביצה. בלי תווית זו הערכה,
   // והטווח בין ארוז לתוצרת בית הוא 165-200. מנה עיקרית: 200 גרם ולא 150.
   // הרוטב הוא הנעלם הגדול כאן — שמנת או חמאה מכפילים את המנה.
   // תפוחי אדמה בתנור סופגים שמן ומאבדים מים — פי 1.7 מתפוח אדמה מבושל.
   // הכינוי חייב להיות ארוך מ'תפוחי אדמה', אחרת מנה שלמה נספרת כתפו"א רגיל.
-  { id: 'roastpotato', names: ['תפוחי אדמה בתנור', 'תפוח אדמה בתנור', 'תפוחי אדמה צלויים', 'תפוחי אדמה אפויים', 'תפוא בתנור', 'תפוחי אדמה קטנים'], per100: [150, 2.5, 25, 5], unit: 'g', def: 200, gout: 'ok', src: 'הערכה' },
-  { id: 'gnocchi', names: ['ניוקי', 'נוקי', 'גנוקי', 'ניוקים'], per100: [165, 4.5, 33, 1.5], unit: 'g', def: 200, gout: 'ok', src: 'הערכה' },
-  { id: 'couscous', names: ['קוסקוס', 'פתיתים', 'פתית'], per100: [112, 3.8, 23, 0.2], unit: 'g', def: 150, src: 'USDA' },
-  { id: 'oats', names: ['שיבולת שועל', 'קוואקר', 'דייסה'], per100: [389, 17, 66, 7], unit: 'g', def: 40, src: 'USDA' },
+  { id: 'roastpotato', names: ['תפוחי אדמה בתנור', 'תפוח אדמה בתנור', 'תפוחי אדמה צלויים', 'תפוחי אדמה אפויים', 'תפוא בתנור', 'תפוחי אדמה קטנים'], per100: [150, 2.5, 25, 5], sugar: 1.5, fiber: 2.5, unit: 'g', def: 200, gout: 'ok', src: 'הערכה' },
+  { id: 'gnocchi', names: ['ניוקי', 'נוקי', 'גנוקי', 'ניוקים'], per100: [165, 4.5, 33, 1.5], sugar: 1, fiber: 2, unit: 'g', def: 200, gout: 'ok', src: 'הערכה' },
+  { id: 'couscous', names: ['קוסקוס', 'פתיתים', 'פתית'], per100: [112, 3.8, 23, 0.2], sugar: 0.1, fiber: 1.4, unit: 'g', def: 150, src: 'USDA' },
+  { id: 'oats', names: ['שיבולת שועל', 'קוואקר', 'דייסה'], per100: [389, 17, 66, 7], sugar: 1, fiber: 10, unit: 'g', def: 40, src: 'USDA' },
 
   // ---- שומנים / ממרחים ----
-  { id: 'tahini', names: ['טחינה'], per100: [595, 17, 21, 54], unit: 'unit', unitGrams: 15, unitLabel: 'כף', def: 2, gout: 'ok', src: 'USDA' },
-  { id: 'hummus', names: ['חומוס'], per100: [177, 8, 20, 9], unit: 'unit', unitGrams: 15, unitLabel: 'כף', def: 3, gout: 'ok', src: 'USDA' },
-  { id: 'avocado', names: ['אבוקדו', 'גוואקמול', 'גואקמול'], per100: [160, 2, 9, 15], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'oliveoil', names: ['שמן זית', 'שמן'], per100: [884, 0, 0, 100], unit: 'unit', unitGrams: 13.5, unitLabel: 'כף', def: 1, src: 'USDA' },
-  { id: 'peanutbutter', names: ['חמאת בוטנים'], per100: [588, 25, 20, 50], unit: 'unit', unitGrams: 16, unitLabel: 'כף', def: 1, src: 'USDA' },
-  { id: 'honey', names: ['דבש'], per100: [304, 0.3, 82, 0], unit: 'unit', unitGrams: 7, unitLabel: 'כפית', def: 1, gout: 'ok', src: 'USDA' },   // כפית = 7 גר'; "כף דבש" מומר ל-3 כפיות
-  { id: 'nuts', names: ['שקדים', 'אגוזים', 'קשיו', 'בוטנים', 'פיסטוק', 'שקד', 'אגוז', 'פיצוחים', 'פיצוח', 'גרעינים', 'גרעיני חמניה'], per100: [579, 21, 22, 50], unit: 'g', def: 28, src: 'USDA' },
+  { id: 'tahini', names: ['טחינה'], per100: [595, 17, 21, 54], sugar: 0.5, fiber: 9, unit: 'unit', unitGrams: 15, unitLabel: 'כף', def: 2, gout: 'ok', src: 'USDA' },
+  { id: 'hummus', names: ['חומוס'], per100: [177, 8, 20, 9], sugar: 0.3, fiber: 6, unit: 'unit', unitGrams: 15, unitLabel: 'כף', def: 3, gout: 'ok', src: 'USDA' },
+  { id: 'avocado', names: ['אבוקדו', 'גוואקמול', 'גואקמול'], per100: [160, 2, 9, 15], sugar: 0.7, fiber: 7, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'oliveoil', names: ['שמן זית', 'שמן'], per100: [884, 0, 0, 100], sugar: 0, fiber: 0, unit: 'unit', unitGrams: 13.5, unitLabel: 'כף', def: 1, src: 'USDA' },
+  { id: 'peanutbutter', names: ['חמאת בוטנים'], per100: [588, 25, 20, 50], sugar: 9, fiber: 6, unit: 'unit', unitGrams: 16, unitLabel: 'כף', def: 1, src: 'USDA' },
+  { id: 'honey', names: ['דבש'], per100: [304, 0.3, 82, 0], sugar: 82, fiber: 0.2, unit: 'unit', unitGrams: 7, unitLabel: 'כפית', def: 1, gout: 'ok', src: 'USDA' },   // כפית = 7 גר'; "כף דבש" מומר ל-3 כפיות
+  { id: 'nuts', names: ['שקדים', 'אגוזים', 'קשיו', 'בוטנים', 'פיסטוק', 'שקד', 'אגוז', 'פיצוחים', 'פיצוח', 'גרעינים', 'גרעיני חמניה'], per100: [579, 21, 22, 50], sugar: 4.4, fiber: 12.5, unit: 'g', def: 28, src: 'USDA' },
   // פקאן ומלך שמנוניים בהרבה מהשקד (691/654 מול 579) — שם ספציפי גובר על 'אגוז' הכללי
-  { id: 'pecan', names: ['אגוזי פקאן', 'אגוז פקאן', 'פקאנים', 'פקאן'], per100: [691, 9.2, 14, 72], unit: 'g', def: 28, gout: 'ok', src: 'USDA' },
-  { id: 'walnut', names: ['אגוזי מלך', 'אגוז מלך'], per100: [654, 15, 14, 65], unit: 'g', def: 28, gout: 'ok', src: 'USDA' },
+  { id: 'pecan', names: ['אגוזי פקאן', 'אגוז פקאן', 'פקאנים', 'פקאן'], per100: [691, 9.2, 14, 72], sugar: 4, fiber: 9.6, unit: 'g', def: 28, gout: 'ok', src: 'USDA' },
+  { id: 'walnut', names: ['אגוזי מלך', 'אגוז מלך'], per100: [654, 15, 14, 65], sugar: 2.6, fiber: 6.7, unit: 'g', def: 28, gout: 'ok', src: 'USDA' },
 
   // ---- ירקות / פירות ----
-  { id: 'salad', names: ['סלט ירקות', 'סלט', 'ירקות'], per100: [25, 1, 5, 0.2], unit: 'g', def: 200, src: 'USDA' },
-  { id: 'coleslaw', names: ['קולסלאו', 'כרוב במיונז'], per100: [150, 1, 13, 11], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
-  { id: 'tomato', names: ['עגבנייה', 'עגבניה', 'עגבניות'], per100: [18, 0.9, 3.9, 0.2], unit: 'unit', unitGrams: 120, unitLabel: 'יח', def: 1, src: 'USDA' },
-  { id: 'apple', names: ['תפוח עץ', 'תפוח '], per100: [52, 0.3, 14, 0.2], unit: 'unit', unitGrams: 180, unitLabel: 'יח', def: 1, src: 'USDA' },
-  { id: 'banana', names: ['בננה', 'בננות'], per100: [89, 1.1, 23, 0.3], unit: 'unit', unitGrams: 120, unitLabel: 'יח', def: 1, src: 'USDA' },
-  { id: 'date', names: ['תמר', 'תמרים'], per100: [282, 2.5, 75, 0.4], unit: 'unit', unitGrams: 8, unitLabel: 'יח', def: 3, src: 'USDA' },
-  { id: 'blueberry', names: ['אוכמניות', 'אוכמנית', 'בלוברי'], per100: [57, 0.7, 14, 0.3], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
+  { id: 'salad', names: ['סלט ירקות', 'סלט', 'ירקות'], per100: [25, 1, 5, 0.2], sugar: 2.5, fiber: 1.5, unit: 'g', def: 200, src: 'USDA' },
+  { id: 'coleslaw', names: ['קולסלאו', 'כרוב במיונז'], per100: [150, 1, 13, 11], sugar: 9, fiber: 1.5, unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
+  { id: 'tomato', names: ['עגבנייה', 'עגבניה', 'עגבניות'], per100: [18, 0.9, 3.9, 0.2], sugar: 2.6, fiber: 1.2, unit: 'unit', unitGrams: 120, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'apple', names: ['תפוח עץ', 'תפוח '], per100: [52, 0.3, 14, 0.2], sugar: 10, fiber: 2.4, unit: 'unit', unitGrams: 180, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'banana', names: ['בננה', 'בננות'], per100: [89, 1.1, 23, 0.3], sugar: 12, fiber: 2.6, unit: 'unit', unitGrams: 120, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'date', names: ['תמר', 'תמרים'], per100: [282, 2.5, 75, 0.4], sugar: 63, fiber: 8, unit: 'unit', unitGrams: 8, unitLabel: 'יח', def: 3, src: 'USDA' },
+  { id: 'blueberry', names: ['אוכמניות', 'אוכמנית', 'בלוברי'], per100: [57, 0.7, 14, 0.3], sugar: 10, fiber: 2.4, unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
 
   // ---- פירות (מדף מלא) ----
-  { id: 'nectarine', names: ['נקטרינה', 'נקטרינ'], per100: [44, 1.1, 11, 0.3], unit: 'unit', unitGrams: 150, unitLabel: 'יח', def: 1, src: 'USDA' },
-  { id: 'peach', names: ['אפרסק'], per100: [39, 0.9, 10, 0.3], unit: 'unit', unitGrams: 150, unitLabel: 'יח', def: 1, src: 'USDA' },
-  { id: 'plum', names: ['שזיף'], per100: [46, 0.7, 11, 0.3], unit: 'unit', unitGrams: 65, unitLabel: 'יח', def: 2, src: 'USDA' },
-  { id: 'apricot', names: ['משמש'], per100: [48, 1.4, 11, 0.4], unit: 'unit', unitGrams: 35, unitLabel: 'יח', def: 3, src: 'USDA' },
-  { id: 'pear', names: ['אגס'], per100: [57, 0.4, 15, 0.1], unit: 'unit', unitGrams: 180, unitLabel: 'יח', def: 1, src: 'USDA' },
-  { id: 'orange', names: ['תפוז'], per100: [47, 0.9, 12, 0.1], unit: 'unit', unitGrams: 140, unitLabel: 'יח', def: 1, src: 'USDA' },
-  { id: 'clementine', names: ['קלמנטינה', 'מנדרינה', 'קלמנטינ', 'מנדרינ'], per100: [53, 0.8, 13, 0.3], unit: 'unit', unitGrams: 75, unitLabel: 'יח', def: 2, src: 'USDA' },
-  { id: 'grapefruit', names: ['אשכולית', 'אשכולי'], per100: [42, 0.8, 11, 0.1], unit: 'unit', unitGrams: 230, unitLabel: 'יח', def: 0.5, src: 'USDA' },
-  { id: 'mango', names: ['מנגו'], per100: [60, 0.8, 15, 0.4], unit: 'g', def: 200, src: 'USDA' },
-  { id: 'pineapple', names: ['אננס'], per100: [50, 0.5, 13, 0.1], unit: 'g', def: 150, src: 'USDA' },
-  { id: 'kiwi', names: ['קיווי'], per100: [61, 1.1, 15, 0.5], unit: 'unit', unitGrams: 75, unitLabel: 'יח', def: 2, src: 'USDA' },
-  { id: 'pomegranate', names: ['רימון'], per100: [83, 1.7, 19, 1.2], unit: 'unit', unitGrams: 180, unitLabel: 'יח', def: 1, src: 'USDA' },
-  { id: 'grapes', names: ['ענבים', 'ענב'], per100: [69, 0.7, 18, 0.2], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'watermelon', names: ['אבטיח'], per100: [30, 0.6, 8, 0.2], unit: 'g', def: 200, src: 'USDA' },
-  { id: 'melon', names: ['מלון'], per100: [34, 0.8, 8, 0.2], unit: 'g', def: 200, src: 'USDA' },
-  { id: 'strawberry', names: ['תות שדה', 'תות'], per100: [32, 0.7, 8, 0.3], unit: 'g', def: 150, src: 'USDA' },
-  { id: 'berries', names: ['פירות יער', 'פירות קפואים', 'תערובת פירות יער'], per100: [45, 0.9, 11, 0.4], unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
-  { id: 'raspberry', names: ['פטל'], per100: [52, 1.2, 12, 0.7], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'cherry', names: ['דובדבן'], per100: [63, 1, 16, 0.2], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'persimmon', names: ['אפרסמון'], per100: [70, 0.6, 18, 0.2], unit: 'unit', unitGrams: 170, unitLabel: 'יח', def: 1, src: 'USDA' },
-  { id: 'fig', names: ['תאנה', 'תאנ'], per100: [74, 0.8, 19, 0.3], unit: 'unit', unitGrams: 50, unitLabel: 'יח', def: 3, src: 'USDA' },
-  { id: 'papaya', names: ['פפאיה'], per100: [43, 0.5, 11, 0.3], unit: 'g', def: 150, src: 'USDA' },
-  { id: 'guava', names: ['גויאבה'], per100: [68, 2.6, 14, 1], unit: 'unit', unitGrams: 55, unitLabel: 'יח', def: 1, src: 'USDA' },
-  { id: 'lychee', names: ["ליצ'י", 'ליצי'], per100: [66, 0.8, 17, 0.4], unit: 'unit', unitGrams: 10, unitLabel: 'יח', def: 6, src: 'USDA' },
-  { id: 'loquat', names: ['שסק'], per100: [47, 0.4, 12, 0.2], unit: 'unit', unitGrams: 15, unitLabel: 'יח', def: 4, src: 'USDA' },
+  { id: 'nectarine', names: ['נקטרינה', 'נקטרינ'], per100: [44, 1.1, 11, 0.3], sugar: 8, fiber: 1.7, unit: 'unit', unitGrams: 150, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'peach', names: ['אפרסק'], per100: [39, 0.9, 10, 0.3], sugar: 8, fiber: 1.5, unit: 'unit', unitGrams: 150, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'plum', names: ['שזיף'], per100: [46, 0.7, 11, 0.3], sugar: 10, fiber: 1.4, unit: 'unit', unitGrams: 65, unitLabel: 'יח', def: 2, src: 'USDA' },
+  { id: 'apricot', names: ['משמש'], per100: [48, 1.4, 11, 0.4], sugar: 9, fiber: 2, unit: 'unit', unitGrams: 35, unitLabel: 'יח', def: 3, src: 'USDA' },
+  { id: 'pear', names: ['אגס'], per100: [57, 0.4, 15, 0.1], sugar: 10, fiber: 3.1, unit: 'unit', unitGrams: 180, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'orange', names: ['תפוז'], per100: [47, 0.9, 12, 0.1], sugar: 9, fiber: 2.4, unit: 'unit', unitGrams: 140, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'clementine', names: ['קלמנטינה', 'מנדרינה', 'קלמנטינ', 'מנדרינ'], per100: [53, 0.8, 13, 0.3], sugar: 11, fiber: 1.8, unit: 'unit', unitGrams: 75, unitLabel: 'יח', def: 2, src: 'USDA' },
+  { id: 'grapefruit', names: ['אשכולית', 'אשכולי'], per100: [42, 0.8, 11, 0.1], sugar: 7, fiber: 1.6, unit: 'unit', unitGrams: 230, unitLabel: 'יח', def: 0.5, src: 'USDA' },
+  { id: 'mango', names: ['מנגו'], per100: [60, 0.8, 15, 0.4], sugar: 13.4, fiber: 1.6, unit: 'g', def: 200, src: 'USDA' },
+  { id: 'pineapple', names: ['אננס'], per100: [50, 0.5, 13, 0.1], sugar: 10, fiber: 1.4, unit: 'g', def: 150, src: 'USDA' },
+  { id: 'kiwi', names: ['קיווי'], per100: [61, 1.1, 15, 0.5], sugar: 9, fiber: 3, unit: 'unit', unitGrams: 75, unitLabel: 'יח', def: 2, src: 'USDA' },
+  { id: 'pomegranate', names: ['רימון'], per100: [83, 1.7, 19, 1.2], sugar: 14, fiber: 4, unit: 'unit', unitGrams: 180, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'grapes', names: ['ענבים', 'ענב'], per100: [69, 0.7, 18, 0.2], sugar: 16, fiber: 0.9, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'watermelon', names: ['אבטיח'], per100: [30, 0.6, 8, 0.2], sugar: 6, fiber: 0.4, unit: 'g', def: 200, src: 'USDA' },
+  { id: 'melon', names: ['מלון'], per100: [34, 0.8, 8, 0.2], sugar: 7.1, fiber: 0.9, unit: 'g', def: 200, src: 'USDA' },
+  { id: 'strawberry', names: ['תות שדה', 'תות'], per100: [32, 0.7, 8, 0.3], sugar: 4.9, fiber: 2, unit: 'g', def: 150, src: 'USDA' },
+  { id: 'berries', names: ['פירות יער', 'פירות קפואים', 'תערובת פירות יער'], per100: [45, 0.9, 11, 0.4], sugar: 7, fiber: 4, unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
+  { id: 'raspberry', names: ['פטל'], per100: [52, 1.2, 12, 0.7], sugar: 4.4, fiber: 6.5, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'cherry', names: ['דובדבן'], per100: [63, 1, 16, 0.2], sugar: 13, fiber: 2.1, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'persimmon', names: ['אפרסמון'], per100: [70, 0.6, 18, 0.2], sugar: 13, fiber: 3.6, unit: 'unit', unitGrams: 170, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'fig', names: ['תאנה', 'תאנ'], per100: [74, 0.8, 19, 0.3], sugar: 16, fiber: 2.9, unit: 'unit', unitGrams: 50, unitLabel: 'יח', def: 3, src: 'USDA' },
+  { id: 'papaya', names: ['פפאיה'], per100: [43, 0.5, 11, 0.3], sugar: 8, fiber: 1.7, unit: 'g', def: 150, src: 'USDA' },
+  { id: 'guava', names: ['גויאבה'], per100: [68, 2.6, 14, 1], sugar: 9, fiber: 5.4, unit: 'unit', unitGrams: 55, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'lychee', names: ["ליצ'י", 'ליצי'], per100: [66, 0.8, 17, 0.4], sugar: 15, fiber: 1.3, unit: 'unit', unitGrams: 10, unitLabel: 'יח', def: 6, src: 'USDA' },
+  { id: 'loquat', names: ['שסק'], per100: [47, 0.4, 12, 0.2], sugar: 9, fiber: 1.7, unit: 'unit', unitGrams: 15, unitLabel: 'יח', def: 4, src: 'USDA' },
 
   // ---- ירקות (מדף מלא) ----
-  { id: 'onion', names: ['בצל סגול', 'בצל ירוק', 'בצל'], per100: [40, 1.1, 9, 0.1], unit: 'g', def: 50, gout: 'ok', src: 'USDA' },
-  { id: 'cucumber', names: ['מלפפון'], per100: [15, 0.7, 3.6, 0.1], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'carrot', names: ['גזר'], per100: [41, 0.9, 10, 0.2], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'pepper', names: ['פלפל'], per100: [31, 1, 6, 0.3], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'lettuce', names: ['חסה'], per100: [15, 1.4, 2.9, 0.2], unit: 'g', def: 50, src: 'USDA' },
-  { id: 'cabbage', names: ['כרוב'], per100: [25, 1.3, 6, 0.1], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'cauliflower', names: ['כרובית'], per100: [25, 1.9, 5, 0.3], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'broccoli', names: ['ברוקולי'], per100: [34, 2.8, 7, 0.4], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'zucchini', names: ['קישוא', 'קוסא', 'כוסא'], per100: [17, 1.2, 3.1, 0.3], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'eggplant', names: ['חציל'], per100: [25, 1, 6, 0.2], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'spinach', names: ['תרד'], per100: [23, 2.9, 3.6, 0.4], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'beet', names: ['סלק'], per100: [43, 1.6, 10, 0.2], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'radish', names: ['צנונית', 'צנון'], per100: [16, 0.7, 3.4, 0.1], unit: 'g', def: 50, src: 'USDA' },
-  { id: 'pumpkin', names: ['דלעת'], per100: [26, 1, 6.5, 0.1], unit: 'g', def: 150, src: 'USDA' },
-  { id: 'butternut', names: ['דלורית'], per100: [45, 1, 12, 0.1], unit: 'g', def: 150, src: 'USDA' },
-  { id: 'kohlrabi', names: ['קולורבי'], per100: [27, 1.7, 6, 0.1], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'greenbeans', names: ['שעועית ירוקה', 'שעועית ירוק'], per100: [31, 1.8, 7, 0.2], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'peas', names: ['אפונה'], per100: [81, 5, 14, 0.4], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'okra', names: ['במיה'], per100: [33, 1.9, 7, 0.2], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'sesame', names: ['שומשום', 'זרעי שומשום'], per100: [573, 17.7, 23, 50], unit: 'unit', unitGrams: 9, unitLabel: 'כף', def: 1, gout: 'ok', src: 'USDA' },
-  { id: 'garlic', names: ['שיני שום', 'שן שום', 'שום'], per100: [149, 6.4, 33, 0.5], unit: 'unit', unitGrams: 3, unitLabel: 'שן', def: 2, gout: 'ok', src: 'USDA' },
+  { id: 'onion', names: ['בצל סגול', 'בצל ירוק', 'בצל'], per100: [40, 1.1, 9, 0.1], sugar: 4.2, fiber: 1.7, unit: 'g', def: 50, gout: 'ok', src: 'USDA' },
+  { id: 'cucumber', names: ['מלפפון'], per100: [15, 0.7, 3.6, 0.1], sugar: 1.7, fiber: 0.5, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'carrot', names: ['גזר'], per100: [41, 0.9, 10, 0.2], sugar: 4.7, fiber: 2.8, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'pepper', names: ['פלפל'], per100: [31, 1, 6, 0.3], sugar: 4.2, fiber: 2.1, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'lettuce', names: ['חסה'], per100: [15, 1.4, 2.9, 0.2], sugar: 0.8, fiber: 1.3, unit: 'g', def: 50, src: 'USDA' },
+  { id: 'cabbage', names: ['כרוב'], per100: [25, 1.3, 6, 0.1], sugar: 3.2, fiber: 2.5, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'cauliflower', names: ['כרובית'], per100: [25, 1.9, 5, 0.3], sugar: 1.9, fiber: 2, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'broccoli', names: ['ברוקולי'], per100: [34, 2.8, 7, 0.4], sugar: 1.7, fiber: 2.6, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'zucchini', names: ['קישוא', 'קוסא', 'כוסא'], per100: [17, 1.2, 3.1, 0.3], sugar: 2.5, fiber: 1, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'eggplant', names: ['חציל'], per100: [25, 1, 6, 0.2], sugar: 3.5, fiber: 3, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'spinach', names: ['תרד'], per100: [23, 2.9, 3.6, 0.4], sugar: 0.4, fiber: 2.2, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'beet', names: ['סלק'], per100: [43, 1.6, 10, 0.2], sugar: 7, fiber: 2.8, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'radish', names: ['צנונית', 'צנון'], per100: [16, 0.7, 3.4, 0.1], sugar: 1.9, fiber: 1.6, unit: 'g', def: 50, src: 'USDA' },
+  { id: 'pumpkin', names: ['דלעת'], per100: [26, 1, 6.5, 0.1], sugar: 2.8, fiber: 0.5, unit: 'g', def: 150, src: 'USDA' },
+  { id: 'butternut', names: ['דלורית'], per100: [45, 1, 12, 0.1], sugar: 2.2, fiber: 2, unit: 'g', def: 150, src: 'USDA' },
+  { id: 'kohlrabi', names: ['קולורבי'], per100: [27, 1.7, 6, 0.1], sugar: 2.6, fiber: 3.6, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'greenbeans', names: ['שעועית ירוקה', 'שעועית ירוק'], per100: [31, 1.8, 7, 0.2], sugar: 3.3, fiber: 2.7, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'peas', names: ['אפונה'], per100: [81, 5, 14, 0.4], sugar: 5.7, fiber: 5, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'okra', names: ['במיה'], per100: [33, 1.9, 7, 0.2], sugar: 1.5, fiber: 3.2, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'sesame', names: ['שומשום', 'זרעי שומשום'], per100: [573, 17.7, 23, 50], sugar: 0.3, fiber: 11.8, unit: 'unit', unitGrams: 9, unitLabel: 'כף', def: 1, gout: 'ok', src: 'USDA' },
+  { id: 'garlic', names: ['שיני שום', 'שן שום', 'שום'], per100: [149, 6.4, 33, 0.5], sugar: 1, fiber: 2.1, unit: 'unit', unitGrams: 3, unitLabel: 'שן', def: 2, gout: 'ok', src: 'USDA' },
   // רוטב פטריות-בצל-שום, מוקפץ: 100 ג' פטריות, 50 בצל, 2 שיני שום ו-1.5 כף
   // שמן זית. 234 קק"ל, שמהם 177 הם השמן. הירקות עצמם הם 57 — כלומר הרוטב
   // הזה הוא בעיקר שמן, גם כשאין בו שמנת, וזה המספר שקל להחמיץ.
   // אין כינוי 'רוטב פטריות ובצל': ' ו' הוא מפריד והכינוי היה קוד מת.
-  { id: 'mushroomsauce', names: ['רוטב פטריות', 'רוטב פטריות שום', 'רוטב פטריות מוקפץ'], per100: [130, 2.4, 4.4, 11.5], unit: 'g', def: 180, gout: 'ok', src: 'הערכה' },
-  { id: 'mushroom', names: ['פטריות', 'פטרייה', 'פטרי'], per100: [22, 3.1, 3.3, 0.3], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'artichoke', names: ['ארטישוק'], per100: [47, 3.3, 11, 0.2], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'asparagus', names: ['אספרגוס'], per100: [20, 2.2, 3.9, 0.1], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'celery', names: ['סלרי'], per100: [16, 0.7, 3, 0.2], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'fennel', names: ['שומר'], per100: [31, 1.2, 7, 0.2], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'arugula', names: ['רוקט'], per100: [25, 2.6, 3.7, 0.7], unit: 'g', def: 50, src: 'USDA' },
-  { id: 'brussels', names: ['כרוב ניצנים', 'ניצנים'], per100: [43, 3.4, 9, 0.3], unit: 'g', def: 100, src: 'USDA' },
-  { id: 'sprouts', names: ['נבטים', 'נבט'], per100: [30, 3, 6, 0.2], unit: 'g', def: 50, src: 'USDA' },
+  { id: 'mushroomsauce', names: ['רוטב פטריות', 'רוטב פטריות שום', 'רוטב פטריות מוקפץ'], per100: [130, 2.4, 4.4, 11.5], sugar: 2, fiber: 1.5, unit: 'g', def: 180, gout: 'ok', src: 'הערכה' },
+  { id: 'mushroom', names: ['פטריות', 'פטרייה', 'פטרי'], per100: [22, 3.1, 3.3, 0.3], sugar: 2, fiber: 1, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'artichoke', names: ['ארטישוק'], per100: [47, 3.3, 11, 0.2], sugar: 1, fiber: 5.4, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'asparagus', names: ['אספרגוס'], per100: [20, 2.2, 3.9, 0.1], sugar: 1.9, fiber: 2.1, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'celery', names: ['סלרי'], per100: [16, 0.7, 3, 0.2], sugar: 1.3, fiber: 1.6, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'fennel', names: ['שומר'], per100: [31, 1.2, 7, 0.2], sugar: 3.9, fiber: 3.1, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'arugula', names: ['רוקט'], per100: [25, 2.6, 3.7, 0.7], sugar: 2, fiber: 1.6, unit: 'g', def: 50, src: 'USDA' },
+  { id: 'brussels', names: ['כרוב ניצנים', 'ניצנים'], per100: [43, 3.4, 9, 0.3], sugar: 2.2, fiber: 3.8, unit: 'g', def: 100, src: 'USDA' },
+  { id: 'sprouts', names: ['נבטים', 'נבט'], per100: [30, 3, 6, 0.2], sugar: 1.5, fiber: 1.8, unit: 'g', def: 50, src: 'USDA' },
 
   // ---- מנות אתניות / מוכנות ----
-  { id: 'laffa', names: ['פיתת לאפה', 'לאפה'], per100: [270, 8, 53, 2.5], unit: 'unit', unitGrams: 100, unitLabel: 'לאפה', def: 1, src: 'הערכה' },
-  { id: 'fries', names: ["צ'יפס", 'צ׳יפס', 'ציפס'], per100: [312, 3.4, 41, 15], unit: 'unit', unitGrams: 7, unitLabel: 'יח', def: 10, src: 'USDA' },
-  { id: 'plov', names: ['פלאוו', 'פלאו', 'פלוב', 'פילאף'], per100: [200, 6, 26, 8], unit: 'g', def: 200, gout: 'high', src: 'הערכה' },
-  { id: 'dushpara', names: ['דושפרה', 'דושפרא', 'דושברה', 'דושפארה'], per100: [250, 10, 22, 14], unit: 'unit', unitGrams: 60, unitLabel: 'יח', def: 1, gout: 'high', src: 'הערכה' },
-  { id: 'khachapuri', names: ["חצ'פורי", 'חצ׳פורי', 'חצפורי', 'קובדארי'], per100: [275, 11, 28, 13], unit: 'unit', unitGrams: 180, unitLabel: 'יח', def: 1, src: 'הערכה' },
-  { id: 'shawarma', names: ['שווארמה', 'שוורמה', 'שווארמא', 'שווארמ'], per100: [230, 24, 1, 15], unit: 'g', def: 130, gout: 'high', src: 'USDA' }, // אנטריקוט עגל
-  { id: 'shawarma_pita', names: ['פיתה שווארמה', 'פיתת שווארמה', 'פיתה שוורמה', 'פיתת שוורמה'], per100: [235, 16, 20, 11], unit: 'unit', unitGrams: 260, unitLabel: 'פיתה', def: 1, gout: 'high', src: 'הערכה' }, // פיתה+~130ג' בשר+טחינה+סלט
-  { id: 'knafeh', names: ['כנאפה', 'קנאפה', 'כנאפ'], per100: [370, 6, 47, 18], unit: 'g', def: 150, gout: 'ok', src: 'הערכה' },
+  { id: 'laffa', names: ['פיתת לאפה', 'לאפה'], per100: [270, 8, 53, 2.5], sugar: 4, fiber: 2.5, unit: 'unit', unitGrams: 100, unitLabel: 'לאפה', def: 1, src: 'הערכה' },
+  { id: 'fries', names: ["צ'יפס", 'צ׳יפס', 'ציפס'], per100: [312, 3.4, 41, 15], sugar: 0.3, fiber: 3.8, unit: 'unit', unitGrams: 7, unitLabel: 'יח', def: 10, src: 'USDA' },
+  { id: 'plov', names: ['פלאוו', 'פלאו', 'פלוב', 'פילאף'], per100: [200, 6, 26, 8], sugar: 3, fiber: 2, unit: 'g', def: 200, gout: 'high', src: 'הערכה' },
+  { id: 'dushpara', names: ['דושפרה', 'דושפרא', 'דושברה', 'דושפארה'], per100: [250, 10, 22, 14], sugar: 2, fiber: 1.5, unit: 'unit', unitGrams: 60, unitLabel: 'יח', def: 1, gout: 'high', src: 'הערכה' },
+  { id: 'khachapuri', names: ["חצ'פורי", 'חצ׳פורי', 'חצפורי', 'קובדארי'], per100: [275, 11, 28, 13], sugar: 2, fiber: 1.5, unit: 'unit', unitGrams: 180, unitLabel: 'יח', def: 1, src: 'הערכה' },
+  { id: 'shawarma', names: ['שווארמה', 'שוורמה', 'שווארמא', 'שווארמ'], per100: [230, 24, 1, 15], sugar: 0, fiber: 0, unit: 'g', def: 130, gout: 'high', src: 'USDA' }, // אנטריקוט עגל
+  { id: 'shawarma_pita', names: ['פיתה שווארמה', 'פיתת שווארמה', 'פיתה שוורמה', 'פיתת שוורמה'], per100: [235, 16, 20, 11], sugar: 3, fiber: 2, unit: 'unit', unitGrams: 260, unitLabel: 'פיתה', def: 1, gout: 'high', src: 'הערכה' }, // פיתה+~130ג' בשר+טחינה+סלט
+  { id: 'knafeh', names: ['כנאפה', 'קנאפה', 'כנאפ'], per100: [370, 6, 47, 18], sugar: 30, fiber: 1, unit: 'g', def: 150, gout: 'ok', src: 'הערכה' },
   // ממולאים = ירק + אורז + בשר. הכינוי המורכב ('קישואים ממולאים') ארוך מ'קישוא' ומ'ממולאים' → גובר,
   // ולכן ממולא לא נספר יותר כירק ריק של 17 קק"ל. ממולא טיפוסי במסעדה ~120 גר'.
-  { id: 'stuffed', names: ['ממולאים', 'ממולא', 'קישואים ממולאים', 'קישוא ממולא', 'קישואים במילוי', 'כרוב ממולא', 'כרובים ממולאים', 'פלפל ממולא', 'פלפלים ממולאים', 'חציל ממולא'], per100: [140, 7, 14, 6], unit: 'unit', unitGrams: 120, unitLabel: 'יח', def: 2, gout: 'high', src: 'הערכה' },
-  { id: 'vineleaves', names: ['עלי גפן', 'עלי גפן ממולאים', 'ורק ענב', 'ורק דוואלי'], per100: [180, 3, 20, 10], unit: 'unit', unitGrams: 25, unitLabel: 'יח', def: 4, gout: 'ok', src: 'הערכה' },
+  { id: 'stuffed', names: ['ממולאים', 'ממולא', 'קישואים ממולאים', 'קישוא ממולא', 'קישואים במילוי', 'כרוב ממולא', 'כרובים ממולאים', 'פלפל ממולא', 'פלפלים ממולאים', 'חציל ממולא'], per100: [140, 7, 14, 6], sugar: 3, fiber: 2.5, unit: 'unit', unitGrams: 120, unitLabel: 'יח', def: 2, gout: 'high', src: 'הערכה' },
+  { id: 'vineleaves', names: ['עלי גפן', 'עלי גפן ממולאים', 'ורק ענב', 'ורק דוואלי'], per100: [180, 3, 20, 10], sugar: 2, fiber: 3, unit: 'unit', unitGrams: 25, unitLabel: 'יח', def: 4, gout: 'ok', src: 'הערכה' },
   // סלט סלק מסעדתי — סלק מבושל עם שמן ולימון, פי 2 מסלק חי.
-  { id: 'beetsalad', names: ['סלט סלק', 'סלט סלקים'], per100: [90, 1.5, 11, 4], unit: 'g', def: 100, gout: 'ok', src: 'הערכה' },
-  { id: 'schug', names: ['סחוג', 'זחוג'], per100: [230, 3, 8, 21], unit: 'unit', unitGrams: 15, unitLabel: 'כף', def: 1, gout: 'ok', src: 'הערכה' },
+  { id: 'beetsalad', names: ['סלט סלק', 'סלט סלקים'], per100: [90, 1.5, 11, 4], sugar: 8, fiber: 2.5, unit: 'g', def: 100, gout: 'ok', src: 'הערכה' },
+  { id: 'schug', names: ['סחוג', 'זחוג'], per100: [230, 3, 8, 21], sugar: 3, fiber: 4, unit: 'unit', unitGrams: 15, unitLabel: 'כף', def: 1, gout: 'ok', src: 'הערכה' },
   // ירק בתנור אינו ירק חי: מסעדה מוסיפה 5-7 גר' שמן ל-100 גר', והמים מתאדים.
   // הכינוי המורכב ('קישואים בתנור') ארוך מ'קישוא' ולכן גובר — אחרת ירק אפוי נספר כ-17 קק"ל.
-  { id: 'vegroast', names: ['ירקות בתנור', 'ירקות אפויים', 'ירקות צלויים', 'ירקות בגריל', 'קישואים בתנור', 'קישוא בתנור', 'קישואים אפויים', 'קישוא אפוי', 'כרוב בתנור', 'כרוב אפוי', 'כרוב צלוי', 'חציל בתנור', 'חציל אפוי'], per100: [95, 2, 11, 5], unit: 'g', def: 200, gout: 'ok', src: 'הערכה' },
+  { id: 'vegroast', names: ['ירקות בתנור', 'ירקות אפויים', 'ירקות צלויים', 'ירקות בגריל', 'קישואים בתנור', 'קישוא בתנור', 'קישואים אפויים', 'קישוא אפוי', 'כרוב בתנור', 'כרוב אפוי', 'כרוב צלוי', 'חציל בתנור', 'חציל אפוי'], per100: [95, 2, 11, 5], sugar: 4, fiber: 3, unit: 'g', def: 200, gout: 'ok', src: 'הערכה' },
 
   // ---- חטיפים / שתייה ----
-  { id: 'bamba', names: ['במבה', 'במבות'], per100: [530, 13, 49, 33], unit: 'g', def: 50, src: 'תווית' },
+  { id: 'bamba', names: ['במבה', 'במבות'], per100: [530, 13, 49, 33], sugar: 5, fiber: 4, unit: 'g', def: 50, src: 'תווית' },
   // טעמי הביסלי חייבים להיות כינויים: 'ביסלי פיצה' מכיל גם 'ביסלי' וגם 'פיצה',
   // ובלי הכינוי המורכב שקית ביסלי הייתה מקבלת משולש פיצה בתוספת.
-  { id: 'bisli', names: ['ביסלי', 'ביסלי פיצה', 'ביסלי פלאפל', 'ביסלי גריל', 'ביסלי בצל', 'ביסלי ברביקיו'], per100: [483, 9, 63, 22], unit: 'unit', unitGrams: 55, unitLabel: 'שקית', def: 1, src: 'הערכה' },
+  { id: 'bisli', names: ['ביסלי', 'ביסלי פיצה', 'ביסלי פלאפל', 'ביסלי גריל', 'ביסלי בצל', 'ביסלי ברביקיו'], per100: [483, 9, 63, 22], sugar: 2, fiber: 3, unit: 'unit', unitGrams: 55, unitLabel: 'שקית', def: 1, src: 'הערכה' },
   // מאפה מתוק (רוגלך/עוגה/בורקס מתוק): שם ספציפי יותר מ"לחם" → גובר במטצ'ר. הערכה לחתיכה ~80 גר'.
   // 'עוגת' אינו 'עוגה' — תי"ו מול ה"א, ולכן כל צירוף "עוגת X" פספס את הפריט
   // הזה לגמרי. "עוגת שוקולד" נספרה כחפיסת שוקולד של 134 במקום פרוסת עוגה של
   // 380. לכל מילוי שהוא מאכל בפני עצמו יש כינוי מורכב שגובר על שניהם, ו'עוגת'
   // לבדו תופס את השאר. אותה משפחה כמו שום/שומן וצנון/צנונית.
-  { id: 'pastry', names: ['מאפה מתוק', 'מאפה', 'רוגלך', 'עוגה', 'עוגת', 'עוגת שוקולד', 'עוגת גבינה', 'עוגת תפוחים', 'עוגת גזר', 'עוגת דבש', 'עוגת תמרים', 'עוגת בננות'], per100: [380, 6, 52, 16], unit: 'unit', unitGrams: 80, unitLabel: 'יח', def: 1, src: 'הערכה' },
+  { id: 'pastry', names: ['מאפה מתוק', 'מאפה', 'רוגלך', 'עוגה', 'עוגת', 'עוגת שוקולד', 'עוגת גבינה', 'עוגת תפוחים', 'עוגת גזר', 'עוגת דבש', 'עוגת תמרים', 'עוגת בננות'], per100: [380, 6, 52, 16], sugar: 24, fiber: 2, unit: 'unit', unitGrams: 80, unitLabel: 'יח', def: 1, src: 'הערכה' },
   // עוגת ביסקוויטים — שכבות ביסקוויט וקרם, בלי אפייה. צפופה יותר מעוגה רגילה
   // ופרוסה שלה גדולה יותר: 100 גרם ולא 80.
-  { id: 'biscuitcake', names: ['עוגת ביסקוויטים', 'עוגת ביסקוויט', 'עוגת הביסקוויטים'], per100: [420, 5, 50, 23], unit: 'unit', unitGrams: 100, unitLabel: 'פרוסה', def: 1, gout: 'ok', src: 'הערכה' },
-  { id: 'coffee', names: ['קפה שחור', 'קפה', 'אספרסו', 'נס '], per100: [2, 0.1, 0, 0], unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, src: 'USDA' },
+  { id: 'biscuitcake', names: ['עוגת ביסקוויטים', 'עוגת ביסקוויט', 'עוגת הביסקוויטים'], per100: [420, 5, 50, 23], sugar: 32, fiber: 1.5, unit: 'unit', unitGrams: 100, unitLabel: 'פרוסה', def: 1, gout: 'ok', src: 'הערכה' },
+  { id: 'coffee', names: ['קפה שחור', 'קפה', 'אספרסו', 'נס '], per100: [2, 0.1, 0, 0], sugar: 0, fiber: 0, unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, src: 'USDA' },
   // בלי 'תה' לבד — הוא יושב בתוך "חביתה" והפך חביתה לכוס תה. רק צירופים מלאים.
-  { id: 'tea', names: ['תה חם', 'כוס תה', 'תה צמחים', 'תה ירוק', 'תה שחור', 'תה נענע'], per100: [1, 0, 0, 0], unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, src: 'USDA' },
+  { id: 'tea', names: ['תה חם', 'כוס תה', 'תה צמחים', 'תה ירוק', 'תה שחור', 'תה נענע'], per100: [1, 0, 0, 0], sugar: 0, fiber: 0, unit: 'unit', unitGrams: 240, unitLabel: 'כוס', def: 1, src: 'USDA' },
   // 'גלידת פיסטוק' חייב להיות ארוך מ'פיסטוק' — אחרת הוא נבלע ע"י האגוזים ונספר 162 קק"ל במקום ~300
   // מילקשייק ביתי: 2 כפות גלידה (130 ג') ו-180 מ"ל חלב 3' = 377 קק"ל, 310 גרם.
   // הגלידה היא 269 מתוך 377. מילקשייק קנוי בבית קפה או בפאסט-פוד הוא כוס
   // גדולה יותר ועשירה יותר — 500-550 — ולכן זה פריט לגרסה הביתית. אין כינוי
   // 'שייק חלב': 'חלב' בתוכו, והוא עצמו בתוך 'שייק חלבון'.
-  { id: 'milkshake', names: ['מילקשייק', 'מילק שייק'], per100: [122, 3.5, 12.7, 6.5], unit: 'unit', unitGrams: 310, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'הערכה' },
-  { id: 'icecream', names: ['גלידה', 'גלידת פיסטוק', 'גלידת שוקולד', 'גלידת וניל', 'גלידת'], per100: [207, 3.5, 24, 11], unit: 'g', def: 140, src: 'USDA' },
+  { id: 'milkshake', names: ['מילקשייק', 'מילק שייק'], per100: [122, 3.5, 12.7, 6.5], sugar: 12, fiber: 0.3, unit: 'unit', unitGrams: 310, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'הערכה' },
+  { id: 'icecream', names: ['גלידה', 'גלידת פיסטוק', 'גלידת שוקולד', 'גלידת וניל', 'גלידת'], per100: [207, 3.5, 24, 11], sugar: 21, fiber: 0.7, unit: 'g', def: 140, src: 'USDA' },
   // 'עוגיות תמרים' חייב להיות ארוך מ'תמר' — אחרת חמש עוגיות נספרו כחמישה תמרים (113 במקום ~500)
-  { id: 'datecookie', names: ['עוגיות תמרים', 'עוגיית תמרים', 'עוגיות תמר', 'עוגיית תמר', 'מעמול'], per100: [420, 5, 62, 17], unit: 'unit', unitGrams: 24, unitLabel: 'יח', def: 1, src: 'הערכה' },
+  { id: 'datecookie', names: ['עוגיות תמרים', 'עוגיית תמרים', 'עוגיות תמר', 'עוגיית תמר', 'מעמול'], per100: [420, 5, 62, 17], sugar: 35, fiber: 4, unit: 'unit', unitGrams: 24, unitLabel: 'יח', def: 1, src: 'הערכה' },
   // 'עוגיות שוקולד' חייב להיות כינוי (ולא ראשון — הוא לא שם התצוגה): אחרת
   // המטצ'ר תופס גם 'עוגיות' וגם
   // 'שוקולד', ומוסיף 134 קק"ל של חפיסת שוקולד שלא הייתה שם.
-  { id: 'cookie', names: ['עוגיות', 'עוגייה', 'עוגיה', 'ביסקוויטים', 'ביסקוויט', 'פתיבר', 'עוגיות שוקולד', 'עוגיית שוקולד', 'עוגית שוקולד'], per100: [470, 5, 65, 21], unit: 'unit', unitGrams: 20, unitLabel: 'יח', def: 1, src: 'USDA' },
+  { id: 'cookie', names: ['עוגיות', 'עוגייה', 'עוגיה', 'ביסקוויטים', 'ביסקוויט', 'פתיבר', 'עוגיות שוקולד', 'עוגיית שוקולד', 'עוגית שוקולד'], per100: [470, 5, 65, 21], sugar: 36, fiber: 2, unit: 'unit', unitGrams: 20, unitLabel: 'יח', def: 1, src: 'USDA' },
   // קראנץ בוטנים, מהתווית שאבי צילם (30.9): 385 קק"ל, 26.2 שומן (15 רווי), 31.2 פחמ' (28.5 סוכר), 7 חלבון — ל-100 ג'.
   // 'חטיף בוטנים' ארוך מ'בוטנים' (כינוי של אגוזים) ולכן מנצח אותו בהתאמה.
-  { id: 'pbbar', names: ['קראנץ בוטנים', 'קראנץ', 'קרנץ', 'חטיף שוקולד בוטנים', 'חטיף בוטנים', 'חטיף שוקולד'], per100: [385, 7, 31.2, 26.2], unit: 'unit', unitGrams: 79, unitLabel: 'חטיף', def: 1, gout: 'ok', src: 'תווית' },
+  { id: 'pbbar', names: ['קראנץ בוטנים', 'קראנץ', 'קרנץ', 'חטיף שוקולד בוטנים', 'חטיף בוטנים', 'חטיף שוקולד'], per100: [385, 7, 31.2, 26.2], sugar: 24, fiber: 3, unit: 'unit', unitGrams: 79, unitLabel: 'חטיף', def: 1, gout: 'ok', src: 'תווית' },
   // נס קפה עם טיפת חלב ~50 מ"ל. בלי הפריט הזה ה'חלב' נספר ככוס מלאה —
   // 144 קק"ל במקום 35, ואבי שותה 3-5 כאלה ביום.
-  { id: 'coffee_splash', names: ['קפה בחלב', 'נס קפה בחלב', 'נס בחלב', 'קפה חלב', 'נס קפה חלב'], per100: [12, 0.6, 0.9, 0.6], unit: 'unit', unitGrams: 290, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'הערכה' },
+  { id: 'coffee_splash', names: ['קפה בחלב', 'נס קפה בחלב', 'נס בחלב', 'קפה חלב', 'נס קפה חלב'], per100: [12, 0.6, 0.9, 0.6], sugar: 0.9, fiber: 0, unit: 'unit', unitGrams: 290, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'הערכה' },
   // "קפה לבן" הוא תערובת קלייה בהירה, לרוב עם תירס או חיטה קלויים, ושותים אותה
   // עם מים רותחים בלבד. באבקה היבשה יש 300-360 ל-100 גרם, אבל האבקה לא נאכלת:
   // מבשלים ומסננים, והכוס עצמה אפסית. אין גרסת חלב — זה לא משקה שקיים.
-  { id: 'coffee_white', names: ['קפה לבן'], per100: [2, 0.1, 0, 0], unit: 'unit', unitGrams: 250, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'הערכה' },
-  { id: 'coffeemilk', names: ['קפה הפוך', 'הפוך', 'קפוצ\'ינו', 'לאטה'], per100: [45, 2.4, 3.4, 1.6], unit: 'unit', unitGrams: 200, unitLabel: 'כוס', def: 1, src: 'הערכה' },
-  { id: 'cola', names: ['קולה', 'קוקה', 'ספרייט', 'פאנטה'], per100: [42, 0, 10.6, 0], unit: 'unit', unitGrams: 330, unitLabel: 'פחית', def: 1, src: 'USDA' },
-  { id: 'coladiet', names: ['זירו', 'דיאט', 'לייט'], per100: [0.4, 0, 0, 0], unit: 'unit', unitGrams: 330, unitLabel: 'פחית', def: 1, src: 'USDA' },
+  { id: 'coffee_white', names: ['קפה לבן'], per100: [2, 0.1, 0, 0], sugar: 0, fiber: 0, unit: 'unit', unitGrams: 250, unitLabel: 'כוס', def: 1, gout: 'ok', src: 'הערכה' },
+  { id: 'coffeemilk', names: ['קפה הפוך', 'הפוך', 'קפוצ\'ינו', 'לאטה'], per100: [45, 2.4, 3.4, 1.6], sugar: 3.4, fiber: 0, unit: 'unit', unitGrams: 200, unitLabel: 'כוס', def: 1, src: 'הערכה' },
+  { id: 'cola', names: ['קולה', 'קוקה', 'ספרייט', 'פאנטה'], per100: [42, 0, 10.6, 0], sugar: 10.6, fiber: 0, unit: 'unit', unitGrams: 330, unitLabel: 'פחית', def: 1, src: 'USDA' },
+  { id: 'coladiet', names: ['זירו', 'דיאט', 'לייט'], per100: [0.4, 0, 0, 0], sugar: 0, fiber: 0, unit: 'unit', unitGrams: 330, unitLabel: 'פחית', def: 1, src: 'USDA' },
 ];
 
 // מיזוג: הטבלה של אבי + כל פריט-זרע שעוד לא קיים אצלו (לפי id). לא דורס עריכות שלו.
@@ -372,8 +376,12 @@ export function mergeFoods(userFoods: FoodItem[] | undefined): FoodItem[] {
   return [...SEED_FOODS, ...mine];
 }
 
-export interface FoodLine { name: string; qty: number; qtyLabel: string; macro: [number, number, number, number] }
-export interface FoodEstimate { lines: FoodLine[]; total: { kcal: number; p: number; c: number; f: number }; notInDB: string[] }
+export interface FoodLine { name: string; qty: number; qtyLabel: string; macro: [number, number, number, number]; sugar: number; fiber: number }
+export interface FoodEstimate {
+  lines: FoodLine[];
+  total: { kcal: number; p: number; c: number; f: number; sugar: number; fiber: number };
+  notInDB: string[];
+}
 
 const FILLER = ['עם', 'של', 'ללא', 'בלי', 'סוכר', 'מלח', 'קינמון', 'וניל', 'נענע', 'מנטה', 'קרח', 'כורכום', 'תמצית', 'שמן', 'בבוקר', 'בערב', 'בצהריים', 'קופסא', 'קופסה', 'גרם', 'גר', "ג'", 'כוס', 'בקבוק', 'מים', 'קצת', 'הרבה', 'ועוד', 'גדול', 'קטן', 'שומן', 'שמן זית', 'לימון'];
 
@@ -531,7 +539,7 @@ function sliceBy(seg: string, hits: Hit[]): { text: string; nameAt: number }[] {
 export function estimateFood(text: string, foods: FoodItem[]): FoodEstimate {
   const lines: FoodLine[] = [];
   const notInDB: string[] = [];
-  const total = { kcal: 0, p: 0, c: 0, f: 0 };
+  const total = { kcal: 0, p: 0, c: 0, f: 0, sugar: 0, fiber: 0 };
   // מפריד: פסיק/נקודה/שורה, וגם מילת החיבור "ו" (הו' תמיד תחילית — נבלעת עם המפריד).
   // "או" לא מפריד — הוא "או" (אותה מנה בשני שמות), כדי לא לספור כפול.
   // חריג לוא"ו החיבור: מילים עבריות שמתחילות בוא"ו הן מעטות, ובלעדיהן "גלידת וניל"
@@ -554,11 +562,18 @@ export function estimateFood(text: string, foods: FoodItem[]): FoodEstimate {
       const { qty, grams } = parseQty(parts[i].text, food, parts[i].nameAt);
       const gramsEq = grams ? qty : (food.unit === 'g' ? qty : qty * (food.unitGrams || 100));
       const macro = food.per100.map(v => Math.round(v * gramsEq / 100)) as [number, number, number, number];
-      lines.push({ name: food.names[0], qty, qtyLabel: grams ? `${qty}ג'` : qtyLabel(food, qty), macro });
+      // סוכר וסיבים נצברים בעשירית הגרם ומעוגלים רק בסוף: עשרים פריטים של
+      // 0.4 גרם סיבים הם 8 גרם, ולא אפס כפי שעיגול פר-שורה היה מראה.
+      const sugar = Math.round(food.sugar * gramsEq) / 100;
+      const fiber = Math.round(food.fiber * gramsEq) / 100;
+      lines.push({ name: food.names[0], qty, qtyLabel: grams ? `${qty}ג'` : qtyLabel(food, qty), macro, sugar, fiber });
       total.kcal += macro[0]; total.p += macro[1]; total.c += macro[2]; total.f += macro[3];
+      total.sugar += sugar; total.fiber += fiber;
     });
   }
 
+  total.sugar = Math.round(total.sugar);
+  total.fiber = Math.round(total.fiber);
   return { lines, total, notInDB: notInDB.slice(0, 4) };
 }
 

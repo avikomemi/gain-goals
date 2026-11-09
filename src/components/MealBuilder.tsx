@@ -115,6 +115,7 @@ export default function MealBuilder() {
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--dim)', marginTop: 8 }}>
               פחמ' {est.total.c} גר' · שומן {est.total.f} גר' (יעד {goals.fat})
+              <br />סוכר {est.total.sugar} גר' · סיבים {est.total.fiber} גר'
             </div>
             <button className="cta mt12" style={{ width: '100%' }} onClick={saveToDiary}>➕ הוסף ליומן של היום</button>
             <button className="ghost mt8" style={{ width: '100%' }} onClick={() => setPicked([])}>נקה</button>

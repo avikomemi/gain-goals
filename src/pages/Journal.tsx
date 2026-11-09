@@ -509,6 +509,14 @@ function HilaResponse({ text, photoCount, waterMl, waterGoal, title, date }: { t
           <span className="pill">חלבון ~<b className="num">{est.total.p}</b>/{g.protein} גר'</span>
           <span className="pill">פחמ' ~<b className="num">{est.total.c}</b> גר'</span>
           <span className="pill">שומן ~<b className="num">{est.total.f}</b> גר'</span>
+          {/* סוכר הוא סה"כ ולא "תוספת סוכר": תמר ויוגורט נספרים בו בדיוק כמו קולה.
+              הצבע מסמן את הסף של ארגון הבריאות, 10% מהאנרגיה — 54 גר' ב-2150. */}
+          <span className="pill" style={{ color: est.total.sugar > 54 ? 'var(--danger)' : est.total.sugar > 36 ? 'var(--acc2)' : undefined }}>
+            סוכר ~<b className="num">{est.total.sugar}</b> גר'
+          </span>
+          <span className="pill" style={{ color: est.total.fiber >= 25 ? 'var(--good)' : undefined }}>
+            סיבים ~<b className="num">{est.total.fiber}</b>/25 גר'
+          </span>
         </div>
       )}
       {hasNums && act && (
