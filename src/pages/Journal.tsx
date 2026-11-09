@@ -512,10 +512,11 @@ function HilaResponse({ text, photoCount, waterMl, waterGoal, title, date }: { t
           {/* הסכום הכולל הוא מידע בלבד ואינו נצבע: סוכר של פרי, ירק וחלב נכנס
               אליו בדיוק כמו קולה, ויום של שלושה פירות ויוגורט מגיע ל-45 גר'
               בלי גרם אחד מוסף. הצבע נקבע רק לפי הסוכר החופשי, שלו באמת שייכים
-              ספי ארגון הבריאות: 27 גר' (5% מהאנרגיה) ו-54 (10%). */}
-          <span className="pill" style={{ color: est.total.freeSugar > 54 ? 'var(--danger)' : est.total.freeSugar > 27 ? 'var(--acc2)' : undefined }}>
+              היעד הוא 27 גר': ההמלצה המחמירה של ארגון הבריאות, 5% מהאנרגיה.
+              זו החלה כאן ולא 10%, כי המשתמש בטווח מטבולי שמצדיק את המחמירה. */}
+          <span className="pill" style={{ color: est.total.freeSugar > 40 ? 'var(--danger)' : est.total.freeSugar > 27 ? 'var(--acc2)' : undefined }}>
             סוכר ~<b className="num">{est.total.sugar}</b> גר'
-            {est.total.sugar > 0 && <small style={{ fontWeight: 400 }}> · מוסף {est.total.freeSugar}</small>}
+            {est.total.sugar > 0 && <small style={{ fontWeight: 400 }}> · מוסף {est.total.freeSugar}/27</small>}
           </span>
           <span className="pill" style={{ color: est.total.fiber >= 25 ? 'var(--good)' : undefined }}>
             סיבים ~<b className="num">{est.total.fiber}</b>/25 גר'
