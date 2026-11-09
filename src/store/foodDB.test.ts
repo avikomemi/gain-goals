@@ -180,14 +180,14 @@ describe('פריט-יחידה עם מספר גדול', () => {
 
 describe('מיזוג המאגר', () => {
   it('פריט-זרע מתעדכן גם אם כבר קיים אצל המשתמש (אחרת תיקונים לא מגיעים למכשיר)', () => {
-    const stale: FoodItem = { id: 'white5', names: ['לבנה 5'], per100: [98, 9, 4.3, 5], sugar: 4, fiber: 0, unit: 'g', def: 100 };
+    const stale: FoodItem = { id: 'white5', names: ['לבנה 5'], per100: [98, 9, 4.3, 5], sugar: 4, freeSugar: 0, fiber: 0, unit: 'g', def: 100 };
     const merged = mergeFoods([stale]);
     const white = merged.find(f => f.id === 'white5')!;
     expect(white.names).toContain('גבינה');          // הכינוי החדש הגיע
     expect(estimateFood('גבינה 125 גרם', merged).lines).toHaveLength(1);
   });
   it('מאכל שאבי הוסיף בעצמו נשמר', () => {
-    const mine: FoodItem = { id: 'my-thing', names: ['התבשיל של אשתי'], per100: [200, 10, 20, 8], sugar: 3, fiber: 2, unit: 'g', def: 300 };
+    const mine: FoodItem = { id: 'my-thing', names: ['התבשיל של אשתי'], per100: [200, 10, 20, 8], sugar: 3, freeSugar: 1, fiber: 2, unit: 'g', def: 300 };
     expect(mergeFoods([mine]).find(f => f.id === 'my-thing')).toEqual(mine);
   });
 });
@@ -1061,6 +1061,27 @@ describe('סלטי מסעדה — שם הסלט גובר על "סלט"', () => {
 
 describe('סוכר וסיבים', () => {
   const est = (x: string) => estimateFood(x, foods).total;
+
+  it('סוכר חופשי לעולם אינו עולה על הסוכר הכולל', () => {
+    const bad = foods.filter(f => f.freeSugar > f.sugar).map(f => `${f.id}: ${f.freeSugar} > ${f.sugar}`);
+    expect(bad).toEqual([]);
+  });
+
+  it('פרי, ירק וחלב — אפס סוכר חופשי', () => {
+    // זו כל ההבחנה: תמר ב-63 גר' סוכר הוא אפס מוסף, קולה ב-10.6 היא הכל מוסף.
+    for (const id of ['date', 'banana', 'apple', 'milk', 'cottage', 'carrot', 'greekfull'])
+      expect(foods.find(f => f.id === id)!.freeSugar).toBe(0);
+    const cola = foods.find(f => f.id === 'cola')!;
+    expect(cola.freeSugar).toBe(cola.sugar);
+    expect(foods.find(f => f.id === 'honey')!.freeSugar).toBe(82);
+  });
+
+  it('יום של פירות ויוגורט אינו יום של סוכר', () => {
+    // זה המקרה שהצבע הקודם צבע בכתום בטעות: 43 גר' סוכר, אפס מוסף.
+    const day = estimateFood('בננה, תפוח עץ, 3 תמרים, יוגורט יווני 200 גרם', foods).total;
+    expect(day.sugar).toBeGreaterThan(35);
+    expect(day.freeSugar).toBe(0);
+  });
 
   it('שניהם חלק מהפחמימות ולא תוספת להן', () => {
     // סוכר + סיבים לא יכולים לעלות על סך הפחמימות — זה אילוץ פיזי, והבדיקה
