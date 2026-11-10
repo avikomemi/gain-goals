@@ -3,11 +3,21 @@
 import React from 'react';
 import { useStore, today } from '../store/store';
 import { getGoals, clampGoal } from '../store/goals';
+import { estimateFood, mergeFoods } from '../store/foodDB';
 
 export default function WaterCard() {
   const { db, update } = useStore();
   const goal = getGoals(db).waterMl;
-  const ml = db.water.find(w => w.date === today())?.ml ?? 0;
+  const manual = db.water.find(w => w.date === today())?.ml ?? 0;
+  // אבי, 10.11.26: תה וקפה נרשמים ביומן האוכל וצריכים להיספר בשתייה.
+  // הם לא מתווספים למונה הידני אלא מוצגים לצדו — המונה הוא מה שהוא לחץ,
+  // וזה מה שנשמר. כאן רק מסכמים את שניהם ליעד.
+  const fromFood = (() => {
+    const txt = db.food.find(f => f.date === today())?.text;
+    if (!txt?.trim()) return 0;
+    return estimateFood(txt, mergeFoods(db.foods)).total.fluidMl;
+  })();
+  const ml = manual + fromFood;
   const pct = Math.min(100, Math.round((ml / goal) * 100));
 
   const addWater = (amt: number) => update(d => {
@@ -26,6 +36,7 @@ export default function WaterCard() {
       <div className="spread" style={{ alignItems: 'baseline' }}>
         <b className="num" style={{ fontSize: 22, color: ml >= goal ? 'var(--good)' : 'inherit' }}>
           {ml} <small style={{ fontSize: 12, fontWeight: 400 }}>מ"ל</small>{ml >= goal && ' ✓'}
+          {fromFood > 0 && <small style={{ fontSize: 11, fontWeight: 400, color: 'var(--dim)' }}> ({manual} + {fromFood} משתייה ביומן)</small>}
         </b>
         <span style={{ fontSize: 12, color: 'var(--dim)', display: 'flex', alignItems: 'center', gap: 6 }}>
           יעד אישי:

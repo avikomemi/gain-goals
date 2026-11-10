@@ -180,14 +180,14 @@ describe('פריט-יחידה עם מספר גדול', () => {
 
 describe('מיזוג המאגר', () => {
   it('פריט-זרע מתעדכן גם אם כבר קיים אצל המשתמש (אחרת תיקונים לא מגיעים למכשיר)', () => {
-    const stale: FoodItem = { id: 'white5', names: ['לבנה 5'], per100: [98, 9, 4.3, 5], sugar: 4, freeSugar: 0, fiber: 0, unit: 'g', def: 100 };
+    const stale: FoodItem = { id: 'white5', names: ['לבנה 5'], per100: [98, 9, 4.3, 5], sugar: 4, freeSugar: 0, fluid: 0, fiber: 0, unit: 'g', def: 100 };
     const merged = mergeFoods([stale]);
     const white = merged.find(f => f.id === 'white5')!;
     expect(white.names).toContain('גבינה');          // הכינוי החדש הגיע
     expect(estimateFood('גבינה 125 גרם', merged).lines).toHaveLength(1);
   });
   it('מאכל שאבי הוסיף בעצמו נשמר', () => {
-    const mine: FoodItem = { id: 'my-thing', names: ['התבשיל של אשתי'], per100: [200, 10, 20, 8], sugar: 3, freeSugar: 1, fiber: 2, unit: 'g', def: 300 };
+    const mine: FoodItem = { id: 'my-thing', names: ['התבשיל של אשתי'], per100: [200, 10, 20, 8], sugar: 3, freeSugar: 1, fluid: 0, fiber: 2, unit: 'g', def: 300 };
     expect(mergeFoods([mine]).find(f => f.id === 'my-thing')).toEqual(mine);
   });
 });
@@ -1056,6 +1056,29 @@ describe('סלטי מסעדה — שם הסלט גובר על "סלט"', () => {
     // 'סלט ים תיכוני' ארוך מ'ים תיכוני' שהוא היוגורט — שניהם במסד
     expect(name('ים תיכוני')).toBe('יוגורט יווני');
     expect(name('יוגורט ים תיכוני')).toBe('יוגורט יווני');
+  });
+});
+
+describe('נוזלים מהיומן', () => {
+  const fl = (x: string) => estimateFood(x, foods).total.fluidMl;
+
+  it('תה וקפה נספרים כנוזל מלא', () => {
+    // הרעיון שקפאין מייבש בצריכה רגילה אינו נכון — הם נוזל לכל דבר.
+    expect(fl('כוס תה')).toBe(240);
+    expect(fl('כוס קפה')).toBe(240);
+    expect(fl('כוס תה, כוס תה, כוס קפה, כוס קפה')).toBe(960);
+  });
+
+  it('מרק ומשקאות נספרים, מאכל מוצק לא', () => {
+    expect(fl('מרק ירקות 350 גרם')).toBe(320);
+    expect(fl('כוס חלב')).toBe(220);
+    expect(fl('קולה')).toBe(330);
+    expect(fl('בננה, עוף 200 גרם, סלט ירקות')).toBe(0);   // מלפפון אינו שתייה
+  });
+
+  it('לכל מאכל יש ערך נוזל, והוא לא עולה על משקלו', () => {
+    const bad = foods.filter(f => !(f.fluid >= 0) || f.fluid > 100).map(f => f.id);
+    expect(bad).toEqual([]);
   });
 });
 
