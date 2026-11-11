@@ -230,7 +230,12 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'walnut', names: ['אגוזי מלך', 'אגוז מלך'], per100: [654, 15, 14, 65], sugar: 2.6, freeSugar: 0, fluid: 0, fiber: 6.7, unit: 'g', def: 28, gout: 'ok', src: 'USDA' },
 
   // ---- ירקות / פירות ----
-  { id: 'salad', names: ['סלט ירקות', 'סלט', 'ירקות'], per100: [25, 1, 5, 0.2], sugar: 2.5, freeSugar: 0, fluid: 0, fiber: 1.5, unit: 'g', def: 200, src: 'USDA' },
+  // ההרכב בפועל: מלפפון ועגבנייה כבסיס, פלפל אדום, גזר, מלפפון חמוץ, ולפעמים
+  // סלק, קולורבי ובצל. תיבול: מלח ולימון בלבד. חישוב התערובת נתן 24.8 ל-100
+  // גרם — ולכן הערך כאן נשאר 25. מה שקובע את המספר הזה הוא שאין שמן: כף שמן
+  // זית מוסיפה 119 קק"ל לקערה ומכפילה אותה, וטחינה עוד יותר. סלט מסעדה אינו
+  // הפריט הזה.
+  { id: 'salad', names: ['סלט ירקות', 'סלט', 'ירקות'], per100: [25, 1, 5, 0.2], sugar: 3, freeSugar: 0, fluid: 0, fiber: 1.5, unit: 'g', def: 200, src: 'USDA' },
   { id: 'coleslaw', names: ['קולסלאו', 'כרוב במיונז'], per100: [150, 1, 13, 11], sugar: 9, freeSugar: 5, fluid: 0, fiber: 1.5, unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
   { id: 'tomato', names: ['עגבנייה', 'עגבניה', 'עגבניות'], per100: [18, 0.9, 3.9, 0.2], sugar: 2.6, freeSugar: 0, fluid: 0, fiber: 1.2, unit: 'unit', unitGrams: 120, unitLabel: 'יח', def: 1, src: 'USDA' },
   { id: 'apple', names: ['תפוח עץ', 'תפוח '], per100: [52, 0.3, 14, 0.2], sugar: 10, freeSugar: 0, fluid: 0, fiber: 2.4, unit: 'unit', unitGrams: 180, unitLabel: 'יח', def: 1, src: 'USDA' },
