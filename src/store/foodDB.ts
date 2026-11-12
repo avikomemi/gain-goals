@@ -162,6 +162,10 @@ export const SEED_FOODS: FoodItem[] = [
   // מ'בקר' ולכן גובר, אחרת הוא נספר כסטייק רזה יותר ב-90 קק"ל ל-100 גרם.
   // פורינים גבוהים כמו כל בקר, ועם שומן רווי כפול מאנטריקוט.
   { id: 'shortrib', names: ['אסאדו', 'שפונדרה', 'צלעות בקר', 'צלעות קצרות', 'פלאנקן'], per100: [360, 15, 0, 33], sugar: 0, freeSugar: 0, fluid: 0, fiber: 0, unit: 'g', def: 150, gout: 'high', src: 'USDA' },
+  // כנפיים מזוגגות במסעדה — טריאקי, צ'ילי מתוק או ברביקיו. כנף קטנה היא 28 גר'
+  // כולל עצם. הזיגוג הוא סירופ סוכר: 8 גר' ל-100, כולו חופשי, וזה מה שמבדיל
+  // אותן מכל עוף אחר במסד. 'כנפי עוף' ארוך מ'עוף' ולכן גובר.
+  { id: 'wings', names: ['כנפיים', 'כנפי עוף', 'כנפיים בטריאקי', 'כנפי עוף בטריאקי', 'כנף עוף'], per100: [300, 24, 8, 19], sugar: 8, freeSugar: 8, fluid: 0, fiber: 0, unit: 'unit', unitGrams: 28, unitLabel: 'יח', def: 6, gout: 'ok', src: 'הערכה' },
   { id: 'kebab', names: ['קבבונים', 'קבבון', 'קבב'], per100: [265, 17, 3, 21], sugar: 1, freeSugar: 0.5, fluid: 0, fiber: 0.2, unit: 'unit', unitGrams: 50, unitLabel: 'יח', def: 2, gout: 'high', src: 'USDA' },
   // גרסת עוף/הודו — בלי דגל גאוט, ורזה בהרבה. נפרד כי ההבדל מהותי לאבי.
   { id: 'kebab_poultry', names: ['קבבוני הודו', 'קבבוני עוף', 'קבב הודו', 'קבב עוף'], per100: [170, 20, 3, 9], sugar: 1, freeSugar: 0.5, fluid: 0, fiber: 0.2, unit: 'unit', unitGrams: 50, unitLabel: 'יח', def: 2, gout: 'ok', src: 'USDA' },
@@ -200,6 +204,8 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'burger_meal', names: ['מנת המבורגר', 'המבורגר במסעדה', 'המבורגר מהמעשנה'], per100: [316, 12, 22, 20], sugar: 5, freeSugar: 3, fluid: 0, fiber: 2, unit: 'unit', unitGrams: 500, unitLabel: 'מנה', def: 1, gout: 'high', src: 'הערכה' },
   { id: 'bun', names: ['לחמנייה', 'לחמניה', 'לחמנית'], per100: [290, 9, 50, 5], sugar: 6, freeSugar: 4, fluid: 0, fiber: 2, unit: 'unit', unitGrams: 90, unitLabel: 'יח', def: 1, src: 'USDA' },
   { id: 'sweetfries', names: ["צ'יפס בטטה", 'צ׳יפס בטטה', 'ציפס בטטה'], per100: [190, 2, 25, 9], sugar: 7, freeSugar: 0, fluid: 0, fiber: 3.5, unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
+  // רוטב ברביקיו / טריאקי / צ'ילי מתוק — שלושתם סירופ סוכר בבסיסם. רובו חופשי.
+  { id: 'bbqsauce', names: ['רוטב ברביקיו', 'ברביקיו', 'רוטב טריאקי', 'טריאקי', "צ'ילי מתוק", 'צילי מתוק'], per100: [160, 1, 38, 0.5], sugar: 33, freeSugar: 31, fluid: 0, fiber: 0.5, unit: 'g', def: 30, gout: 'ok', src: 'USDA' },
   { id: 'aioli', names: ['אייולי', 'איולי', 'אייולי שום'], per100: [680, 1, 3, 74], sugar: 1, freeSugar: 1, fluid: 0, fiber: 0, unit: 'g', def: 35, gout: 'ok', src: 'USDA' },
   { id: 'padthai', names: ['פד תאי', 'פאד תאי', 'פד צאי', 'פאד צאי', 'פדתאי'], per100: [180, 8, 23, 6], sugar: 6, freeSugar: 5, fluid: 0, fiber: 1.5, unit: 'g', def: 250, gout: 'ok', src: 'הערכה' },
   { id: 'pasta', names: ['פסטה', 'אטריות', 'נודל', 'ספגטי', 'ספגטני'], per100: [157, 5.8, 31, 0.9], sugar: 0.6, freeSugar: 0, fluid: 0, fiber: 1.8, unit: 'g', def: 150, src: 'USDA' },
