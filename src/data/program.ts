@@ -32,6 +32,8 @@ export interface ExerciseDef {
   tips?: string[];         // טיפים משתנים בקול הצוות — מוצג אחד לכל אימון, מתחלף (סעיף 5)
   harder?: string;         // איך מקשים בלי להוסיף עומס — לתרגילי שיקום, שבהם "קל מדי" לא פותרים במשקל
   cues?: string[];         // דגשים שמוצגים תמיד, לא מתחלפים — לתרגיל שנתקעים בו וצריך אותם מול העיניים
+  tempoSec?: number;       // תרגיל טמפו: שניות לירידה אחת. מפעיל טיימר בצליל נפרד,
+  //   כי בלי קצב קבוע אין מה להשוות בין אימונים — אותן חמש חזרות הן 50 שניות או 75.
 }
 
 // 'P' = דף הפיזיותרפיה. אימון נפרד לחלוטין — לא חלק מסבב ABC, נבחר ידנית.
@@ -80,12 +82,22 @@ export const PROGRAM: RoutineDef[] = [
         tips: ['עמית: קופסה נמוכה, 15-20 ס"מ בלבד — נפיצות, לא גובה. הברכיים לפני האגו.', 'טל: כל הכוח בדחיפה למעלה, ירידה מבוקרת. לא קופצים חזרה למטה.', 'נעה: הכוח מהעקב של הרגל העובדת — משם, לא מהאצבעות.', 'מאיה: כאב ברך? מורידים גובה או עוברים ל-Broad Jump קצר. בלי גבורה.'] },
       { id: 'a-press', name: 'Overhead Press', target: '3×6-8', setsDefault: 3, repsDefault: 8, weighted: true, area: 'כתף', gym: { name: 'Single KB Press', note: 'יד חופשית בתנועה הפוכה' }, home: { name: 'Pike Push-Up', note: 'התקדמות הדרגתית' },
         tips: ['רז: אגרוף סגור, שורש כף יד ישר — כמו מכת אגרוף כלפי מעלה.', 'נעה: צלעות סגורות, בלי קשת בגב. הכוח מהכתף, לא מהגב התחתון.', 'עמית: יד חופשית בתנועה הפוכה — מייצב את הליבה ומחקה תנועה קרבית.', 'טל: נשיפה בדחיפה למעלה, שאיפה בירידה. הנשימה היא חצי מהכוח.'] },
-      { id: 'a-hinge', name: 'Explosive Hinge', target: '3×10', setsDefault: 3, repsDefault: 10, weighted: true, area: 'גב תחתון', gym: { name: 'KB Swing', note: '⚠️ גב ניטרלי — בלי קשת בסיום' }, home: { name: 'Backpack Swing', note: 'אותם דגשים' },
+      // המכון החדש מוגבל ל-24 ק"ג, ואבי כבר עושה סינגל-ארם. דד-סטופ מקשה בלי להוסיף
+      // ולו קילו: כל חזרה מתחילה מהרצפה, בלי התנופה האלסטית מהחזרה הקודמת — כוח
+      // התנעה טהור. וכל חזרה היא איפוס תנוחה, מה שחשוב עם הליסתזיס.
+      // 5-8 לכל יד ולא 15: זה תרגיל כוח, לא קונדישן.
+      { id: 'a-hinge', name: 'Explosive Hinge', target: '3×5-8 לכל יד', setsDefault: 3, repsDefault: 6, weighted: true, area: 'גב תחתון', gym: { name: 'Dead-Stop Single-Arm Swing', note: '⚠️ גב ניטרלי · הקטלבל נח על הרצפה בין חזרות · עובר גבוה בין הירכיים' }, home: { name: 'Backpack Swing', note: 'אותם דגשים' },
         tips: ['נעה: זה ציר ירכיים, לא סקוואט. הישבן אחורה, הגב ישר כמו סרגל.', 'מאיה: בלי קשת בסוף! הכוח מהישבן, נועלים בטן — הגב נשאר ניטרלי.', 'רז: הקטלבל צף מתנופת הירכיים, לא מהידיים. גיוס תנע נקי.', 'עמית: חם ורחוק מהמזגן. תנועת גב מתפרצת על גוף קר = השבתה.'] },
-      { id: 'a-squat', name: 'Tempo Squat', target: '3×5', setsDefault: 3, repsDefault: 5, weighted: true, area: 'ברך', gym: { name: 'Tempo Goblet Squat' }, home: { note: 'איטי, גו זקוף, תיק אם קל' },
+      // אבי, 13.11.26: "עמים הירידה לסקוואט היא 15 שניות ולפעמים 10" — והמשקל (6 ק"ג)
+      // מעולם לא היה העומס כאן. הזמן תחת מתח הוא העומס, והוא לא היה מדיד.
+      // 10 שניות קבועות + טיימר. מתקדמים בחזרות (5→6→7) ואחר כך בשניות (10→12).
+      { id: 'a-squat', name: 'Tempo Squat', target: '5 × ירידה של 10 שניות', setsDefault: 5, repsDefault: 1, weighted: true, tempoSec: 10, area: 'ברך', gym: { name: 'Tempo Goblet Squat' }, home: { note: 'איטי, גו זקוף, תיק אם קל' },
         tips: ['עמית: איטי בירידה, 3 שניות, שליטה מלאה. הטמפו הוא האימון, לא המשקל.', 'נעה: עקבים דבוקים לרצפה, גו זקוף. עומק עד כמה שהברך שקטה.', 'מאיה: ברך מעל האצבעות, לא פנימה. עצירה לפני כל כאב.', 'טל: נשיפה בדחיפה למעלה — דוחפים את הרצפה, לא רק קמים.'] },
       { id: 'a-pyramid', name: 'Energy Burst', target: '4×30 שנ\'', setsDefault: 4, repsDefault: 30, timeBased: true,
-        gym: { name: 'Push-Up Pyramid', target: '8 פירמידות · 1→8', note: 'פירמידה עולה: שכיבה אחת → ג\'אמפינג ג\'ק → 2 שכיבות → ג\'אמפינג ג\'ק → ... עד 8. ג\'אמפינג ג\'ק אחד בין כל מדרגה. 8 פירמידות, 3 דק\' מנוחה ביניהן.', setsDefault: 8, repsDefault: 36, timeBased: false, restDefault: 180 },
+        // היעד היה "8 פירמידות" — 30+ דקות על תרגיל אחד, ואבי עשה אחת בכל פעם מאז
+        // שהתרגיל נכנס. המספר נכתב פעם ולא נבדק מול המציאות. עכשיו הוא 1, וההתקדמות
+        // היא להאריך את הפירמידה: 1→8 (36 שכיבות) → 1→9 (45) → 1→10 (55).
+        gym: { name: 'Push-Up Pyramid', target: 'פירמידה אחת · 1→8', note: 'פירמידה עולה: שכיבה אחת → ג\'אמפינג ג\'ק → 2 שכיבות → ג\'אמפינג ג\'ק → ... עד 8. ג\'אמפינג ג\'ק אחד בין כל מדרגה. פירמידה אחת, ברצף.', setsDefault: 1, repsDefault: 36, timeBased: false, restDefault: 180 },
         home: { name: 'Shadow Boxing Rounds', note: 'קומבינציות מהירות — מחליף ברפי' },
         tips: ['טל: זה פיניישר — קצב רציף בתוך הפירמידה, הג\'אמפינג ג\'ק שומר דופק. 3 דקות מנוחה בין פירמידה לפירמידה, ואז שוב.', 'רז: שכיבות נקיות, גוף ישר כמו קרש — גם בשלב 8. איכות לפני מספר.', 'מאיה: ג\'אמפינג ג\'ק בנחיתה רכה על כריות כף הרגל, ברכיים רכות. כואב ברך/גב? מהלך צד נמוך במקום קפיצה.', 'עמית: מחליף את האינטרוולים — כל האנרגיה, בלי מכונה. 8 פירמידות זה הרבה; אם נגמר הדלק, עוצרים ביושר.'] },
       { id: 'a-flow', name: 'FLOW', target: '3 סבבים', setsDefault: 3, repsDefault: 1, note: 'משחק תנועה על הקרקע — מעברים, גלגולים, קימות',
@@ -286,9 +298,10 @@ export function exNote(ex: ExerciseDef, loc: Loc): string | undefined {
 }
 
 // מבנה אפקטיבי פר-מיקום: הגרסה (חדר/בית) גוברת על הבסיס. מאפשר תרגיל שונה בחדר ובבית.
-export function exStruct(ex: ExerciseDef, loc: Loc): { setsDefault: number; repsDefault: number; timeBased?: boolean; weighted?: boolean; restDefault?: number; target: string } {
+export function exStruct(ex: ExerciseDef, loc: Loc): { setsDefault: number; repsDefault: number; timeBased?: boolean; weighted?: boolean; restDefault?: number; target: string; tempoSec?: number } {
   const v = loc === 'home' ? ex.home : ex.gym;
   return {
+    tempoSec: (v as { tempoSec?: number } | undefined)?.tempoSec ?? ex.tempoSec,
     setsDefault: v?.setsDefault ?? ex.setsDefault,
     repsDefault: v?.repsDefault ?? ex.repsDefault,
     timeBased: v?.timeBased ?? ex.timeBased,

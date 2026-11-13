@@ -12,20 +12,30 @@
  * שאפשר יהיה לנגן אותו אחר כך בלי מחווה. Web Audio נשאר גיבוי, ואחריו רטט.
  */
 
-// הצליל: שלושה ביפים חדים (880 → 1245 → 880) שנשמעים גם מעל מוזיקה.
+// שני צלילים, ובכוונה שונים מאוד זה מזה:
+//   end   — שלושה ביפים גבוהים וחדים (880 → 1245 → 880). "הסט נגמר".
+//   tempo — ביפ בודד, נמוך וקצר. "סיימת ירידה" בתוך סט טמפו.
+// אבי, 13.11.26: הטיימר של הטמפו חייב צליל אחר משל סיום התרגיל, אחרת
+// באמצע סט של חמש ירידות אי אפשר לדעת מה נגמר.
 const RATE = 22050;
 const LEAD = 0.15;   // שקט בהתחלה — מאפשר "חימום" שקט של האלמנט (play+pause מיידי)
-const BEEPS = [0, 0.3, 0.6].map((at, i) => ({ at: LEAD + at, freq: i === 1 ? 1245 : 880 }));
-const DUR = LEAD + 0.9;
 
-let wavUrl: string | null = null;
-let el: HTMLAudioElement | null = null;
+type Tone = 'end' | 'tempo';
+const PROFILE: Record<Tone, { beeps: { at: number; freq: number }[]; dur: number }> = {
+  end:   { beeps: [0, 0.3, 0.6].map((at, i) => ({ at: LEAD + at, freq: i === 1 ? 1245 : 880 })), dur: LEAD + 0.9 },
+  tempo: { beeps: [{ at: LEAD, freq: 523 }], dur: LEAD + 0.4 },
+};
+const BEEPS = PROFILE.end.beeps;   // הגיבוי של Web Audio לצלצול הסיום
+
+const wavUrl: Partial<Record<Tone, string>> = {};
+const els: Partial<Record<Tone, HTMLAudioElement>> = {};
 let ac: AudioContext | null = null;
 let primed = false;   // האלמנט נוגן פעם אחת בתוך מחוות משתמש → מותר לנגן אותו מעכשיו
 let armed = false;    // מאזיני המחווה כבר נרשמו
 
 /** WAV קצר שנבנה בזמן ריצה — כדי לא לגרור קובץ בינארי לריפו */
-function buildWav(): string {
+function buildWav(tone: Tone): string {
+  const { beeps, dur: DUR } = PROFILE[tone];
   const n = Math.round(RATE * DUR);
   const view = new DataView(new ArrayBuffer(44 + n * 2));
   const ascii = (off: number, s: string) => { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); };
@@ -36,7 +46,7 @@ function buildWav(): string {
   for (let i = 0; i < n; i++) {
     const t = i / RATE;
     let v = 0;
-    for (const b of BEEPS) {
+    for (const b of beeps) {
       const dt = t - b.at;
       if (dt < 0 || dt > 0.34) continue;
       const env = Math.min(1, dt / 0.005) * Math.exp(-dt * 11); // attack קצר + דעיכה
@@ -47,17 +57,18 @@ function buildWav(): string {
   return URL.createObjectURL(new Blob([view.buffer], { type: 'audio/wav' }));
 }
 
-function audioEl(): HTMLAudioElement | null {
-  if (el || typeof Audio === 'undefined') return el;
+function audioEl(tone: Tone = 'end'): HTMLAudioElement | null {
+  if (els[tone] || typeof Audio === 'undefined') return els[tone] ?? null;
   try {
-    if (!wavUrl) wavUrl = buildWav();
-    el = new Audio(wavUrl);
-    el.preload = 'auto';
+    if (!wavUrl[tone]) wavUrl[tone] = buildWav(tone);
+    const a = new Audio(wavUrl[tone]);
+    a.preload = 'auto';
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (el as any).playsInline = true;
-    el.load();
-  } catch { el = null; }
-  return el;
+    (a as any).playsInline = true;
+    a.load();
+    els[tone] = a;
+  } catch { delete els[tone]; }
+  return els[tone] ?? null;
 }
 
 function webAudio(): AudioContext | null {
@@ -99,15 +110,22 @@ export async function primeBell(): Promise<void> {
     } catch { /* אין Web Audio — יש את האלמנט */ }
   }
 
-  const e = audioEl();
-  if (!e || primed) return;
-  try {
-    e.currentTime = 0;
-    await e.play();
-    e.pause();
-    e.currentTime = 0;
-    primed = true;
-  } catch { primed = false; }
+  // שני האלמנטים מחוממים באותה מחווה. אם רק הראשון יחומם, צליל הטמפו ייחסם
+  // באייפון בפעם הראשונה שנצטרך אותו — ואז דווקא הוא לא יישמע.
+  if (primed) return;
+  let ok = false;
+  for (const tone of ['end', 'tempo'] as const) {
+    const e = audioEl(tone);
+    if (!e) continue;
+    try {
+      e.currentTime = 0;
+      await e.play();
+      e.pause();
+      e.currentTime = 0;
+      ok = true;
+    } catch { /* ננסה את הבא; אם שניהם נכשלו primed נשאר false */ }
+  }
+  primed = ok;
 }
 
 /** רישום חד-פעמי: המחווה הראשונה באפליקציה מחממת את הצליל */
@@ -155,7 +173,7 @@ function ringWebAudio(): boolean {
  */
 export async function ringBell(): Promise<boolean> {
   vibrate();
-  const e = audioEl();
+  const e = audioEl('end');
   if (e) {
     try {
       e.currentTime = 0;
@@ -164,6 +182,32 @@ export async function ringBell(): Promise<boolean> {
     } catch { /* נחסם (לא חומם / חוסם אוטומטי) — ננסה Web Audio */ }
   }
   return ringWebAudio();
+}
+
+/**
+ * צליל הטמפו — ביפ בודד ונמוך, לסיום ירידה בתוך סט. שונה בכוונה מצלצול הסיום.
+ * רטט קצר ויחיד, לא התבנית של סוף הסט.
+ */
+export async function ringTempo(): Promise<boolean> {
+  try { navigator.vibrate?.(120); } catch { /* לא נתמך */ }
+  const e = audioEl('tempo');
+  if (e) {
+    try { e.currentTime = 0; await e.play(); return true; } catch { /* ננסה Web Audio */ }
+  }
+  const a = webAudio();
+  if (!a) return false;
+  try {
+    if (a.state === 'suspended') { void a.resume().catch(() => { /* ויזואלי בלבד */ }); return false; }
+    const osc = a.createOscillator(); const g = a.createGain();
+    osc.type = 'square'; osc.frequency.value = PROFILE.tempo.beeps[0].freq;
+    const t0 = a.currentTime;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.5, t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.25);
+    osc.connect(g); g.connect(a.destination);
+    osc.start(t0); osc.stop(t0 + 0.27);
+    return true;
+  } catch { return false; }
 }
 
 /** האם הצליל חומם ומוכן לנגן בסוף הטיימר */

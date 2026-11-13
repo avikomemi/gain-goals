@@ -5,7 +5,7 @@ import { useStore, today, WorkoutLog, ExLog } from '../store/store';
 import { workoutMinutes, workoutKcal, workoutRpe, intensityLabel, kravKcal } from '../store/effort';
 import { nextRoutine, direction, sleepAdvice } from '../store/adi';
 import { heDate } from '../components/bits';
-import { ringBell, primeBell } from '../lib/bell';
+import { ringBell, primeBell, ringTempo } from '../lib/bell';
 import { keepAwake } from '../lib/wakeLock';
 
 type Phase = 'pick' | 'warmup' | 'live' | 'injury' | 'flex' | 'done' | 'krav' | 'backday' | 'order';
@@ -71,6 +71,8 @@ export default function Workout() {
   // סעיף 6 — בלוק גמישות אינטראקטיבי: צ'קבוקס פר-מתיחה + טיימר למתיחות מתוזמנות (מעקב תוך-אימון, לא נשמר ביומן)
   const [flexChecked, setFlexChecked] = useState<Record<number, boolean>>({});
   const [flexTimer, setFlexTimer] = useState<{ i: number; endAt: number } | null>(null);
+  // טיימר טמפו — ירידה אחת בתרגיל טמפו. צליל נפרד משל סוף הסט.
+  const [tempo, setTempo] = useState<{ endAt: number; sec: number } | null>(null);
 
   // סעיף 11 — פאנל כאב מהיר (בלי לעזוב את מסך האימון)
   const [painOpen, setPainOpen] = useState(false);
@@ -112,13 +114,13 @@ export default function Workout() {
   // כל עוד טיימר רץ — מסך דלוק (אחרת הדפדפן מקפיא את הטיימר ואין צלצול)
   // וגם: חזרה למסך אחרי הקפאה מעדכנת מיד את השעון, כדי שהצלצול לא יחכה לתיקתוק הבא
   useEffect(() => {
-    const active = !!restEndAt || !!flexTimer;
+    const active = !!restEndAt || !!flexTimer || !!tempo;
     keepAwake(active);
     if (!active) return;
     const wake = () => { if (document.visibilityState === 'visible') setNow(Date.now()); };
     document.addEventListener('visibilitychange', wake);
     return () => { document.removeEventListener('visibilitychange', wake); keepAwake(false); };
-  }, [restEndAt, flexTimer]);
+  }, [restEndAt, flexTimer, tempo]);
 
   // צלצול כשהמנוחה נגמרה (סעיף 2) — כולל צלצול מיידי בחזרה אם הזמן כבר עבר (סעיף 7ב)
   useEffect(() => {
@@ -138,6 +140,16 @@ export default function Workout() {
       setFlexTimer(null);
     }
   }, [now, flexTimer]);
+
+  // טיימר הטמפו: תיקתוק צפוף (הירידה היא 10 שניות, לא 60) וצליל נפרד בסיום
+  useEffect(() => {
+    if (!tempo) return;
+    const iv = setInterval(() => setNow(Date.now()), 100);
+    return () => clearInterval(iv);
+  }, [tempo]);
+  useEffect(() => {
+    if (tempo && now >= tempo.endAt) { void ringTempo(); setTempo(null); }
+  }, [now, tempo]);
 
   // שימור מצב אימון חי ל-localStorage (סעיף 12) — נמחק כשהאימון נגמר/ננטש
   useEffect(() => {
@@ -470,6 +482,24 @@ export default function Workout() {
             </div>
           ))}
         </div>
+        {st.tempoSec && (() => {
+          // טיימר הירידה. בלי קצב קבוע אותן חמש חזרות הן 50 שניות או 75, ואין
+          // מה להשוות בין אימונים. הצליל כאן נמוך ובודד — שונה מצלצול סוף הסט.
+          const left = tempo ? Math.max(0, (tempo.endAt - now) / 1000) : 0;
+          return (
+            <div className="field" style={{ marginTop: 12 }}>
+              <label>קצב הירידה · {st.tempoSec} שניות לחזרה</label>
+              <button className="cta" style={{ width: '100%', background: tempo ? 'var(--acc2)' : undefined }}
+                onClick={() => { void primeBell(); if (tempo) setTempo(null); else { setNow(Date.now()); setTempo({ endAt: Date.now() + st.tempoSec! * 1000, sec: st.tempoSec! }); } }}>
+                {tempo ? `⏱ ${left.toFixed(1)} — לחץ לעצור` : `▶︎ התחל ירידה · ${st.tempoSec} שנ'`}
+              </button>
+              <div style={{ fontSize: 11.5, color: 'var(--dim)', marginTop: 6, lineHeight: 1.5 }}>
+                מתקדמים בחזרות קודם (5 → 6 → 7), ורק אחר כך בשניות. המשקל לא זז.
+              </div>
+            </div>
+          );
+        })()}
+
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="addset" style={{ flex: 1 }} onClick={() => setLogAt(e => { e.sets.push({ ...e.sets[e.sets.length - 1], done: false }); })}>+ הוסף סט</button>
           {exLog.sets.length > 1 && (
