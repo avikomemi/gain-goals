@@ -61,7 +61,7 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'cottage', names: ['קוטג'], per100: [95, 11, 1.5, 5], sugar: 1.5, freeSugar: 0, fluid: 0, fiber: 0, unit: 'g', def: 125, gout: 'ok', src: 'OFF' },
   { id: 'white5', names: ['גבינה לבנה', 'לבנה 5', 'לבנה 3', 'לבנה 9', 'גבינה רזה', 'גבינה 5', 'גבינה 3', 'גבינה 9', 'גבינה'], per100: [98, 9, 4.3, 5], sugar: 4, freeSugar: 0, fluid: 0, fiber: 0, unit: 'g', def: 100, gout: 'ok', src: 'OFF' },
   { id: 'bulgarit', names: ['גבינה בולגרית', 'גבינה צפתית', 'בולגרית', 'פטה', 'צפתית', 'פטא'], per100: [130, 11, 2, 9], sugar: 2, freeSugar: 0, fluid: 0, fiber: 0, unit: 'g', def: 50, gout: 'ok', src: 'תווית' },
-  { id: 'yellow', names: ['גבינה צהובה', 'צהובה', 'עמק', 'גאודה', 'מוצרלה', 'קשקבל'], per100: [350, 25, 1, 27], sugar: 1, freeSugar: 0, fluid: 0, fiber: 0, unit: 'g', def: 30, gout: 'ok', src: 'USDA' },
+  { id: 'yellow', names: ['גבינה צהובה', 'צהובה', 'עמק', 'גאודה', 'מוצרלה', 'קשקבל', "גבינת צ'דר", "צ'דר", 'צדר', 'פרמזן'], per100: [350, 25, 1, 27], sugar: 1, freeSugar: 0, fluid: 0, fiber: 0, unit: 'g', def: 30, gout: 'ok', src: 'USDA' },
   { id: 'egg', names: ['ביצה', 'ביצים', 'חביתה', 'אומלט'], per100: [143, 13, 0.7, 10], sugar: 0, freeSugar: 0, fluid: 0, fiber: 0, unit: 'unit', unitGrams: 50, unitLabel: 'ביצה', def: 2, gout: 'ok', src: 'USDA' },
   // אבי ביקש גמישות: סלמון ושוקולד הם חלק מהתוכנית, לא חריגה ממנה — אז הם במאגר
   { id: 'salmon', names: ['סלמון'], per100: [208, 22, 0, 13], sugar: 0, freeSugar: 0, fluid: 0, fiber: 0, unit: 'g', def: 150, gout: 'ok', src: 'USDA' },
@@ -70,7 +70,7 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'darkchoc', names: ['שוקולד מריר'], per100: [598, 7.8, 46, 43], sugar: 24, freeSugar: 24, fluid: 0, fiber: 11, unit: 'g', def: 25, src: 'USDA' },
   { id: 'choc', names: ['שוקולד חלב', 'שוקולד'], per100: [535, 7.6, 59, 30], sugar: 52, freeSugar: 52, fluid: 0, fiber: 3.4, unit: 'g', def: 25, src: 'USDA' },
   // מזונות נפח — הרבה שובע במעט קלוריות, הפתרון לרעב שמוביל לשטויות
-  { id: 'vegsoup', names: ['מרק ירקות', 'מרק צח'], per100: [35, 1.5, 6, 0.8], sugar: 2.5, freeSugar: 0, fluid: 90, fiber: 1.2, unit: 'g', def: 300, gout: 'ok', src: 'הערכה' },
+  { id: 'vegsoup', names: ['מרק ירקות', 'מרק צח', 'צלחת מרק', 'קערת מרק', 'מרק'], per100: [35, 1.5, 6, 0.8], sugar: 2.5, freeSugar: 0, fluid: 90, fiber: 1.2, unit: 'g', def: 300, gout: 'ok', src: 'הערכה' },
   { id: 'popcorn', names: ['פופקורן'], per100: [387, 13, 78, 4], sugar: 0.5, freeSugar: 0, fluid: 0, fiber: 15, unit: 'g', def: 30, src: 'USDA' },
   { id: 'tuna', names: ['טונה'], per100: [116, 26, 0, 1], sugar: 0, freeSugar: 0, fluid: 0, fiber: 0, unit: 'g', def: 100, gout: 'ok', src: 'USDA' },
   // אמנון (טילפיה) — היחס הטוב ביותר במסד: 4.8 קק"ל לכל גרם חלבון, טוב מחזה עוף
@@ -171,7 +171,7 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'kebab_poultry', names: ['קבבוני הודו', 'קבבוני עוף', 'קבב הודו', 'קבב עוף'], per100: [170, 20, 3, 9], sugar: 1, freeSugar: 0.5, fluid: 0, fiber: 0.2, unit: 'unit', unitGrams: 50, unitLabel: 'יח', def: 2, gout: 'ok', src: 'USDA' },
   // מהתווית שאבי צילם: גביע 200 גר' = 134 קק"ל · 10.4 חלבון · 6 שומן · 9.6 פחמ' (הכל לקטוז) · 500 מ"ג סידן
   { id: 'bioyog', names: ['יוגורט ביו', 'ביו 3%'], per100: [67, 5.2, 4.8, 3], sugar: 4.8, freeSugar: 0, fluid: 0, fiber: 0, unit: 'unit', unitGrams: 200, unitLabel: 'גביע', def: 1, gout: 'ok', src: 'תווית' },
-  { id: 'multiyog', names: ['יוגורט מולטי', 'מולטי'], per100: [71, 6.5, 4.6, 3], sugar: 4.6, freeSugar: 0, fluid: 0, fiber: 0, unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
+  { id: 'multiyog', names: ['יוגורט מולטי', 'מולטי', 'יוגורט'], per100: [71, 6.5, 4.6, 3], sugar: 4.6, freeSugar: 0, fluid: 0, fiber: 0, unit: 'g', def: 150, gout: 'ok', src: 'תווית' },
 
   // ---- פחמימות ----
   { id: 'pita', names: ['פיתה', 'פיתת מחמצת', 'פיתה מחמצת', 'פיתת', 'פיתות'], per100: [275, 9, 55, 1.2], sugar: 5, freeSugar: 3, fluid: 0, fiber: 2.4, unit: 'unit', unitGrams: 60, unitLabel: 'פיתה', def: 1, src: 'USDA' },
@@ -330,6 +330,11 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'schug', names: ['סחוג', 'זחוג'], per100: [230, 3, 8, 21], sugar: 3, freeSugar: 0, fluid: 0, fiber: 4, unit: 'unit', unitGrams: 15, unitLabel: 'כף', def: 1, gout: 'ok', src: 'הערכה' },
   // ירק בתנור אינו ירק חי: מסעדה מוסיפה 5-7 גר' שמן ל-100 גר', והמים מתאדים.
   // הכינוי המורכב ('קישואים בתנור') ארוך מ'קישוא' ולכן גובר — אחרת ירק אפוי נספר כ-17 קק"ל.
+  // ירקות שורש מאודים אינם 'סלט ירקות' ואינם ירקות בתנור: אין שמן ולכן לא 95,
+  // אבל גזר/סלק/תפו"א מבושלים הם פחמימה ולא 25.
+  { id: 'vegsteam', names: ['ירקות שורש מאודים', 'ירקות שורש', 'ירקות מאודים', 'ירקות מבושלים', 'ירקות בסיר'], per100: [55, 1.5, 12, 0.2], sugar: 4.5, freeSugar: 0, fluid: 0, fiber: 2.5, unit: 'g', def: 200, gout: 'ok', src: 'USDA' },
+  // תירס גמדי הוא ירק, לא פחמימה: 9 גרם ליחידה, 26 קק"ל ל-100.
+  { id: 'babycorn', names: ['תירס גמדי', 'תירסים גמדיים'], per100: [26, 2.1, 5.2, 0.2], sugar: 2.7, freeSugar: 0, fluid: 0, fiber: 1.4, unit: 'unit', unitGrams: 9, unitLabel: 'יח', def: 4, gout: 'ok', src: 'USDA' },
   { id: 'vegroast', names: ['ירקות בתנור', 'ירקות אפויים', 'ירקות צלויים', 'ירקות בגריל', 'קישואים בתנור', 'קישוא בתנור', 'קישואים אפויים', 'קישוא אפוי', 'כרוב בתנור', 'כרוב אפוי', 'כרוב צלוי', 'חציל בתנור', 'חציל אפוי'], per100: [95, 2, 11, 5], sugar: 4, freeSugar: 0, fluid: 0, fiber: 3, unit: 'g', def: 200, gout: 'ok', src: 'הערכה' },
 
   // ---- חטיפים / שתייה ----
