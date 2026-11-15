@@ -560,9 +560,11 @@ const FLEX_FIELDS = [
 function FlexTestCard() {
   const { db, update } = useStore();
   const [vals, setVals] = useState<Record<string, string>>({});
-  const [howOpen, setHowOpen] = useState(false);
-  const [saved, setSaved] = useState(false);
   const last = [...(db.flex || [])].sort((a, b) => (a.date < b.date ? 1 : -1))[0];
+  // ההוראות פתוחות עד למדידה הראשונה. סגורות כברירת מחדל, אבי לא ידע מה המבחן
+  // בכלל — ארבעה שדות מספר בלי הסבר הם לא מבחן, הם ניחוש.
+  const [howOpen, setHowOpen] = useState(!last);
+  const [saved, setSaved] = useState(false);
 
   const save = () => {
     const num = (s?: string) => { const t = (s ?? '').trim(); if (t === '') return undefined; const n = parseFloat(t); return isNaN(n) ? undefined : n; };
