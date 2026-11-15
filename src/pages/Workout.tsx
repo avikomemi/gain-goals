@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PROGRAM, PHYSIO_BACK, routineByKey, routineLabel, RoutineDef, Loc, exName, exNote, exStruct, BODY_AREAS, KRAV_TAGS, SENSITIVE_BACK_DAY } from '../data/program';
+import { PROGRAM, PHYSIO_BACK, FLEX_SESSION, routineByKey, routineLabel, RoutineDef, Loc, exName, exNote, exStruct, exStage, BODY_AREAS, KRAV_TAGS, SENSITIVE_BACK_DAY } from '../data/program';
 import { useStore, today, WorkoutLog, ExLog } from '../store/store';
 import { workoutMinutes, workoutKcal, workoutRpe, intensityLabel, kravKcal } from '../store/effort';
 import { nextRoutine, direction, sleepAdvice } from '../store/adi';
@@ -193,9 +193,14 @@ export default function Workout() {
     setRoutine(r); setLoc(l);
     setLog(orderedExercises(r, db.orders[r.key]).map(ex => {
       const prev = db.workouts.flatMap(w => w.exercises).filter(e => e.id === ex.id && !e.skipped).pop();
-      const st = exStruct(ex, l); // מבנה אפקטיבי לפי המיקום (חדר/בית)
+      const stage = db.stageByEx?.[ex.id];
+      const st = exStruct(ex, l, stage); // מבנה אפקטיבי לפי המיקום (חדר/בית) והשלב
+      const nm = exName(ex, l, stage);
       // ברירת מחדל: תרגיל שהמאמן כתב עם משקל → מתחיל בק"ג; שאר התרגילים (לא-זמן) → משקל גוף עם אפשרות להוסיף משקל חיצוני
-      const sets = prev?.sets?.length
+      // הסטים נגררים מהפעם הקודמת רק אם זה אותו תרגיל ממש. אחרת 2 שניות של
+      // Lever שלב 3 היו נגררות ל-Hollow Body, ושלב חדש היה נפתח על מספר של
+      // תרגיל אחר. אותו שמירה חלה גם על גרסת חדר מול בית.
+      const sets = (prev?.sets?.length && prev.name === nm)
         ? prev.sets.map(s => ({ ...s, done: false }))
         : Array.from({ length: st.setsDefault }, () => ({
             reps: st.repsDefault,
@@ -207,7 +212,7 @@ export default function Workout() {
       const params = ex.params?.length
         ? Object.fromEntries(ex.params.map(p => [p.key, prev?.params?.[p.key] ?? p.def ?? 0]))
         : undefined;
-      return { id: ex.id, name: exName(ex, l), sets, rpe: undefined, params };
+      return { id: ex.id, name: nm, sets, rpe: undefined, params };
     }));
     setExIdx(0);
     setPhase('warmup');
@@ -218,8 +223,10 @@ export default function Workout() {
     update(d => {
       const w: WorkoutLog = { id: crypto.randomUUID(), date: today(), routine: routine.key, loc, exercises: log, stoppedEarly, flexDone };
       d.workouts.push(w);
-      // אימון הפיזיו נפרד מהתוכנית — הוא לא נספר ככיול של A/B/C
-      if (!d.calib.done && routine.key !== 'P') {
+      // הפיזיו ('P') והגמישות ('F') נפרדים מהתוכנית — הם לא נספרים ככיול של A/B/C.
+      // רשימה חיובית ולא 'שונה מ-P': עם רשימה שלילית הוספת 'F' כתבה
+      // runs.F = NaN לתוך הכיול, כי runs מכיל A/B/C בלבד.
+      if (!d.calib.done && (routine.key === 'A' || routine.key === 'B' || routine.key === 'C')) {
         d.calib.runs[routine.key] = Math.min(2, d.calib.runs[routine.key] + 1);
         const c = d.calib;
         if (c.firstWeight && c.waist && c.bp && c.flexTests && c.runs.A >= 2 && c.runs.B >= 2 && c.runs.C >= 2) c.done = true;
@@ -284,6 +291,26 @@ export default function Workout() {
             בכאב 4+ מדלגים על Box Squat ועל Single Leg Deadlift — שני התרגילים היחידים עם משקל.
           </div>
         </div>
+        {/* סקשן הגמישות — בנוסף לבלוק שבתוך כל אימון, לא במקומו. לכל יום. */}
+        <div className="card mt8" style={{ borderColor: 'var(--acc2)' }}>
+          <div>
+            <b style={{ fontSize: 16, fontWeight: 900 }}>{FLEX_SESSION.icon} {FLEX_SESSION.name}</b>
+            <span className="dir ease" style={{ marginInlineStart: 8 }}>11 דקות</span>
+            <div style={{ fontSize: 12, color: 'var(--dim)', marginTop: 4 }}>{FLEX_SESSION.focus}</div>
+            <div style={{ fontSize: 12, marginTop: 6, cursor: 'pointer', color: 'var(--acc)', fontWeight: 700 }}
+              onClick={() => setWhyOpen(whyOpen === 'F' ? null : 'F')}>
+              {whyOpen === 'F' ? '▴ מה הסקשן הזה משיג' : '▾ מה הסקשן הזה משיג?'}
+            </div>
+            {whyOpen === 'F' && <div style={{ fontSize: 12.5, marginTop: 6, lineHeight: 1.55 }}>{FLEX_SESSION.why}</div>}
+          </div>
+          <div className="seg mt12">
+            <b onClick={() => startLive(FLEX_SESSION, 'home')}>▶︎ התחל · {FLEX_SESSION.exercises.length} תרגילים</b>
+            <b style={{ flex: '0 0 auto', padding: '10px 14px' }} title="שנה סדר תרגילים" onClick={() => { setRoutine(FLEX_SESSION); setPhase('order'); }}>⇅</b>
+          </div>
+          <div style={{ fontSize: 11.5, color: 'var(--dim)', marginTop: 10, lineHeight: 1.5 }}>
+            בלוק הגמישות שבסוף A/B/C נשאר כמו שהוא. זה בנוסף, ולא במקום.
+          </div>
+        </div>
         <div className="h-sec">עוד</div>
         <div className="seg">
           <b onClick={() => setPhase('krav')}>🥊 רישום קרב מגע</b>
@@ -330,7 +357,7 @@ export default function Workout() {
   if (phase === 'warmup') {
     return (
       <div className="scr fade-in">
-        <div className="micro">{routineLabel(routine.key)}{routine.key === 'P' ? '' : ` · ${loc === 'home' ? '🏠 בית' : '🏋️ חדר כושר'}`}</div>
+        <div className="micro">{routineLabel(routine.key)}{routine.key === 'P' || routine.key === 'F' ? '' : ` · ${loc === 'home' ? '🏠 בית' : '🏋️ חדר כושר'}`}</div>
         <div className="h-huge mt8">חימום.</div>
         {loc === 'gym' && (
           <div className="alert mt12">🧊 <span><b>פרוטוקול אנטי-התכווצות:</b> רחוק מפתח המזגן, סווטשירט/חולצה יבשה בהישג יד. הפליאומטריה מיד אחרי החימום — כשהגוף חם.</span></div>
@@ -354,17 +381,43 @@ export default function Workout() {
     const dirLabel = dir === 'add' ? '▲ הוסף' : dir === 'ease' ? '▼ הקל' : '◼ שמור';
     const prev = db.workouts.flatMap(w => w.exercises).filter(e => e.id === exDef.id && !e.skipped).pop();
     // סעיף 5 — טיפ מתחלף: סבב לפי מספר האימונים, כך שכל פעם משהו אחר
-    const tip = exDef.tips?.length ? exDef.tips[(db.workouts.length + exIdx) % exDef.tips.length] : null;
+    // טיפים, דגשים ו'איך מקשים' של התרגיל המלא מטעים בשלב מוקדם — "ירידה איטית
+    // במעבר" על תלייה סטטית. כשיש שלב, הוא המקור היחיד.
+    const stageTips = exStage(exDef, db.stageByEx?.[exDef.id] ?? 0)?.tips;
+    const tipPool = exDef.stages?.length ? stageTips : exDef.tips;
+    const tip = tipPool?.length ? tipPool[(db.workouts.length + exIdx) % tipPool.length] : null;
 
     const setLogAt = (fn: (e: ExLog) => void) => setLog(ls => { const c = structuredClone(ls); fn(c[exIdx]); return c; });
     const restLeft = restEndAt ? Math.max(0, Math.ceil((restEndAt - now) / 1000)) : 0;
-    const st = exStruct(exDef, loc); // מבנה אפקטיבי לפי המיקום
+    const stageIdx = db.stageByEx?.[exDef.id] ?? 0;
+    const stage = exStage(exDef, stageIdx);
+    const st = exStruct(exDef, loc, stageIdx); // מבנה אפקטיבי לפי המיקום והשלב
+    // קידום שלב באמצע אימון חייב לעדכן גם את הרשומה החיה: בלי זה השם שנשמר
+    // ביומן נשאר של השלב הקודם, והסטים נשארים במבנה שלו — 3×15 שניות של תלייה
+    // היו נרשמים בשם 'משיכה גבוהה', ומשם נכנסים ל-progressReport כשקר.
+    const setStage = (next: number) => {
+      const sg = exStage(exDef, next);
+      if (!sg) return;
+      update(d => { d.stageByEx = { ...(d.stageByEx || {}), [exDef.id]: next }; return d; });
+      setLog(ls => {
+        const c = structuredClone(ls);
+        c[exIdx].name = sg.name;
+        c[exIdx].sets = Array.from({ length: sg.setsDefault }, () => ({
+          reps: sg.repsDefault,
+          weight: undefined,
+          bw: sg.timeBased ? undefined : true,
+          done: false,
+        }));
+        c[exIdx].rpe = undefined;
+        return c;
+      });
+    };
     const exRest = db.restByEx?.[exDef.id] ?? st.restDefault ?? restSec; // פר-תרגיל → ברירת-מחדל של התרגיל → גלובלי
 
     return (
       <div className="scr fade-in" key={exDef.id}>
         <div className="spread">
-          <div className="micro">{routineLabel(routine.key)}{routine.key === 'P' ? '' : ` · ${loc === 'home' ? '🏠 בית' : '🏋️ חדר'}`}</div>
+          <div className="micro">{routineLabel(routine.key)}{routine.key === 'P' || routine.key === 'F' ? '' : ` · ${loc === 'home' ? '🏠 בית' : '🏋️ חדר'}`}</div>
           <div className="dots">
             {exList.map((_, i) => (
               <i key={i} className={i < exIdx ? 'done' : i === exIdx ? 'now' : ''} />
@@ -377,10 +430,34 @@ export default function Workout() {
         <div className="w-name">{exLog.name}</div>
         <div className="w-meta">
           <span>יעד: <b>{st.target}</b></span>
-          {exNote(exDef, loc) && <span style={{ color: 'var(--acc2)' }}>{exNote(exDef, loc)}</span>}
+          {exNote(exDef, loc, stageIdx) && <span style={{ color: 'var(--acc2)' }}>{exNote(exDef, loc, stageIdx)}</span>}
         </div>
+        {/* סולם שלבים: השער הוא המספר שפותח את השלב הבא, והקידום ידני בכוונה —
+            אבי מחליט שהוא עמד בו, לא האפליקציה. */}
+        {stage && exDef.stages && (
+          <div className="card mt8" style={{ borderColor: 'var(--acc)' }}>
+            <div className="spread" style={{ alignItems: 'center' }}>
+              <span style={{ fontSize: 12, color: 'var(--dim)', fontWeight: 800 }}>
+                🪜 שלב {stageIdx + 1} מתוך {exDef.stages.length}
+              </span>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button className="pill" disabled={stageIdx === 0} onClick={() => setStage(stageIdx - 1)}>← אחורה</button>
+                <button className="pill" disabled={stageIdx >= exDef.stages.length - 1}
+                  onClick={() => { if (confirm(`לעבור לשלב ${stageIdx + 2}?\n\nהשער: ${stage.gate}`)) setStage(stageIdx + 1); }}>שלב הבא →</button>
+              </div>
+            </div>
+            <div style={{ fontSize: 13, marginTop: 6, lineHeight: 1.5 }}>
+              <b>עוברים הלאה כש:</b> {stage.gate}
+            </div>
+            {stageIdx < exDef.stages.length - 1 && (
+              <div style={{ fontSize: 11.5, color: 'var(--dim)', marginTop: 4 }}>
+                אחר כך: {exDef.stages[stageIdx + 1].name}
+              </div>
+            )}
+          </div>
+        )}
         {/* דגשים קבועים — לא בסבב הטיפים. לתרגיל שאבי נתקע בו וביקש אותם מול העיניים. */}
-        {exDef.cues?.length && (
+        {!exDef.stages?.length && exDef.cues?.length && (
           <div className="card mt8" style={{ borderColor: 'var(--acc2)' }}>
             <span style={{ fontSize: 12, color: 'var(--dim)', fontWeight: 800 }}>🎯 דגשים — בכל חזרה</span>
             {exDef.cues.map((c, i) => (
@@ -389,7 +466,7 @@ export default function Workout() {
           </div>
         )}
         {/* אבי: "התרגילים קלים במונחי מאמץ". בתרגילי ייצוב לא מוסיפים משקל — מאטים ומאריכים. */}
-        {exDef.harder && (
+        {!exDef.stages?.length && exDef.harder && (
           <div className="card mt8" style={{ borderColor: 'var(--good)' }}>
             <span style={{ fontSize: 12, color: 'var(--dim)', fontWeight: 800 }}>💪 קל מדי? כך מקשים</span>
             <div style={{ fontSize: 13, marginTop: 6, lineHeight: 1.5 }}>{exDef.harder}</div>
@@ -514,7 +591,7 @@ export default function Workout() {
               <b key={n} className={exRest === n ? 'on' : ''} onClick={() => update(d => { d.restByEx = { ...d.restByEx, [exDef.id]: n }; return d; })}>{n} שנ'</b>
             ))}
             <b className={!REST_PRESETS.includes(exRest) ? 'on' : ''} onClick={() => {
-              const v = prompt(`זמן מנוחה ל${exName(exDef, loc)} (שניות):`, String(exRest));
+              const v = prompt(`זמן מנוחה ל${exName(exDef, loc, stageIdx)} (שניות):`, String(exRest));
               if (v == null) return;
               const n = Math.max(5, Math.min(600, parseInt(v, 10) || 0));
               if (n) update(d => { d.restByEx = { ...d.restByEx, [exDef.id]: n }; return d; });
@@ -552,7 +629,7 @@ export default function Workout() {
             else setPhase('flex');
           }}>
             {exIdx < exList.length - 1
-              ? `התרגיל הבא: ${exName(exList[exIdx + 1], loc)} ←`
+              ? `התרגיל הבא: ${exName(exList[exIdx + 1], loc, db.stageByEx?.[exList[exIdx + 1].id])} ←`
               : 'לבלוק הגמישות ←'}
           </button>
           <button className="ghost" style={{ width: 56, fontSize: 18 }} title="פידבק טכניקה" onClick={() => alert('פידבק טכניקה: צלם וידאו קצר באפליקציית המצלמה של הטלפון, ושלח לי (אבי) בצ\'אט של קלוד — נעה או רז יחזרו עם תיקונים. צילום מתוך האפליקציה עצמה — בפיתוח.')}>📷</button>

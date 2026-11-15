@@ -35,10 +35,12 @@ export interface DB {
   weights: WeightEntry[]; waists: WaistEntry[]; workouts: WorkoutLog[];
   injuries: Injury[]; krav: KravLog[]; food: FoodLog[]; reviews: Review[];
   water: WaterDay[]; bp: BpEntry[]; flex: FlexEntry[]; toe: ToeEntry[]; calib: Calib;
-  orders: { A?: string[]; B?: string[]; C?: string[]; P?: string[] };
+  orders: { A?: string[]; B?: string[]; C?: string[]; P?: string[]; F?: string[] };
   foods?: FoodItem[]; // מסד תזונה אישי (ערכים פר-100-גרם) — נזרע מ-SEED_FOODS, גדל עם הזמן
   restSec?: number; // ברירת-מחדל גלובלית לזמן מנוחה (שניות) — נפילה לתרגילים שלא הוגדרו פרטנית
   restByEx?: Record<string, number>; // זמן מנוחה פר-תרגיל (exerciseId → שניות) — גובר על restSec
+  stageByEx?: Record<string, number>; // השלב הנוכחי בתרגיל מרובה-שלבים (exerciseId → אינדקס)
+  //   יושב בנתונים ולא בקוד כדי שקידום שלב יהיה פעולה באפליקציה ולא קומיט.
   waterGoal?: number; // מ"ל ליום — השדה הישן, נשמר לתאימות; היעד החי יושב ב-goals
   goals?: Partial<import('./goals').Goals>; // היעדים שאבי קבע (מה שלא נקבע — ברירת מחדל)
   startDate?: string; // היום שבו אבי התחיל — כל הסטטיסטיקות נמדדות מכאן, לא לפני
