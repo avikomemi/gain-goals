@@ -57,6 +57,8 @@ export interface ExerciseDef {
   tips?: string[];         // טיפים משתנים בקול הצוות — מוצג אחד לכל אימון, מתחלף (סעיף 5)
   harder?: string;         // איך מקשים בלי להוסיף עומס — לתרגילי שיקום, שבהם "קל מדי" לא פותרים במשקל
   cues?: string[];         // דגשים שמוצגים תמיד, לא מתחלפים — לתרגיל שנתקעים בו וצריך אותם מול העיניים
+  source?: string;         // הפריט במקור (source.ts) שהתרגיל הזה מממש. חסר =
+  //   תרגיל שאינו במקור, ואז הוא חייב להופיע ב-DEVIATIONS כ-addition.
   stages?: ExStage[];      // סולם שלבים — ראו ExStage. השלב הנוכחי ב-db.stageByEx
   tempoSec?: number;       // תרגיל טמפו: שניות לירידה אחת. מפעיל טיימר בצליל נפרד,
   //   כי בלי קצב קבוע אין מה להשוות בין אימונים — אותן חמש חזרות הן 50 שניות או 75.
@@ -104,17 +106,17 @@ export const PROGRAM: RoutineDef[] = [
     flexTitle: 'גמישות A · גב עליון וירכיים',
     warmup: WARMUP_COMMON,
     exercises: [
-      { id: 'a-land', name: 'Single-Leg Landing Drill', target: '4×5', setsDefault: 4, repsDefault: 5, area: 'ברך', note: 'נחיתה רכה ושקטה — מוקדם באימון, כשהגוף חם',
+      { id: 'a-land', source: 'Drop lands', name: 'Single-Leg Landing Drill', target: '4×5', setsDefault: 4, repsDefault: 5, area: 'ברך', note: 'נחיתה רכה ושקטה — מוקדם באימון, כשהגוף חם',
         tips: ['מאיה: נחיתה שקטה — אם שומעים "בום", הברך סופגת במקום השריר. רך = נכון.', 'נעה: ברך מעל אצבע 2, לא נופלת פנימה. זו היציבות ששומרת על המיניסקוס.', 'רז: דמיין נחיתת חתול — קליטה, לא עצירה. בדיוק המנגנון של בעיטה שנוחתת.', 'עמית: מוקדם באימון, כשהגוף חם. נחיתה על גוף קר זה הטריגר של הגב.'] },
-      { id: 'a-plyo', name: 'Explosive Step-Up', target: '3×3-4', setsDefault: 3, repsDefault: 4, area: 'ברך', gym: { note: 'קופסה 15-20 ס"מ בלבד (ברכיים!)' }, home: { name: 'Broad Jump + Stick', note: 'קצר ומבוקר, נעל את הנחיתה' },
+      { id: 'a-plyo', source: 'Box jump', name: 'Explosive Step-Up', target: '3×3-4', setsDefault: 3, repsDefault: 4, area: 'ברך', gym: { note: 'קופסה 15-20 ס"מ בלבד (ברכיים!)' }, home: { name: 'Broad Jump + Stick', note: 'קצר ומבוקר, נעל את הנחיתה' },
         tips: ['עמית: קופסה נמוכה, 15-20 ס"מ בלבד — נפיצות, לא גובה. הברכיים לפני האגו.', 'טל: כל הכוח בדחיפה למעלה, ירידה מבוקרת. לא קופצים חזרה למטה.', 'נעה: הכוח מהעקב של הרגל העובדת — משם, לא מהאצבעות.', 'מאיה: כאב ברך? מורידים גובה או עוברים ל-Broad Jump קצר. בלי גבורה.'] },
-      { id: 'a-press', name: 'Overhead Press', target: '3×6-8', setsDefault: 3, repsDefault: 8, weighted: true, area: 'כתף', gym: { name: 'Single KB Press', note: 'יד חופשית בתנועה הפוכה' }, home: { name: 'Pike Push-Up', note: 'התקדמות הדרגתית' },
+      { id: 'a-press', source: 'Single KB press', name: 'Overhead Press', target: '3×6-8', setsDefault: 3, repsDefault: 8, weighted: true, area: 'כתף', gym: { name: 'Single KB Press', note: 'יד חופשית בתנועה הפוכה' }, home: { name: 'Pike Push-Up', note: 'התקדמות הדרגתית' },
         tips: ['רז: אגרוף סגור, שורש כף יד ישר — כמו מכת אגרוף כלפי מעלה.', 'נעה: צלעות סגורות, בלי קשת בגב. הכוח מהכתף, לא מהגב התחתון.', 'עמית: יד חופשית בתנועה הפוכה — מייצב את הליבה ומחקה תנועה קרבית.', 'טל: נשיפה בדחיפה למעלה, שאיפה בירידה. הנשימה היא חצי מהכוח.'] },
       // המכון החדש מוגבל ל-24 ק"ג, ואבי כבר עושה סינגל-ארם. דד-סטופ מקשה בלי להוסיף
       // ולו קילו: כל חזרה מתחילה מהרצפה, בלי התנופה האלסטית מהחזרה הקודמת — כוח
       // התנעה טהור. וכל חזרה היא איפוס תנוחה, מה שחשוב עם הליסתזיס.
       // 5-8 לכל יד ולא 15: זה תרגיל כוח, לא קונדישן.
-      { id: 'a-hinge', name: 'Explosive Hinge', target: '3×5-8 לכל יד', setsDefault: 3, repsDefault: 6, weighted: true, area: 'גב תחתון', gym: { name: 'Dead-Stop Single-Arm Swing', note: '⚠️ גב ניטרלי · הקטלבל נח על הרצפה בין חזרות · עובר גבוה בין הירכיים' }, home: { name: 'Backpack Swing', note: 'אותם דגשים' },
+      { id: 'a-hinge', source: 'KB swing', name: 'Explosive Hinge', target: '3×5-8 לכל יד', setsDefault: 3, repsDefault: 6, weighted: true, area: 'גב תחתון', gym: { name: 'Dead-Stop Single-Arm Swing', note: '⚠️ גב ניטרלי · הקטלבל נח על הרצפה בין חזרות · עובר גבוה בין הירכיים' }, home: { name: 'Backpack Swing', note: 'אותם דגשים' },
         tips: ['נעה: זה ציר ירכיים, לא סקוואט. הישבן אחורה, הגב ישר כמו סרגל.', 'מאיה: בלי קשת בסוף! הכוח מהישבן, נועלים בטן — הגב נשאר ניטרלי.', 'רז: הקטלבל צף מתנופת הירכיים, לא מהידיים. גיוס תנע נקי.', 'עמית: חם ורחוק מהמזגן. תנועת גב מתפרצת על גוף קר = השבתה.'] },
       // אבי, 13.11.26: "עמים הירידה לסקוואט היא 15 שניות ולפעמים 10" — והמשקל (6 ק"ג)
       // מעולם לא היה העומס כאן. הזמן תחת מתח הוא העומס, והוא לא היה מדיד.
@@ -128,7 +130,7 @@ export const PROGRAM: RoutineDef[] = [
         gym: { name: 'Push-Up Pyramid', target: 'פירמידה אחת · 1→8', note: 'פירמידה עולה: שכיבה אחת → ג\'אמפינג ג\'ק → 2 שכיבות → ג\'אמפינג ג\'ק → ... עד 8. ג\'אמפינג ג\'ק אחד בין כל מדרגה. פירמידה אחת, ברצף.', setsDefault: 1, repsDefault: 36, timeBased: false, restDefault: 180 },
         home: { name: 'Shadow Boxing Rounds', note: 'קומבינציות מהירות — מחליף ברפי' },
         tips: ['טל: זה פיניישר — קצב רציף בתוך הפירמידה, הג\'אמפינג ג\'ק שומר דופק. 3 דקות מנוחה בין פירמידה לפירמידה, ואז שוב.', 'רז: שכיבות נקיות, גוף ישר כמו קרש — גם בשלב 8. איכות לפני מספר.', 'מאיה: ג\'אמפינג ג\'ק בנחיתה רכה על כריות כף הרגל, ברכיים רכות. כואב ברך/גב? מהלך צד נמוך במקום קפיצה.', 'עמית: מחליף את האינטרוולים — כל האנרגיה, בלי מכונה. 8 פירמידות זה הרבה; אם נגמר הדלק, עוצרים ביושר.'] },
-      { id: 'a-flow', name: 'FLOW', target: '3 סבבים', setsDefault: 3, repsDefault: 1, note: 'משחק תנועה על הקרקע — מעברים, גלגולים, קימות',
+      { id: 'a-flow', source: 'FLOW', name: 'FLOW', target: '3 סבבים', setsDefault: 3, repsDefault: 1, note: 'משחק תנועה על הקרקע — מעברים, גלגולים, קימות',
         tips: ['נעה: זה משחק, לא מבחן. מעברים רכים בין תנוחות — הגוף לומד לזרום.', 'רז: קימות וגלגולים — בדיוק היכולת שמצילה בקרקע. איכות מעל מהירות.', 'עמית: אין "נכון" אחד. תקשיב לגוף, תמצא את המעברים שלך.'] },
     ],
     // בלוק הגב העליון הוא מהמקור ("Thoracic mobility" באימון 1) — הוא נשמט
@@ -152,9 +154,9 @@ export const PROGRAM: RoutineDef[] = [
     flexTitle: 'גמישות B · כתפיים ובית חזה',
     warmup: [...WARMUP_COMMON, 'Scapula Pulls ×8'],
     exercises: [
-      { id: 'b-pull', name: 'Pull-Ups', target: '3× (מקס + 2×5-10)', setsDefault: 3, repsDefault: 8, area: 'כתף', note: 'עם משקל אם אפשר', gym: { name: 'Pull-Ups' }, home: { name: 'Ring Pull-Ups', note: 'אחיזה ניטרלית — עדין לכתפיים' },
+      { id: 'b-pull', source: 'Pull-ups', name: 'Pull-Ups', target: '3× (מקס + 2×5-10)', setsDefault: 3, repsDefault: 8, area: 'כתף', note: 'עם משקל אם אפשר', gym: { name: 'Pull-Ups' }, home: { name: 'Ring Pull-Ups', note: 'אחיזה ניטרלית — עדין לכתפיים' },
         tips: ['רז: שכמות למטה לפני המרפקים — משיכה נקייה.', 'עמית: סט מקס נקי, ואז 2 סטים של 5-10. איכות מעל כמות.', 'טל: ירידה מבוקרת 2-3 שניות — שם נבנה חצי מהשריר.'] },
-      { id: 'b-dip', name: 'Dips', target: '3× (מקס + 2×5-10)', setsDefault: 3, repsDefault: 8, area: 'כתף', note: 'עם משקל אם אפשר', gym: { name: 'Dips' }, home: { name: 'Ring Dips / Negatives', note: 'התחל משליליים איטיים' },
+      { id: 'b-dip', source: 'Dips', name: 'Dips', target: '3× (מקס + 2×5-10)', setsDefault: 3, repsDefault: 8, area: 'כתף', note: 'עם משקל אם אפשר', gym: { name: 'Dips' }, home: { name: 'Ring Dips / Negatives', note: 'התחל משליליים איטיים' },
         tips: ['מאיה: ירידה עד 90 מעלות — לא נמוך יותר, שומרים כתף.', 'רז: נעל את התחתית, דחוף מתפרץ למעלה.', 'עמית: אין כוח? שליליים איטיים 3-4 שניות.'] },
       // אבי, 29.9.26, על סרטון הניסיון: "זה כמעט שם. אל תוריד אותו, זה בדיוק מה שאני רוצה."
       // מהסרטון: החזה מגיע לגובה המוט — הכוח קיים. מה שחסר הוא אחיזה והכיוון של המשיכה.
@@ -216,7 +218,7 @@ export const PROGRAM: RoutineDef[] = [
         ] },
       // במקור כתוב "Lever: 3-5 min play" — משחק, לא מבחן. אבי מדד את עצמו בהצלחה/כישלון
       // על תרגיל שנכתב כחקירה, ולכן "לא מצליח". המדד עכשיו שניות בשלב, לא כן/לא.
-      { id: 'b-lever', name: 'Lever', target: '3-5 דקות משחק', setsDefault: 3, repsDefault: 15, timeBased: true,
+      { id: 'b-lever', source: 'Lever', name: 'Lever', target: '3-5 דקות משחק', setsDefault: 3, repsDefault: 15, timeBased: true,
         area: 'גב תחתון', note: 'סולם: תלייה ישרה → טאק → חצי-טאק. מודדים שניות בשלב, לא הצלחה',
         harder: 'לפתוח את הברכיים סנטימטר בכל פעם — לא לקפוץ שלב',
         tips: [
@@ -270,7 +272,7 @@ export const PROGRAM: RoutineDef[] = [
       // את הגב — וירידה של 3 שניות מבטלת את הנדנוד ומעבירה את העבודה לליבה.
       // השם משתנה ולכן progress.ts מסווג 'variant' ולא משווה 5 איטיות ל-8
       // רגילות, ו-startLive לא גורר את 8 החזרות הישנות לתרגיל החדש.
-      { id: 'b-t2b', name: 'Slow-Negative Toes to Bar', target: '3×5-6 · ירידה 3 שניות', setsDefault: 3, repsDefault: 6, area: 'גב תחתון',
+      { id: 'b-t2b', source: 'Toes to Bar', name: 'Slow-Negative Toes to Bar', target: '3×5-6 · ירידה 3 שניות', setsDefault: 3, repsDefault: 6, area: 'גב תחתון',
         note: 'העלייה רגילה, הירידה נספרת: שלוש שניות מהמוט עד למטה, בשליטה מלאה',
         harder: 'ירידה של 4-5 שניות · עצירה של שנייה באמצע הירידה',
         tips: [
@@ -278,15 +280,15 @@ export const PROGRAM: RoutineDef[] = [
           'נעה: מתחילים מהטיית אגן, הרגליים עולות מהליבה. בירידה הן לא נופלות — הן מורדות.',
           'עמית: 5 איטיות שוות יותר מ-8 שעשית עשרה שבועות. ספור בקול, אחרת שלוש שניות הופכות לשתיים.',
         ] },
-      { id: 'b-push', name: 'Single-Arm Alt. Wide Deficit Push-Ups', target: '3×12-16', setsDefault: 3, repsDefault: 14, area: 'כתף', note: 'צד לצד', home: { name: 'Ring Push-Ups', note: 'ליבה חזקה, גוף ישר' },
+      { id: 'b-push', source: 'Single Arm Alternating Wide Deficit Push-ups', name: 'Single-Arm Alt. Wide Deficit Push-Ups', target: '3×12-16', setsDefault: 3, repsDefault: 14, area: 'כתף', note: 'צד לצד', home: { name: 'Ring Push-Ups', note: 'ליבה חזקה, גוף ישר' },
         tips: ['נעה: גוף ישר כמו קרש — בטן וישבן נעולים.', 'רז: צד לצד — העברת משקל מבוקרת בין הידיים.', 'טל: ירידה מבוקרת, דחיפה מתפרצת.'] },
-      { id: 'b-tri', name: 'BW Triceps Extension', target: '3×10-15', setsDefault: 3, repsDefault: 12, area: 'מרפק',
+      { id: 'b-tri', source: 'Bodyweight Triceps Extension', name: 'BW Triceps Extension', target: '3×10-15', setsDefault: 3, repsDefault: 12, area: 'מרפק',
         tips: ['רז: מרפקים צמודים, התנועה מהמרפק בלבד.', 'עמית: טווח מלא ואיטי — בלי לנעול בכוח בסוף.', 'נעה: ליבה נעולה, בלי קשת בגב.'] },
       // 3×15/15/15 עשר שבועות מול יעד של 10-15 — שוב תקרת היעד ולא תקרת אבי.
       // הוא מושך 9 מתחים ב-+15 ק"ג, כלומר משיכה אופקית במשקל גוף כבר לא
       // מאמנת אותו. הגבהת הרגליים משנה את הזווית, העצירה מבטלת את התנופה,
       // והחזרות יורדות ל-8-12. בלי ציוד חדש — ספסל שקיים בכל חדר כושר.
-      { id: 'b-row', name: 'Feet-Elevated Australian Pull-Ups', target: '3×8-12 · עצירה 2 שניות', setsDefault: 3, repsDefault: 10, area: 'גב עליון',
+      { id: 'b-row', source: 'Australian Pull-ups', name: 'Feet-Elevated Australian Pull-Ups', target: '3×8-12 · עצירה 2 שניות', setsDefault: 3, repsDefault: 10, area: 'גב עליון',
         note: 'העקבים על ספסל בגובה המוט או קרוב לו. בכל חזרה — החזה נוגע במוט ועוצרים 2 שניות לפני הירידה',
         harder: 'ספסל גבוה יותר · עצירה של 3 שניות · משקל על החזה',
         gym: { name: 'Feet-Elevated Australian Pull-Ups' },
@@ -318,15 +320,15 @@ export const PROGRAM: RoutineDef[] = [
     flexTitle: 'גמישות C · המסטרינג וגב',
     warmup: WARMUP_COMMON,
     exercises: [
-      { id: 'c-pistol', name: 'Box Pistol Squat', target: '3×4-6', setsDefault: 3, repsDefault: 5, area: 'ברך', note: '⚠️ קופסה גבוהה — טווח חלקי בלבד (מיניסקוס)', gym: { name: 'Pistol to High Box' }, home: { name: 'Pistol to Chair' }, params: [{ key: 'boxH', label: 'גובה קופסה', unit: 'ס"מ', step: 5, def: 45 }],
+      { id: 'c-pistol', source: 'Single Pistol Squat', name: 'Box Pistol Squat', target: '3×4-6', setsDefault: 3, repsDefault: 5, area: 'ברך', note: '⚠️ קופסה גבוהה — טווח חלקי בלבד (מיניסקוס)', gym: { name: 'Pistol to High Box' }, home: { name: 'Pistol to Chair' }, params: [{ key: 'boxH', label: 'גובה קופסה', unit: 'ס"מ', step: 5, def: 45 }],
         tips: ['מאיה: גובה הקופסה הוא הבלם שלך — כל עקצוץ בברך, מעלים ס"מ. קדוש.', 'מאיה: קופסה גבוהה = פחות כיפוף ברך = בטוח למיניסקוס. טווח חלקי בכוונה.', 'נעה: הברך עוקבת אחרי האצבע, לא נופלת פנימה. יד קדימה למשקל נגדי.', 'עמית: יורד עד הקופסה, נוגע קליל, קם. לא מתיישב, לא צונח.'] },
-      { id: 'c-step', name: 'Front Step-Up', target: '3×5-6 לרגל', setsDefault: 3, repsDefault: 6, weighted: true, area: 'ברך', home: { name: 'Front Step-Up (Stairs / Stool)' }, params: [{ key: 'stepH', label: 'גובה מדרגה', unit: 'ס"מ', step: 5, def: 30 }],
+      { id: 'c-step', source: 'Forward Step Up', name: 'Front Step-Up', target: '3×5-6 לרגל', setsDefault: 3, repsDefault: 6, weighted: true, area: 'ברך', home: { name: 'Front Step-Up (Stairs / Stool)' }, params: [{ key: 'stepH', label: 'גובה מדרגה', unit: 'ס"מ', step: 5, def: 30 }],
         tips: ['נעה: כל הכוח מהרגל שעל המדרגה — הרגל התחתונה לא עוזרת בדחיפה.', 'עמית: ירידה איטית ומבוקרת — שם הברך לומדת יציבות.', 'רז: זה הבסיס לבעיטה — רגל אחת יציבה שנושאת את כל הגוף.', 'מאיה: גובה מדרגה שבו הברך שקטה. כואב? מורידים גובה.'] },
-      { id: 'c-step-lat', name: 'Lateral Step-Up', target: '3×5-6 לרגל', setsDefault: 3, repsDefault: 6, weighted: true, area: 'ברך', note: 'עלייה מהצד — יציבות לברכיים ולבעיטות', home: { name: 'Lateral Step-Up (Stairs / Stool)' }, params: [{ key: 'stepH', label: 'גובה מדרגה', unit: 'ס"מ', step: 5, def: 30 }],
+      { id: 'c-step-lat', source: 'Sideways Step Up', name: 'Lateral Step-Up', target: '3×5-6 לרגל', setsDefault: 3, repsDefault: 6, weighted: true, area: 'ברך', note: 'עלייה מהצד — יציבות לברכיים ולבעיטות', home: { name: 'Lateral Step-Up (Stairs / Stool)' }, params: [{ key: 'stepH', label: 'גובה מדרגה', unit: 'ס"מ', step: 5, def: 30 }],
         tips: ['נעה: עלייה מהצד — הברך נשארת מעל כף הרגל, לא קורסת פנימה.', 'רז: יציבות צידית = ההגנה של הברך בבעיטות ובתנועה צידית.', 'עמית: איטי ונקי. הצד החלש יגלה את עצמו — שם עובדים.', 'מאיה: זווית צידית עדינה למיניסקוס — עוצרים לפני כל תחושה חדה.'] },
-      { id: 'c-cossack', name: 'Cossack Squat', target: '3×6-8', setsDefault: 3, repsDefault: 7, area: 'ברך', note: 'טווח שליטה — בלי עומק מקסימלי', gym: { note: 'עם משקל אם קל' }, home: { note: 'משקל גוף / תיק' },
+      { id: 'c-cossack', source: 'Cossack Squat', name: 'Cossack Squat', target: '3×6-8', setsDefault: 3, repsDefault: 7, area: 'ברך', note: 'טווח שליטה — בלי עומק מקסימלי', gym: { note: 'עם משקל אם קל' }, home: { note: 'משקל גוף / תיק' },
         tips: ['נעה: טווח שליטה בלבד — יורדים עד כמה שהגב ישר והברך שקטה.', 'מאיה: בלי עומק מקסימלי. הברך של אבי אוהבת טווח בינוני ונקי.', 'עמית: עקב הרגל הישרה על הרצפה. זו מתיחה וכוח באותה תנועה.'] },
-      { id: 'c-box', name: 'Box Squat', target: '3×8', setsDefault: 3, repsDefault: 8, weighted: true, area: 'גב תחתון', note: 'גב ניטרלי, לא חזק ונמוך', gym: { note: 'מוט / קטלבל' }, home: { name: 'To Couch — Slow Tempo' }, params: [{ key: 'boxH', label: 'גובה קופסה', unit: 'ס"מ', step: 5, def: 40 }],
+      { id: 'c-box', source: 'Leg Press', name: 'Box Squat', target: '3×8', setsDefault: 3, repsDefault: 8, weighted: true, area: 'גב תחתון', note: 'גב ניטרלי, לא חזק ונמוך', gym: { note: 'מוט / קטלבל' }, home: { name: 'To Couch — Slow Tempo' }, params: [{ key: 'boxH', label: 'גובה קופסה', unit: 'ס"מ', step: 5, def: 40 }],
         tips: ['נעה: יושבים אחורה לקופסה, גב ניטרלי — ציר ירכיים, לא נפילה.', 'מאיה: לא חזק ולא נמוך — הקופסה מגדירה את העומק הבטוח לגב.', 'עמית: נגיעה קלה בקופסה, לא מנוחה מלאה. שליטה כל הדרך.', 'רז: קימה מתפרצת מהקופסה — כוח דחיפה נקי מהישבן.'] },
       { id: 'c-ham', name: 'Hamstrings', target: '3×6-8', setsDefault: 3, repsDefault: 7, area: 'ברך', gym: { name: 'Nordic Curl', note: 'איטי ומבוקר' }, home: { name: 'Nordic (Couch Anchor) / SL Bridge' },
         tips: ['נעה: ירידה איטית ככל שאפשר — השליליים הם כל התרגיל.', 'מאיה: המסטרינג חזק = ברך מוגנת. זה השריר ששומר על המיניסקוס.', 'עמית: לא מגיעים רחוק? ידיים עוזרות בתחתית ודוחפות חזרה. מטפסים בהדרגה.'] },

@@ -6,6 +6,7 @@ import { estimateFood, mergeFoods } from './foodDB';
 import { getGoals } from './goals';
 import { effortOf } from './effort';
 import { progressSummary } from './progress';
+import { openDeviations } from '../data/source';
 
 export interface ReviewMetric { label: string; value: string; target?: string; status: 'good' | 'warn' | 'bad' }
 export interface ReviewFlag { from: string; title: string; body: string; sev: 'red' | 'warn' }
@@ -109,6 +110,19 @@ export function fullReview(db: DB, days = 21): FullReview {
         value: `${pr.up} עלו · ${pr.down} ירדו · ${pr.same} תקועים${pr.mixed ? ` · ${pr.mixed} מעורב` : ''} (מתוך ${pr.total})`,
         target: 'עלייה אחת לפחות',
         status: (pr.up === 0 ? 'bad' : stuck > pr.total / 2 ? 'warn' : 'good') as ReviewMetric['status'],
+      }];
+    })(),
+    // פערים מול המקור. הם ישבו בקוד חודשיים ואיש לא ראה אותם, ולכן האודיט
+    // החד-פעמי לא הספיק: מה שלא מופיע בסקירה לא קיים.
+    ...(() => {
+      const open = openDeviations();
+      if (!open.length) return [];
+      const heavy = open.filter(d => d.why.includes('⚠️')).length;
+      return [{
+        label: 'פערים מול המקור',
+        value: `${open.length} פתוחים${heavy ? ` · ${heavy} מהותיים` : ''} · ${[...new Set(open.map(d => d.routine))].join(', ')}`,
+        target: 'אפס לא מוכרעים',
+        status: (heavy ? 'bad' : 'warn') as ReviewMetric['status'],
       }];
     })(),
     { label: 'שקילות', value: lastWeight ? `${weights.length} · אחרונה ${lastWeight.kg} ק"ג לפני ${daysSinceWeigh} ימים` : 'אף אחת', target: `${g.weighIns} בשבוע`, status: weighPerWeek >= g.weighIns - 0.5 ? 'good' : weighPerWeek >= 1 ? 'warn' : 'bad' },

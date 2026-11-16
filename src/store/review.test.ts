@@ -138,3 +138,14 @@ describe('מבחני הגמישות', () => {
     expect(r.calibMissing.some(x => x.includes('גמישות'))).toBe(false);
   });
 });
+
+describe('פערים מול המקור בסקירה', () => {
+  it('מופיע כשורה, עם המספר ועם האימונים הנוגעים', () => {
+    const r = fullReview(hydrate(base), 21);
+    const m = r.metrics.find(x => x.label === 'פערים מול המקור')!;
+    expect(m).toBeTruthy();
+    expect(m.value).toMatch(/\d+ פתוחים/);
+    // הפערים המהותיים מסומנים ⚠️ ב-why ומצבעים את השורה באדום
+    expect(m.status).toBe('bad');
+  });
+});
