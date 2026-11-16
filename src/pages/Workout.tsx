@@ -28,6 +28,8 @@ const NUM_INPUT: React.CSSProperties = { width: 46, minWidth: 0, textAlign: 'cen
 const clampNum = clampReps;   // חזרות ושניות — שלמים. משקל עובר דרך parseWeight.
 // סולם צבע למאמץ (RPE): ירוק=קל → אדום בוהק=כואב מאוד (סעיף 3)
 const RPE_COLOR: Record<number, string> = { 6: '#16a34a', 7: '#65a30d', 8: '#d97706', 9: '#ea580c', 10: '#d81f2a' };
+// המספרים לבדם מופשטים. המילה היא מה שהופך 7 ל-7 ולא ל-8.
+const RPE_LABEL: Record<number, string> = { 6: 'קל', 7: 'בינוני', 8: 'קשה', 9: 'כמעט כשל', 10: 'כשל' };
 const PHASES_PERSIST: Phase[] = ['warmup', 'live', 'flex', 'injury'];
 
 // שחזור אימון פעיל שנשמר (סעיף 12) — מחזיר null אם אין/פגום/ישן/לא-אימון-פעיל
@@ -413,6 +415,9 @@ export default function Workout() {
       });
     };
     const exRest = db.restByEx?.[exDef.id] ?? st.restDefault ?? restSec; // פר-תרגיל → ברירת-מחדל של התרגיל → גלובלי
+    // כל הסטים סומנו והמאמץ עדיין ריק — הרגע היחיד שבו יש מה לדווח עליו.
+    const setsDone = exLog.sets.length > 0 && exLog.sets.every(s => s.done);
+    const rpeMissing = setsDone && exLog.rpe == null;
 
     return (
       <div className="scr fade-in" key={exDef.id}>
@@ -584,6 +589,48 @@ export default function Workout() {
           )}
         </div>
 
+        {/* דיווח מאמץ. אבי ביקש ב-13.11 "תבליט אותו יותר", והסיבה חזקה מאז:
+            הוא ביטל את "סט מקס" של המקור, שהיה מנגנון הוויסות המובנה, ולכן
+            המספר הזה הוא אות ההתקדמות היחיד שנשאר. עד כה הוא ישב מתחת לזמן
+            המנוחה ולצליל, בתחתית המסך, ודווח ב-9% מהתרגילים — באימון B כולו
+            שני דיווחים, שניהם על מקבילים, ובדיוק שם המשקל ירד מ-21 ל-15.
+            עכשיו הוא מיד מתחת לסטים, שם העין נמצאת כשהם נגמרים, ומודגש
+            כשכולם סומנו והוא עדיין ריק. הוא לא חוסם — אבי יכול להתעלם. */}
+        <div className={'card mt12' + (rpeMissing ? ' rpe-need' : '')}
+          style={{ borderColor: rpeMissing ? 'var(--acc2)' : undefined }}>
+          <div className="spread" style={{ alignItems: 'center' }}>
+            <span style={{ fontSize: rpeMissing ? 14 : 12, fontWeight: 800, color: rpeMissing ? 'var(--acc2)' : 'var(--dim)' }}>
+              {rpeMissing ? 'כמה זה היה קשה?' : 'מאמץ'}
+            </span>
+            {exLog.rpe != null && (
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: RPE_COLOR[exLog.rpe] }}>{RPE_LABEL[exLog.rpe]}</span>
+            )}
+          </div>
+          <div className="rpe" style={{ marginTop: 8 }}>
+            {[6, 7, 8, 9, 10].map(n => {
+              const c = RPE_COLOR[n];
+              const on = exLog.rpe === n;
+              return (
+                <b key={n} className={on ? 'on' : ''} onClick={() => setLogAt(e => { e.rpe = n; })}
+                  style={{ borderColor: c, color: on ? '#fff' : c, background: on ? c : 'transparent' }}>{n}</b>
+              );
+            })}
+          </div>
+          <div style={{ fontSize: 10.5, color: 'var(--dim)', marginTop: 6, textAlign: 'center', letterSpacing: '.02em' }}>
+            6 קל · 7 בינוני · 8 קשה · 9 כמעט כשל · 10 כשל
+          </div>
+          {rpeMissing && (
+            <div style={{ fontSize: 11.5, color: 'var(--dim)', marginTop: 8, lineHeight: 1.5 }}>
+              עמית: בלי המספר הזה אין איך לדעת מתי להעלות ומתי לעצור. שנייה אחת.
+            </div>
+          )}
+          {exLog.rpe === 10 && (
+            <div style={{ fontSize: 11.5, color: 'var(--danger)', marginTop: 8, lineHeight: 1.5 }}>
+              10 = כואב מאוד. אם זה כאב מפרק ולא שריר — עצור ודווח ב"משהו כואב".
+            </div>
+          )}
+        </div>
+
         <div className="field" style={{ marginTop: 12 }}>
           <label>זמן מנוחה בין סטים · לתרגיל הזה</label>
           <div className="seg">
@@ -607,19 +654,11 @@ export default function Workout() {
           <div className="alert mt12 pulse" style={{ borderColor: 'var(--acc2)', background: 'rgba(217,119,6,.10)' }}>🔔 <span><b>נגמרה המנוחה — קדימה לסט הבא!</b> <button className="pill" style={{ marginInlineStart: 10 }} onClick={() => setRestDone(false)}>אוקיי</button></span></div>
         )}
 
-        <div className="rpe">
-          <span>מאמץ</span>
-          {[6, 7, 8, 9, 10].map(n => {
-            const c = RPE_COLOR[n];
-            const on = exLog.rpe === n;
-            return (
-              <b key={n} className={on ? 'on' : ''} onClick={() => setLogAt(e => { e.rpe = n; })}
-                style={{ borderColor: c, color: on ? '#fff' : c, background: on ? c : 'transparent' }}>{n}</b>
-            );
-          })}
-        </div>
-        {exLog.rpe === 10 && <div style={{ fontSize: 11.5, color: 'var(--danger)', marginTop: 4, textAlign: 'center' }}>10 = כואב מאוד — אם זה כאב מפרק, עצור ודווח</div>}
-
+        {rpeMissing && (
+          <div className="alert mt12" style={{ borderColor: 'var(--acc2)', background: 'rgba(217,119,6,.10)' }}>
+            🎯 <span>סיימת את הסטים ולא דיווחת מאמץ. <b>זה מה שקובע את האימון הבא.</b></span>
+          </div>
+        )}
         <div className="mt16" style={{ display: 'flex', gap: 10 }}>
           <button className="ghost" style={{ width: 56, fontSize: 18 }} title={exIdx > 0 ? 'התרגיל הקודם' : 'חזרה לחימום'}
             onClick={() => { if (exIdx > 0) setExIdx(exIdx - 1); else setPhase('warmup'); }}>→</button>

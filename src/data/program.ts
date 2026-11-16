@@ -161,9 +161,9 @@ export const PROGRAM: RoutineDef[] = [
     flexTitle: 'גמישות B · כתפיים ובית חזה',
     warmup: [...WARMUP_COMMON, 'Scapula Pulls ×8'],
     exercises: [
-      { id: 'b-pull', source: 'Pull-ups', name: 'Pull-Ups', target: '3× (מקס + 2×5-10)', setsDefault: 3, repsDefault: 8, area: 'כתף', note: 'עם משקל אם אפשר', gym: { name: 'Pull-Ups' }, home: { name: 'Ring Pull-Ups', note: 'אחיזה ניטרלית — עדין לכתפיים' },
+      { id: 'b-pull', source: 'Pull-ups', name: 'Pull-Ups', target: '3×5-10 · עם משקל', setsDefault: 3, repsDefault: 8, area: 'כתף', note: 'עם משקל אם אפשר', gym: { name: 'Pull-Ups' }, home: { name: 'Ring Pull-Ups', note: 'אחיזה ניטרלית — עדין לכתפיים' },
         tips: ['רז: שכמות למטה לפני המרפקים — משיכה נקייה.', 'עמית: סט מקס נקי, ואז 2 סטים של 5-10. איכות מעל כמות.', 'טל: ירידה מבוקרת 2-3 שניות — שם נבנה חצי מהשריר.'] },
-      { id: 'b-dip', source: 'Dips', name: 'Dips', target: '3× (מקס + 2×5-10)', setsDefault: 3, repsDefault: 8, area: 'כתף', note: 'עם משקל אם אפשר', gym: { name: 'Dips' }, home: { name: 'Ring Dips / Negatives', note: 'התחל משליליים איטיים' },
+      { id: 'b-dip', source: 'Dips', name: 'Dips', target: '3×5-10 · עם משקל', setsDefault: 3, repsDefault: 8, area: 'כתף', note: 'עם משקל אם אפשר', gym: { name: 'Dips' }, home: { name: 'Ring Dips / Negatives', note: 'התחל משליליים איטיים' },
         tips: ['מאיה: ירידה עד 90 מעלות — לא נמוך יותר, שומרים כתף.', 'רז: נעל את התחתית, דחוף מתפרץ למעלה.', 'עמית: אין כוח? שליליים איטיים 3-4 שניות.'] },
       // אבי, 29.9.26, על סרטון הניסיון: "זה כמעט שם. אל תוריד אותו, זה בדיוק מה שאני רוצה."
       // מהסרטון: החזה מגיע לגובה המוט — הכוח קיים. מה שחסר הוא אחיזה והכיוון של המשיכה.
