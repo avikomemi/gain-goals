@@ -84,8 +84,10 @@ describe('רשומת הפער שלמה', () => {
     }
   });
 
-  it('אין פער כפול על אותו פריט', () => {
-    const keys = DEVIATIONS.map(d => `${d.routine}|${d.source ?? ''}|${d.app ?? ''}`);
+  it('אין שתי רשומות מאותו סוג על אותו פריט', () => {
+    // פריט אחד יכול לשאת שתי רשומות מסוגים שונים: החלפת התרגיל הוכרעה,
+    // ושאלת המינון שבתוכו עדיין פתוחה. אלה שתי החלטות ולא כפילות.
+    const keys = DEVIATIONS.map(d => `${d.kind}|${d.routine}|${d.source ?? ''}|${d.app ?? ''}`);
     expect(new Set(keys).size).toBe(keys.length);
   });
 });
@@ -97,11 +99,17 @@ describe('הפערים הפתוחים נשארים גלויים', () => {
     expect(open.every(d => d.status === 'open')).toBe(true);
   });
 
-  it('הפער החמור ביותר עדיין פתוח ומסומן', () => {
-    // לג-פרס → בוקס סקוואט 50 ק"ג. זו הפרה של העיקרון העקבי ביותר במקור:
-    // אין בכל התוכנית תנועת עומס צירי דו-צדדית על עמוד השדרה.
-    const legPress = DEVIATIONS.find(d => d.source === 'Leg Press')!;
-    expect(legPress.status).toBe('open');
-    expect(legPress.why).toContain('צירי');
+  it('מיקום המשקל בבוקס סקוואט עדיין פתוח ומסומן', () => {
+    // זהות התרגיל הוכרעה (אבי לא רוצה מכונה), אבל 50 ק"ג על הגב הם התנועה
+    // היחידה בכל שלוש השגרות שמפרה את עיקרון 1 — אין עומס צירי על העמוד.
+    const sub = DEVIATIONS.find(d => d.source === 'Leg Press' && d.kind === 'substitution')!;
+    expect(sub.status).toBe('approved');
+    const load = DEVIATIONS.find(d => d.source === 'Leg Press' && d.kind === 'dose')!;
+    expect(load.status).toBe('open');
+    expect(load.why).toContain('צירי');
+  });
+
+  it('שני פריטי החימום שנשמטו חזרו, ואין עליהם רשומת הסרה', () => {
+    expect(DEVIATIONS.some(d => d.routine === 'warmup' && d.kind === 'removal')).toBe(false);
   });
 });
