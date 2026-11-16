@@ -191,3 +191,51 @@ describe('תוכן השלב מחליף את תוכן התרגיל', () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// תרגילים ששינו גרסה. השם הוא המנגנון: progress.ts מסווג לפי שם, ו-startLive
+// גורר סטים מהפעם הקודמת רק כששם התרגיל זהה. שם שלא השתנה היה גורר את
+// 15 החזרות הישנות לתוך תרגיל שהיעד שלו 8-12.
+// ---------------------------------------------------------------------------
+describe('שדרוג גרסה בתרגילים שהיו בתקרת היעד', () => {
+  const B = PROGRAM.find(r => r.key === 'B')!;
+  const ex = (id: string) => B.exercises.find(e => e.id === id)!;
+
+  it('אוסטרליאן: רגליים מוגבהות, עצירה, ופחות חזרות', () => {
+    const e = ex('b-row');
+    expect(e.name).toBe('Feet-Elevated Australian Pull-Ups');
+    expect(exStruct(e, 'gym').repsDefault).toBe(10);      // היה 12, והוא עשה 15
+    expect(e.target).toContain('8-12');
+    expect(e.note).toMatch(/2 שניות/);
+    expect(e.harder).toBeTruthy();
+  });
+
+  it('אצבעות לבר: ירידה איטית ופחות חזרות', () => {
+    const e = ex('b-t2b');
+    expect(e.name).toBe('Slow-Negative Toes to Bar');
+    expect(e.target).toContain('3 שניות');
+    expect(exStruct(e, 'gym').repsDefault).toBe(6);       // הוא עשה 8 בתקרת היעד
+  });
+
+  it('שתיהן ללא משקל וללא ציוד חדש', () => {
+    for (const id of ['b-row', 'b-t2b']) expect(ex(id).weighted, id).toBeFalsy();
+  });
+
+  it('שינוי השם מסווג variant ולא נסיגה', () => {
+    // 15 חזרות רגילות מול 10 מוגבהות אינן ירידה — הן תרגיל אחר.
+    const wk = (date: string, name: string, reps: number[]) => ({
+      id: date, date, routine: 'B', loc: 'gym',
+      exercises: [{ id: 'b-row', name, sets: reps.map(r => ({ reps: r, done: true })) }],
+    });
+    const db = {
+      workouts: [
+        wk('2026-01-01', 'Australian Pull-Ups', [15, 15, 15]),
+        wk('2026-01-08', 'Australian Pull-Ups', [15, 15, 15]),
+        wk('2026-01-15', 'Feet-Elevated Australian Pull-Ups', [10, 10, 8]),
+      ],
+    } as unknown as DB;
+    const r = progressReport(db, 3);
+    expect(r[0].dir).toBe('variant');
+    expect(r[0].dir).not.toBe('down');
+  });
+});
