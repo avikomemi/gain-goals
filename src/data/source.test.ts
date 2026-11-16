@@ -106,7 +106,10 @@ describe('הפערים הפתוחים נשארים גלויים', () => {
     expect(sub.status).toBe('approved');
     const load = DEVIATIONS.find(d => d.source === 'Leg Press' && d.kind === 'dose')!;
     expect(load.status).toBe('open');
-    expect(load.why).toContain('צירי');
+    expect(load.why).toContain('עיקרון 1');
+    // התיקון להערכה שנמסרה כאן בטעות חייב להישאר ברשומה: גובלט אינו פותר
+    // את העומס הצירי, כי כל משקל מוחזק דוחס את העמוד.
+    expect(load.why).toContain('גובלט אינו פותר');
   });
 
   it('שני פריטי החימום שנשמטו חזרו, ואין עליהם רשומת הסרה', () => {
