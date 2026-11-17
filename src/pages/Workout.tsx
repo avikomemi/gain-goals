@@ -4,6 +4,8 @@ import { PROGRAM, PHYSIO_BACK, FLEX_SESSION, routineByKey, routineLabel, Routine
 import { useStore, today, WorkoutLog, ExLog } from '../store/store';
 import { workoutMinutes, workoutKcal, workoutRpe, intensityLabel, kravKcal } from '../store/effort';
 import { nextRoutine, direction, sleepAdvice } from '../store/adi';
+import { prescribeOne } from '../store/prescribe';
+import { progressReport } from '../store/progress';
 import { heDate } from '../components/bits';
 import { ringBell, primeBell, ringTempo } from '../lib/bell';
 import { keepAwake } from '../lib/wakeLock';
@@ -380,6 +382,8 @@ export default function Workout() {
     const exDef = exList[exIdx];
     const exLog = log[exIdx];
     const { dir, why } = direction(db, exDef.id, exDef.area);
+    // ההוראה לתרגיל הזה היום — סטים וחזרות שהושלמו, לא RPE. ראו prescribe.ts.
+    const rx = prescribeOne(db, exDef, loc, progressReport(db, 1).find(p => p.id === exDef.id), today());
     const dirLabel = dir === 'add' ? '▲ הוסף' : dir === 'ease' ? '▼ הקל' : '◼ שמור';
     const prev = db.workouts.flatMap(w => w.exercises).filter(e => e.id === exDef.id && !e.skipped).pop();
     // סעיף 5 — טיפ מתחלף: סבב לפי מספר האימונים, כך שכל פעם משהו אחר
@@ -494,6 +498,20 @@ export default function Workout() {
             </div>
           ) : null}
           <div style={{ fontSize: 12.5, marginTop: 6, lineHeight: 1.5, color: 'var(--acc)' }}>{why}</div>
+          {/* ההוראה עצמה. עד כה הכרטיס הזה הציג כיוון בלבד — תווית שלא נגעה
+              במספרים — ולכן 13 תרגילים עמדו במקום חודשיים וחצי. */}
+          <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--line)' }}>
+            <div style={{ fontSize: 10.5, color: 'var(--dim)', fontWeight: 800, letterSpacing: '.1em' }}>
+              היום
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 800, marginTop: 4, lineHeight: 1.45 }}>{rx.text}</div>
+            <div style={{ fontSize: 11.5, color: 'var(--dim)', marginTop: 4 }}>{rx.why}</div>
+            {rx.veto && (
+              <div className="alert mt8" style={{ borderColor: 'var(--danger)', background: 'rgba(216,31,42,.08)' }}>
+                ⛔ <span>{rx.veto}</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* סעיף 5 — טיפ מתחלף מהצוות */}
