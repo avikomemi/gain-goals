@@ -9,3 +9,7 @@ BACKLOG.md
 .cursorrules
 .claude/
 scripts/repro-shot.png
+# צילומי בדיקה של פלייררייט. סקריפט שרץ עם cwd בשורש הריפו כותב לכאן,
+# וזה קובץ עבודה ולא תוכן. הנכסים האמיתיים יושבים ב-public/ וב-docs/.
+/*.png
+/*.cjs
