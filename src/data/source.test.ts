@@ -116,3 +116,29 @@ describe('הפערים הפתוחים נשארים גלויים', () => {
     expect(DEVIATIONS.some(d => d.routine === 'warmup' && d.kind === 'removal')).toBe(false);
   });
 });
+
+describe('Drop lands — הגובה חזר כמשתנה', () => {
+  const land = PROGRAM.find(r => r.key === 'A')!.exercises.find(e => e.id === 'a-land')!;
+
+  it('הגובה נרשם, ולכן אפשר להתקדם בו', () => {
+    // שישה אימונים זהים לחלוטין כי לא היה שום משתנה להזיז: לא גובה, לא זמן.
+    const h = land.params?.find(p => p.key === 'dropH');
+    expect(h, 'אין שדה גובה').toBeTruthy();
+    expect(h!.def).toBe(15);
+    expect(h!.step).toBe(5);
+  });
+
+  it("'stick the landing' הוא התקן, ולכן הוא ביעד ולא בטיפ מתחלף", () => {
+    expect(land.target).toContain('נעילה 3 שניות');
+    expect(land.note).toMatch(/נועלים 3 שניות/);
+  });
+
+  it('ההקשחה היא גובה, והשער הוא איכות', () => {
+    expect(land.harder).toMatch(/\+5 ס"מ/);
+    expect(land.harder).toMatch(/שקטות ונעולות/);
+  });
+
+  it('נשאר חד-רגלי — לא חוזרים לשתי רגליים', () => {
+    expect(land.name).toContain('Single-Leg');
+  });
+});
