@@ -51,6 +51,9 @@ export interface FoodItem {
   def: number;                                   // כמות ברירת-מחדל כשלא נכתב מספר (גרם ל-g; יחידות ל-unit)
   gout?: 'high' | 'ok';                          // דגל גאוט להערת הילה
   src?: string;                                  // 'OFF' | 'USDA' | 'תווית' | 'הערכה'
+  includes?: string[];                           // מזהי מאכלים שכבר ספורים בתוך המנה הזו.
+  //   ' עם ' הוא מפריד, ולכן "פיצה לבנה עם פטריות" מגיע כשתי שורות נפרדות
+  //   והפטריות נספרות פעמיים. מי שמופיע כאן מוסר כששורת המנה המורכבת קיימת.
 }
 
 // ~35 הקבועים של אבי. ערכים ממותגים ששלפנו מ-OFF מסומנים; השאר USDA/תווית מבוססים.
@@ -207,12 +210,12 @@ export const SEED_FOODS: FoodItem[] = [
   // הפירוק: בצק אפוי ~230 גר' · מוצרלה ~120 · ריקוטה ~70 · פרמזן ~20 ·
   // פטריות ~60 · שמן זית ~8. סך הכול ~480 גר' ו-~1250 קק"ל.
   // פטריות הן פורין בינוני מהצומח, ופורינים מהצומח אינם מעלים סיכון לגאוט.
-  { id: 'whitepizza', names: ['פיצה לבנה', 'פיצה נפוליטנית', 'פיצה פטריות', 'פיצה אישית'], per100: [260, 12, 25, 12], sugar: 2, freeSugar: 0, fluid: 0, fiber: 1.5, unit: 'unit', unitGrams: 480, unitLabel: 'פיצה', def: 1, gout: 'ok', src: 'הערכה' },
+  { id: 'whitepizza', names: ['פיצה לבנה', 'פיצה נפוליטנית', 'פיצה פטריות', 'פיצה אישית'], per100: [260, 12, 25, 12], sugar: 2, freeSugar: 0, fluid: 0, fiber: 1.5, unit: 'unit', unitGrams: 480, unitLabel: 'פיצה', def: 1, gout: 'ok', src: 'הערכה', includes: ['mushroom', 'yellow', 'white5'] },
   // משולש מהפיצה הלבנה: 480 חלקי 8 = 60 גרם. ספירת החיתוכים בצילום נקבעה
   // קודם ל-6 וזו הייתה טעות קריאה; אבי ספר שמונה. משקל הפיצה עצמו נגזר
   // מהקוטר ולא מהחלוקה, ולכן הוא לא השתנה — רק גודל המשולש.
   // הכינוי ארוך גם מ'משולש פיצה' וגם מ'פיצה לבנה' ולכן גובר על שניהם.
-  { id: 'whitepizzaslice', names: ['משולש פיצה לבנה', 'משולשי פיצה לבנה'], per100: [260, 12, 25, 12], sugar: 2, freeSugar: 0, fluid: 0, fiber: 1.5, unit: 'unit', unitGrams: 60, unitLabel: 'משולש', def: 1, gout: 'ok', src: 'הערכה' },
+  { id: 'whitepizzaslice', names: ['משולש פיצה לבנה', 'משולשי פיצה לבנה'], per100: [260, 12, 25, 12], sugar: 2, freeSugar: 0, fluid: 0, fiber: 1.5, unit: 'unit', unitGrams: 60, unitLabel: 'משולש', def: 1, gout: 'ok', src: 'הערכה', includes: ['mushroom', 'yellow', 'white5'] },
   // מגש שלם. בלעדיו "מגש פיצה" היה נתפס כ'פיצה' ונספר כמשולש אחד — 333
   // במקום 2900. זו מחלקת השגיאה השלישית: המאכל זוהה נכון והכמות שקרה.
   // הגזירה: פיצה משפחתית היא 36 ס"מ, כלומר 1018 סמ"ר, ובצפיפות של כ-1 גרם
@@ -423,9 +426,12 @@ export function mergeFoods(userFoods: FoodItem[] | undefined): FoodItem[] {
   return [...SEED_FOODS, ...mine];
 }
 
-export interface FoodLine { name: string; qty: number; qtyLabel: string; macro: [number, number, number, number]; sugar: number; freeSugar: number; fiber: number;
+export interface FoodLine { id: string; name: string; qty: number; qtyLabel: string; macro: [number, number, number, number]; sugar: number; freeSugar: number; fiber: number;
   /** פי כמה מהמנה הרגילה של המאכל. 1 = מנה אחת. ראו suspect. */
-  servings: number }
+  servings: number;
+  /** מ"ל נוזל בשורה הזו. על השורה ולא במפה לפי מאכל: ארבע כוסות תה הן
+   *  ארבע שורות של אותו id, ומפה הייתה סופרת את המצטבר פעם לכל שורה. */
+  fluidMl: number }
 export interface FoodEstimate {
   lines: FoodLine[];
   total: { kcal: number; p: number; c: number; f: number; sugar: number; freeSugar: number; fiber: number; fluidMl: number };
@@ -545,7 +551,10 @@ interface Hit { food: FoodItem; start: number; end: number }
 // זו מחלקת השגיאה השלישית במלוא עוצמתה — המאכל זוהה נכון והכמות שיקרה,
 // והיא אינה מופיעה לא ב-unknownFoods ולא ב-partialMatches.
 // הנרמול מאחד את הצורות לצורת הסמיכות, שהיא הצורה שבכינויים.
+// "7 משולשים של פיצה לבנה" נפל חזרה לפיצה שלמה כי 'של' חצץ בין מילת המנה
+// לשם. אין כינוי אחד במסד שמכיל 'של' — יש בדיקה — ולכן אפשר להסיר אותו.
 const PLURALS: [RegExp, string][] = [
+  [/\s+של\s+/g, ' '],
   [/משולשים(?=\s)/g, 'משולשי'],
   [/פרוסות(?=\s)/g, 'פרוסת'],
   [/כוסות(?=\s)/g, 'כוסות'],
@@ -613,6 +622,7 @@ function sliceBy(seg: string, hits: Hit[]): { text: string; nameAt: number }[] {
 export function estimateFood(text: string, foods: FoodItem[]): FoodEstimate {
   const lines: FoodLine[] = [];
   const notInDB: string[] = [];
+  const byId = new Map(foods.map(f => [f.id, f]));
   const total = { kcal: 0, p: 0, c: 0, f: 0, sugar: 0, freeSugar: 0, fiber: 0, fluidMl: 0 };
   // מפריד: פסיק/נקודה/שורה, וגם מילת החיבור "ו" (הו' תמיד תחילית — נבלעת עם המפריד).
   // "או" לא מפריד — הוא "או" (אותה מנה בשני שמות), כדי לא לספור כפול.
@@ -646,21 +656,30 @@ export function estimateFood(text: string, foods: FoodItem[]): FoodEstimate {
       const servings = grams
         ? (food.unit === 'g' ? qty / (food.def || 100) : qty / ((food.unitGrams || 100) * (food.def || 1)))
         : qty / (food.def || 1);
-      lines.push({ name: food.names[0], qty, qtyLabel: grams ? `${qty}ג'` : qtyLabel(food, qty), macro, sugar, freeSugar, fiber, servings });
-      total.kcal += macro[0]; total.p += macro[1]; total.c += macro[2]; total.f += macro[3];
-      total.sugar += sugar; total.freeSugar += freeSugar; total.fiber += fiber;
-      total.fluidMl += food.fluid * gramsEq / 100;
+      lines.push({ id: food.id, name: food.names[0], qty, qtyLabel: grams ? `${qty}ג'` : qtyLabel(food, qty), macro, sugar, freeSugar, fiber, servings, fluidMl: food.fluid * gramsEq / 100 });
     });
+  }
+
+  // מנה מורכבת בולעת את מרכיביה. ' עם ' הוא מפריד, ולכן "פיצה לבנה עם
+  // פטריות" מגיע לכאן כשתי שורות — הפיצה השלמה, ועוד 100 גרם פטריות
+  // שכבר ספורים בתוכה. הצבירה נעשית אחרי הסינון ולא תוך כדי, אחרת
+  // הסכום כולל שורות שהוסרו.
+  const swallowed = new Set(lines.flatMap(l => byId.get(l.id)?.includes ?? []));
+  const kept = lines.filter(l => !swallowed.has(l.id));
+  for (const l of kept) {
+    total.kcal += l.macro[0]; total.p += l.macro[1]; total.c += l.macro[2]; total.f += l.macro[3];
+    total.sugar += l.sugar; total.freeSugar += l.freeSugar; total.fiber += l.fiber;
+    total.fluidMl += l.fluidMl;
   }
 
   total.sugar = Math.round(total.sugar);
   total.freeSugar = Math.round(total.freeSugar);
   total.fluidMl = Math.round(total.fluidMl / 10) * 10;   // לעשרת המ"ל — דיוק גבוה מזה מדומה
   total.fiber = Math.round(total.fiber);
-  const suspect = lines
+  const suspect = kept
     .filter(l => l.macro[0] >= IMPLAUSIBLE_KCAL && l.servings >= IMPLAUSIBLE_SERVINGS)
     .map(l => `${l.name} · ${l.qtyLabel}`);
-  return { lines, total, notInDB: notInDB.slice(0, 4), suspect };
+  return { lines: kept, total, notInDB: notInDB.slice(0, 4), suspect };
 }
 
 /* ---------- תור המאכלים שהילה לא מכירה ----------
