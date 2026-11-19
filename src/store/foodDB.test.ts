@@ -1434,3 +1434,31 @@ describe('מגש פיצה שלם', () => {
     expect(names('פיצה')).toEqual(['משולש פיצה']);
   });
 });
+
+describe('פיצה לבנה נפוליטנית', () => {
+  it('אינה מגש ואינה משולש — פיצה אישית שלמה', () => {
+    expect(names('פיצה לבנה')).toEqual(['פיצה לבנה']);
+    const w = est('פיצה לבנה').total.kcal;
+    expect(w).toBeLessThan(est('מגש פיצה').total.kcal / 2);
+    expect(w).toBeGreaterThan(est('משולש פיצה').total.kcal * 3);
+  });
+
+  it('בלי רוטב עגבניות — אפס סוכר חופשי', () => {
+    // ההבדל המהותי מפיצה רגילה: בסיס ריקוטה/שמנת במקום רוטב.
+    expect(est('פיצה לבנה').total.freeSugar).toBe(0);
+    expect(est('משולש פיצה').total.freeSugar).toBeGreaterThan(0);
+  });
+
+  it('שומנית יותר מפיצה רגילה ל-100 גרם', () => {
+    const per100 = (t: string, g: number) => est(`${t} ${g} גרם`).total;
+    expect(per100('פיצה לבנה', 100).f).toBeGreaterThan(per100('פיצה', 100).f);
+  });
+
+  it("השם הארוך גובר, ו'פיצה' לבד נשארת משולש", () => {
+    expect(names('פיצה פטריות')).toEqual(['פיצה לבנה']);
+    expect(names('פיצה')).toEqual(['משולש פיצה']);
+    // 'פיצה עם פטריות' לא יכול להיות כינוי: ' עם ' הוא מפריד ו-splitSegments
+    // רץ לפני המטצ'ר. זה סעיף 2 בחוזה הפרסר, והבדיקה הקיימת תפסה את זה.
+    expect(names('פיצה עם פטריות')).toContain('משולש פיצה');
+  });
+});
