@@ -1414,3 +1414,23 @@ describe('פריטים שנחתו בתור', () => {
     expect(names('יוגורט פרו')).toEqual(['יוגורט פרו']);
   });
 });
+
+describe('מגש פיצה שלם', () => {
+  it('מגש אינו משולש — ההפרש הוא פי שמונה', () => {
+    // בלי הפריט הזה "מגש פיצה" נתפס כ'פיצה' ונספר כמשולש בודד.
+    expect(names('מגש פיצה')).toEqual(['מגש פיצה']);
+    const tray = est('מגש פיצה').total.kcal;
+    const slice = est('משולש פיצה').total.kcal;
+    expect(tray).toBeGreaterThan(slice * 7);
+  });
+
+  it('חצי מגש הוא חצי', () => {
+    expect(est('חצי מגש פיצה').total.kcal).toBe(Math.round(est('מגש פיצה').total.kcal / 2));
+  });
+
+  it('משולשים סופרים כמשולשים, והשם הארוך לא נבלע', () => {
+    expect(est('4 משולשי פיצה').total.kcal).toBe(Math.round(266 * 4 * 125 / 100));
+    expect(names('פיצה משפחתית')).toEqual(['מגש פיצה']);
+    expect(names('פיצה')).toEqual(['משולש פיצה']);
+  });
+});
