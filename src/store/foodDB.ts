@@ -423,12 +423,27 @@ export function mergeFoods(userFoods: FoodItem[] | undefined): FoodItem[] {
   return [...SEED_FOODS, ...mine];
 }
 
-export interface FoodLine { name: string; qty: number; qtyLabel: string; macro: [number, number, number, number]; sugar: number; freeSugar: number; fiber: number }
+export interface FoodLine { name: string; qty: number; qtyLabel: string; macro: [number, number, number, number]; sugar: number; freeSugar: number; fiber: number;
+  /** פי כמה מהמנה הרגילה של המאכל. 1 = מנה אחת. ראו suspect. */
+  servings: number }
 export interface FoodEstimate {
   lines: FoodLine[];
   total: { kcal: number; p: number; c: number; f: number; sugar: number; freeSugar: number; fiber: number; fluidMl: number };
   notInDB: string[];
+  /** שורות שהמספר בהן חורג מכל סביר לפריט אחד. ראו IMPLAUSIBLE_KCAL. */
+  suspect: string[];
 }
+
+// מחלקת השגיאה השלישית — מאכל נכון, כמות שגויה — אינה מופיעה באף תור, כי
+// שני התורים בודקים זיהוי ולא כמות. זו ההגנה הכללית עליה: לא משנה איזה
+// כינוי חסר ישבור את זה בפעם הבאה, מכפיל שגוי ייתפס.
+//
+// שני תנאים ביחד, ובכוונה. קלוריות לבדן פוסלות מגש פיצה אמיתי, שהוא 2,926
+// ולגיטימי לחלוטין; מנות לבדן פוסלות עשר עגבניות. החשד הוא מכפיל גדול
+// *וגם* תוצאה שחורגת מיעד יומי שלם — וזה בדיוק מה שקורה כשמילת מנה נבלעת
+// והמספר מוכפל בפריט השלם במקום במנה שלו.
+export const IMPLAUSIBLE_KCAL = 2500;
+export const IMPLAUSIBLE_SERVINGS = 4;
 
 const FILLER = ['עם', 'של', 'ללא', 'בלי', 'סוכר', 'מלח', 'קינמון', 'וניל', 'נענע', 'מנטה', 'קרח', 'כורכום', 'תמצית', 'שמן', 'בבוקר', 'בערב', 'בצהריים', 'קופסא', 'קופסה', 'גרם', 'גר', "ג'", 'כוס', 'בקבוק', 'מים', 'קצת', 'הרבה', 'ועוד', 'גדול', 'קטן', 'שומן', 'שמן זית', 'לימון'];
 
@@ -525,7 +540,19 @@ interface Hit { food: FoodItem; start: number; end: number }
 // פיצול הטקסט למקטעים. מוגדר פעם אחת — גם estimateFood וגם partialMatches משתמשים בו,
 // ואסור שהם יתפצלו אחרת זה מזה.
 // 'נס קפה עם חלב' הוא פריט אחד, אבל ' עם ' הוא מפריד — מכווצים לפני הפיצול.
-export const normalize = (text: string): string => (text || '').replace(/קפה(?:\s+שחור)?\s+עם\s+חלב/g, 'קפה בחלב');
+// צורות רבים של מילות מנה. "7 משולשים פיצה לבנה" החזיר 8,736 קק"ל: המילה
+// 'משולשים' לא הייתה כינוי, הפרסר התעלם ממנה, וה-7 הוכפל בפיצה *שלמה*.
+// זו מחלקת השגיאה השלישית במלוא עוצמתה — המאכל זוהה נכון והכמות שיקרה,
+// והיא אינה מופיעה לא ב-unknownFoods ולא ב-partialMatches.
+// הנרמול מאחד את הצורות לצורת הסמיכות, שהיא הצורה שבכינויים.
+const PLURALS: [RegExp, string][] = [
+  [/משולשים(?=\s)/g, 'משולשי'],
+  [/פרוסות(?=\s)/g, 'פרוסת'],
+  [/כוסות(?=\s)/g, 'כוסות'],
+];
+export const normalize = (text: string): string =>
+  PLURALS.reduce((acc, [re, to]) => acc.replace(re, to),
+    (text || '').replace(/קפה(?:\s+שחור)?\s+עם\s+חלב/g, 'קפה בחלב'));
 
 export function splitSegments(t: string): string[] {
   return t.split(/[\n,·;]+|\.(?!\d)|\s+ו(?!ניל|ופל|יטמין|רוד|רק\s)|\s+עם\s+/).map(x => x.trim()).filter(x => x.length > 1);
@@ -614,7 +641,12 @@ export function estimateFood(text: string, foods: FoodItem[]): FoodEstimate {
       const sugar = Math.round(food.sugar * gramsEq) / 100;
       const freeSugar = Math.round(food.freeSugar * gramsEq) / 100;
       const fiber = Math.round(food.fiber * gramsEq) / 100;
-      lines.push({ name: food.names[0], qty, qtyLabel: grams ? `${qty}ג'` : qtyLabel(food, qty), macro, sugar, freeSugar, fiber });
+      // פי כמה מהמנה הרגילה של המאכל. זה המדד לחשד, לא הקלוריות לבדן:
+      // מגש פיצה שלם הוא מנה אחת ולגיטימי, ו"7 פיצה לבנה" הוא פי שבע.
+      const servings = grams
+        ? (food.unit === 'g' ? qty / (food.def || 100) : qty / ((food.unitGrams || 100) * (food.def || 1)))
+        : qty / (food.def || 1);
+      lines.push({ name: food.names[0], qty, qtyLabel: grams ? `${qty}ג'` : qtyLabel(food, qty), macro, sugar, freeSugar, fiber, servings });
       total.kcal += macro[0]; total.p += macro[1]; total.c += macro[2]; total.f += macro[3];
       total.sugar += sugar; total.freeSugar += freeSugar; total.fiber += fiber;
       total.fluidMl += food.fluid * gramsEq / 100;
@@ -625,7 +657,10 @@ export function estimateFood(text: string, foods: FoodItem[]): FoodEstimate {
   total.freeSugar = Math.round(total.freeSugar);
   total.fluidMl = Math.round(total.fluidMl / 10) * 10;   // לעשרת המ"ל — דיוק גבוה מזה מדומה
   total.fiber = Math.round(total.fiber);
-  return { lines, total, notInDB: notInDB.slice(0, 4) };
+  const suspect = lines
+    .filter(l => l.macro[0] >= IMPLAUSIBLE_KCAL && l.servings >= IMPLAUSIBLE_SERVINGS)
+    .map(l => `${l.name} · ${l.qtyLabel}`);
+  return { lines, total, notInDB: notInDB.slice(0, 4), suspect };
 }
 
 /* ---------- תור המאכלים שהילה לא מכירה ----------

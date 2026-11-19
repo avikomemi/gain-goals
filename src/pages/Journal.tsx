@@ -534,6 +534,15 @@ function HilaResponse({ text, photoCount, waterMl, waterGoal, title, date }: { t
           לפי ערכים אמיתיים פר-100-גרם והכמויות שציינת (בלי מספר — מנה טיפוסית). היעדים שלך: ~{(g.kcal - 100).toLocaleString('he-IL')}-{(g.kcal + 100).toLocaleString('he-IL')} קק"ל · חלבון {g.protein} · שומן {g.fat}.
         </div>
       )}
+      {/* שורה בודדת מעל סף הסבירות. "7 משולשים פיצה לבנה" החזיר 8,736 קק"ל
+          כי מילת המנה ברבים לא הייתה כינוי וה-7 הוכפל בפיצה שלמה. זו מחלקת
+          השגיאה שאין לה תור — המאכל זוהה נכון והכמות שיקרה — ולכן ההגנה
+          היא סף ולא עוד כינוי: מה שיישבר בפעם הבאה ייתפס גם הוא. */}
+      {est.suspect.length > 0 && (
+        <div className="alert mt8" style={{ borderColor: 'var(--danger)', background: 'rgba(216,31,42,.08)' }}>
+          ⚠️ <span><b>המספר הזה נראה גבוה מדי:</b> {est.suspect.join(' · ')}. בדוק את הכמות — כנראה חסרה מילה שתתאר את המנה.</span>
+        </div>
+      )}
       {est.notInDB.length > 0 && (
         <div style={{ fontSize: 12, marginTop: 6, color: 'var(--acc2)' }}>
           לא במסד עדיין: {est.notInDB.join(' · ')} — נאסף אוטומטית, ראה "ממתינים למסד" למטה.

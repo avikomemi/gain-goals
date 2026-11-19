@@ -1,6 +1,6 @@
 // רגרסיה לפרסר התזונה של הילה. מה שנשבר כאן = הילה מציגה לאבי מספר לא נכון.
 import { describe, expect, it } from 'vitest';
-import { estimateFood, mergeFoods, unknownFoods, FoodItem, partialMatches} from './foodDB';
+import { estimateFood, mergeFoods, unknownFoods, FoodItem, partialMatches, IMPLAUSIBLE_KCAL, IMPLAUSIBLE_SERVINGS } from './foodDB';
 import { hilaReview } from './hila';
 
 const foods: FoodItem[] = mergeFoods(undefined);
@@ -1478,5 +1478,62 @@ describe('משולש מהפיצה הלבנה', () => {
     expect(names('משולש פיצה לבנה')).toEqual(['משולש פיצה לבנה']);
     expect(names('משולש פיצה')).toEqual(['משולש פיצה']);
     expect(names('פיצה לבנה')).toEqual(['פיצה לבנה']);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// הבאג של 19.11: "7 משולשים פיצה לבנה" החזיר 8,736 קק"ל. 'משולשים' לא היה
+// כינוי, הפרסר התעלם ממנו, וה-7 הוכפל בפיצה שלמה. זו מחלקת השגיאה השלישית
+// במלוא עוצמתה — המאכל זוהה נכון והכמות שיקרה — והיא לא מופיעה באף תור.
+// שתי הגנות: נרמול צורות הרבים, וסף סבירות שתופס גם את מה שעוד לא נשבר.
+// ---------------------------------------------------------------------------
+describe('מילת מנה ברבים', () => {
+  it('"משולשים" נספר כמשולשים, לא כפיצות שלמות', () => {
+    expect(est('7 משולשים פיצה לבנה').total.kcal).toBe(1092);
+    expect(names('7 משולשים פיצה לבנה')).toEqual(['משולש פיצה לבנה']);
+  });
+
+  it('כל שלוש הצורות מגיעות לאותו מספר', () => {
+    const k = est('7 משולשי פיצה לבנה').total.kcal;
+    expect(est('7 משולשים פיצה לבנה').total.kcal).toBe(k);
+    expect(est('שבעה משולשים פיצה לבנה').total.kcal).toBe(k);
+  });
+
+  it('גם בפיצה הרגילה', () => {
+    expect(est('4 משולשים פיצה').total.kcal).toBe(est('4 משולשי פיצה').total.kcal);
+  });
+});
+
+describe('סף סבירות — ההגנה על מה שעוד לא נשבר', () => {
+  it('שורה מעל הסף מסומנת לבדיקה', () => {
+    // "7 פיצה לבנה" הוא ניסוח תקין שמשמעותו שבע פיצות שלמות. אולי זה נכון,
+    // ואולי חסרה מילה. הסף לא מתקן — הוא שואל.
+    const r = est('7 פיצה לבנה');
+    expect(r.total.kcal).toBeGreaterThan(IMPLAUSIBLE_KCAL);
+    expect(r.suspect).toHaveLength(1);
+    expect(r.suspect[0]).toContain('פיצה לבנה');
+  });
+
+  it('ארוחה כבדה אך סבירה אינה מסומנת', () => {
+    expect(est('7 משולשים פיצה לבנה').suspect).toEqual([]);
+    expect(est('מגש פיצה').suspect).toEqual([]);   // 2,926 — גדול, אבל אמיתי
+  });
+
+  it('הסף הוא לשורה בודדת ולא לסך הארוחה', () => {
+    // שני מגשים הם ארוחה (מוזרה), לא תקלה בפרסר. רק שורה יחידה חשודה.
+    const r = est('מגש פיצה, מגש פיצה');
+    expect(r.total.kcal).toBeGreaterThan(IMPLAUSIBLE_KCAL * 2);
+    expect(r.suspect).toEqual([]);
+  });
+
+  it('שני התנאים נדרשים — קלוריות לבדן או מנות לבדן אינן מספיקות', () => {
+    // מגש פיצה: 2,926 קק"ל אבל מנה אחת. לא חשוד.
+    const tray = est('מגש פיצה').lines[0];
+    expect(tray.macro[0]).toBeGreaterThan(IMPLAUSIBLE_KCAL);
+    expect(tray.servings).toBeLessThan(IMPLAUSIBLE_SERVINGS);
+    // עשר עגבניות: מכפיל גדול אבל קלוריות זניחות. גם לא חשוד.
+    const tom = est('10 עגבניות');
+    expect(tom.lines[0].servings).toBeGreaterThanOrEqual(IMPLAUSIBLE_SERVINGS);
+    expect(tom.suspect).toEqual([]);
   });
 });
