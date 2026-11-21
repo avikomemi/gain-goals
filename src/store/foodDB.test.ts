@@ -1568,3 +1568,43 @@ describe('מנה מורכבת בולעת את מרכיביה', () => {
     expect(bad).toEqual([]);
   });
 });
+
+describe('לחמים תימניים', () => {
+  it('קובנה היא השמנה מכולן — החמאה היא 40% מהקלוריות', () => {
+    const k = est('קובנה 100 גרם').total;
+    expect(k.kcal).toBe(355);
+    expect(k.f).toBe(17);
+    expect(est('קובנה 100 גרם').total.f).toBeGreaterThan(est('פיתה תימנית 100 גרם').total.f * 5);
+  });
+
+  it('לחוח הוא הרזה — קמח ומים, בלי שמן', () => {
+    const l = est('לחוח 100 גרם').total;
+    expect(l.kcal).toBe(190);
+    expect(l.f).toBeLessThanOrEqual(1);   // 0.5 מעוגל כלפי מעלה בשורה
+    // אצל הילה הוא סווג 'מאפה מלוח' עם 13 גר' שומן. זה היה שגוי בגדול.
+    expect(l.f).toBeLessThan(est('בורקס 100 גרם').total.f / 10);
+  });
+
+  it('לחוח נספר ביחידות', () => {
+    expect(est('2 לחוחים').total.kcal).toBe(380);
+    expect(names('לחוח')).toEqual(['לחוח']);
+  });
+
+  it("'פיתה תימנית' גוברת על 'פיתה', והיא גדולה ממנה", () => {
+    expect(names('פיתה תימנית')).toEqual(['פיתה תימנית']);
+    expect(names('פיתה')).toEqual(['פיתה']);
+    expect(est('פיתה תימנית').total.kcal).toBeGreaterThan(est('פיתה').total.kcal);
+  });
+
+  it('סלוף ולחם תימני הם אותו פריט', () => {
+    const k = est('פיתה תימנית').total.kcal;
+    expect(est('סלוף').total.kcal).toBe(k);
+    expect(est('לחם תימני').total.kcal).toBe(k);
+  });
+
+  it('רק בקובנה יש סוכר מוסף', () => {
+    expect(est('קובנה 150 גרם').total.freeSugar).toBeGreaterThan(0);
+    expect(est('לחוח').total.freeSugar).toBe(0);
+    expect(est('פיתה תימנית').total.freeSugar).toBe(0);
+  });
+});
