@@ -1582,7 +1582,9 @@ describe('לחמים תימניים', () => {
     expect(l.kcal).toBe(190);
     expect(l.f).toBeLessThanOrEqual(1);   // 0.5 מעוגל כלפי מעלה בשורה
     // אצל הילה הוא סווג 'מאפה מלוח' עם 13 גר' שומן. זה היה שגוי בגדול.
-    expect(l.f).toBeLessThan(est('בורקס 100 גרם').total.f / 10);
+    // ההשוואה מול קובנה ולא מול בורקס: בורקס אינו במסד (הוא מפתח אצל הילה
+    // בלבד), ולכן est שלו הוא אפס וההשוואה הייתה חסרת משמעות.
+    expect(l.f * 10).toBeLessThan(est('קובנה 100 גרם').total.f);
   });
 
   it('לחוח נספר ביחידות', () => {
@@ -1606,5 +1608,36 @@ describe('לחמים תימניים', () => {
     expect(est('קובנה 150 גרם').total.freeSugar).toBeGreaterThan(0);
     expect(est('לחוח').total.freeSugar).toBe(0);
     expect(est('פיתה תימנית').total.freeSugar).toBe(0);
+  });
+});
+
+describe('מלכודות כינוי אצל הילה', () => {
+  const found = (t: string) => hilaReview(t + ' בארוחת בוקר').found;
+
+  it('"סלוף" אינו בשר מעובד — הוא מכיל "לוף"', () => {
+    expect(found('סלוף עם ביצה')).not.toContain('בשר מעובד');
+    expect(found('סלוף עם ביצה')).toContain('לחם תימני רזה');
+    expect(found('לוף בפיתה')).toContain('בשר מעובד');   // לוף אמיתי עדיין נתפס
+  });
+
+  it('"פיתה" אינה תה — היא מכילה "תה"', () => {
+    expect(found('פיתה עם חומוס')).not.toContain('תה');
+    expect(found('פיתה תימנית עם חומוס')).not.toContain('תה');
+    expect(found('כוס תה')).toContain('תה');            // תה אמיתי עדיין נתפס
+    expect(found('פיתה וכוס תה')).toContain('תה');      // ושניהם יחד
+  });
+
+  it('קובנה ולחוח מקבלים הערות שונות — זה כל העניין', () => {
+    const k = hilaReview('קובנה בארוחת בוקר').notes.join(' ');
+    const l = hilaReview('לחוח בארוחת בוקר').notes.join(' ');
+    expect(k).toContain('מאפה חמאה');
+    expect(l).toContain('קמח ומים');
+    expect(k).not.toContain('קמח ומים');
+  });
+
+  it('הגרסאות התימניות לא נבלעות בקטגוריית הפחמימה הגנרית', () => {
+    expect(found('פיתה תימנית')).not.toContain('פחמימה');
+    expect(found('לחם תימני')).not.toContain('פחמימה');
+    expect(found('פיתה רגילה')).toContain('פחמימה');
   });
 });
