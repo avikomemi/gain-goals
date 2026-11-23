@@ -275,6 +275,15 @@ export const SEED_FOODS: FoodItem[] = [
   { id: 'avocado', names: ['אבוקדו', 'גוואקמול', 'גואקמול'], per100: [160, 2, 9, 15], sugar: 0.7, freeSugar: 0, fluid: 0, fiber: 7, unit: 'g', def: 100, src: 'USDA' },
   { id: 'oliveoil', names: ['שמן זית', 'שמן'], per100: [884, 0, 0, 100], sugar: 0, freeSugar: 0, fluid: 0, fiber: 0, unit: 'unit', unitGrams: 13.5, unitLabel: 'כף', def: 1, src: 'USDA' },
   { id: 'peanutbutter', names: ['חמאת בוטנים'], per100: [588, 25, 20, 50], sugar: 9, freeSugar: 6, fluid: 0, fiber: 6, unit: 'unit', unitGrams: 16, unitLabel: 'כף', def: 1, src: 'USDA' },
+  // שקית ג'ל דבש — You Again, מהתווית שאבי צילם באמצע אימון B.
+  // 21 גר', 60 קק"ל, 16 פחמ', 15 סוכר, 250 מ"ג נתרן, אפס שומן ואפס חלבון.
+  // מרכיבים: דבש פראי גולמי ומלח הימלאיה. זה הכול.
+  //
+  // ⚠️ התווית אומרת "Added Sugars 0g" וזה נכון רגולטורית: ב-FDA דבש שנמכר
+  // כדבש אינו "מוסף". לפי ארגון הבריאות, שהוא ההגדרה שהמסד הזה עובד לפיה,
+  // דבש הוא סוכר חופשי במפורש — ראו ההערה על freeSugar בראש הקובץ.
+  // לכן 15 גר' חופשי מול 0 בתווית. זה בדיוק ההבדל שהשדה נבנה בשבילו.
+  { id: 'honeygel', names: ["ג'ל דבש", 'ג׳ל דבש', 'שקית דבש', "ג'ל אנרגיה", 'ג׳ל אנרגיה'], per100: [286, 0, 76, 0], sugar: 71, freeSugar: 71, fluid: 0, fiber: 0, unit: 'unit', unitGrams: 21, unitLabel: 'שקית', def: 1, gout: 'ok', src: 'תווית' },
   { id: 'honey', names: ['דבש'], per100: [304, 0.3, 82, 0], sugar: 82, freeSugar: 82, fluid: 0, fiber: 0.2, unit: 'unit', unitGrams: 7, unitLabel: 'כפית', def: 1, gout: 'ok', src: 'USDA' },   // כפית = 7 גר'; "כף דבש" מומר ל-3 כפיות
   { id: 'nuts', names: ['שקדים', 'אגוזים', 'קשיו', 'בוטנים', 'פיסטוק', 'שקד', 'אגוז', 'פיצוחים', 'פיצוח', 'גרעינים', 'גרעיני חמניה'], per100: [579, 21, 22, 50], sugar: 4.4, freeSugar: 0, fluid: 0, fiber: 12.5, unit: 'g', def: 28, src: 'USDA' },
   // פקאן ומלך שמנוניים בהרבה מהשקד (691/654 מול 579) — שם ספציפי גובר על 'אגוז' הכללי
