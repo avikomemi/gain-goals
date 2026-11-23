@@ -56,17 +56,18 @@ describe('השלב גובר על הבסיס ועל גרסת המיקום', () =>
   const lever = byId('b-lever');
 
   it('השם בתצוגה וביומן הוא שם השלב', () => {
-    expect(exName(mu, 'gym', 0)).toBe('Muscle-Up · 1 · אחיזה שקרית');
-    expect(exName(mu, 'home', 0)).toBe('Muscle-Up · 1 · אחיזה שקרית');   // גם כשיש gym/home
+    expect(exName(mu, 'gym', 0)).toBe('Muscle-Up · 1 · אחיזה שקרית בשיפוע');
+    expect(exName(mu, 'home', 0)).toBe('Muscle-Up · 1 · אחיזה שקרית בשיפוע');   // גם כשיש gym/home
   });
 
   it('מבנה הסטים נלקח מהשלב', () => {
     const s0 = exStruct(mu, 'gym', 0);
-    expect(s0.timeBased).toBe(true);           // תלייה — שניות
+    expect(s0.timeBased).toBe(true);           // אחיזה בשיפוע — שניות
     expect(s0.setsDefault).toBe(3);
-    const s1 = exStruct(mu, 'gym', 1);
-    expect(s1.timeBased).toBeFalsy();          // משיכה גבוהה — חזרות
-    expect(s1.target).toBe('3×3-5');
+    expect(exStruct(mu, 'gym', 1).timeBased).toBe(true);   // אחיזה בתלייה — שניות
+    const s2 = exStruct(mu, 'gym', 2);
+    expect(s2.timeBased).toBeFalsy();          // משיכה גבוהה — חזרות
+    expect(s2.target).toBe('3×3-5');
   });
 
   it("timeBased של השלב גובר גם כשהבסיס הוא true", () => {
@@ -100,6 +101,17 @@ describe('השלב הראשון מתאים למי שלא מצליח את התר�
   it('Muscle-Up מתחיל באחיזה, לא במשיכה', () => {
     expect(byId('b-mu').stages![0].name).toContain('אחיזה');
     expect(byId('b-mu').stages![0].timeBased).toBe(true);
+  });
+
+  it('האחיזה מתחילה בשיפוע ורק אחר כך בתלייה', () => {
+    // אבי, 23.11: להחזיק את כל משקל הגוף מההתחלה היה קשה מדי. שלב בלי
+    // ווסת רציף הוא מבחן עובר/נכשל — כאן הזווית היא הווסת, כמו גובה
+    // הרגליים ב-Hollow Body וגובה הירידה ב-Drop lands.
+    const st = byId('b-mu').stages!;
+    expect(st[0].name).toContain('שיפוע');
+    expect(st[1].name).toContain('תלייה');
+    expect(st[0].note).toMatch(/הזווית היא הווסת/);
+    expect(st.length).toBe(5);
   });
 });
 
