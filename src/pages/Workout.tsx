@@ -419,9 +419,11 @@ export default function Workout() {
       });
     };
     const exRest = db.restByEx?.[exDef.id] ?? st.restDefault ?? restSec; // פר-תרגיל → ברירת-מחדל של התרגיל → גלובלי
-    // כל הסטים סומנו והמאמץ עדיין ריק — הרגע היחיד שבו יש מה לדווח עליו.
-    const setsDone = exLog.sets.length > 0 && exLog.sets.every(s => s.done);
-    const rpeMissing = setsDone && exLog.rpe == null;
+    // סט שהושלם ואין לו מאמץ. פר-סט ולא פר-תרגיל: אבי ביקש, והסיבה היא
+    // שסט שהגיע לכשל הוא מידע אחר לגמרי מסט שלישי קל.
+    const doneSets = exLog.sets.filter(s => s.done);
+    const rpeMissing = doneSets.length > 0 && doneSets.some(s => s.rpe == null);
+    const rpeGiven = doneSets.map(s => s.rpe).filter((r): r is number => r != null);
 
     return (
       <div className="scr fade-in" key={exDef.id}>
@@ -540,7 +542,8 @@ export default function Workout() {
 
         <div className="mt12">
           {exLog.sets.map((s, si) => (
-            <div className={`set ${s.done ? 'done' : ''}`} key={si}>
+            <div key={si}>
+            <div className={`set ${s.done ? 'done' : ''}`}>
               <span className="sn">סט {si + 1}</span>
               <div className="stp">
                 <span>{st.timeBased ? 'שניות' : 'חזרות'}</span>
@@ -580,6 +583,24 @@ export default function Workout() {
                 {s.done ? '✓' : ''}
               </div>
             </div>
+            {/* מאמץ פר-סט. אבי: "יש סטים שבהם יש כשל" — סט ראשון ב-7 וסט
+                שלישי ב-10 הם מצב אחר לגמרי משלושה סטים של 8, ומספר אחד
+                לתרגיל מחק את ההבדל. מופיע רק אחרי שהסט סומן, כי רק אז יש
+                על מה לדווח. */}
+            {s.done && (
+              <div className={'rpe mini' + (s.rpe == null ? ' rpe-need' : '')}>
+                <span>מאמץ</span>
+                {[6, 7, 8, 9, 10].map(n => {
+                  const c = RPE_COLOR[n];
+                  const on = s.rpe === n;
+                  return (
+                    <b key={n} className={on ? 'on' : ''} onClick={() => setLogAt(e => { e.sets[si].rpe = n; })}
+                      style={{ borderColor: c, color: on ? '#fff' : c, background: on ? c : 'transparent' }}>{n}</b>
+                  );
+                })}
+              </div>
+            )}
+            </div>
           ))}
         </div>
         {st.tempoSec && (() => {
@@ -607,47 +628,36 @@ export default function Workout() {
           )}
         </div>
 
-        {/* דיווח מאמץ. אבי ביקש ב-13.11 "תבליט אותו יותר", והסיבה חזקה מאז:
-            הוא ביטל את "סט מקס" של המקור, שהיה מנגנון הוויסות המובנה, ולכן
-            המספר הזה הוא אות ההתקדמות היחיד שנשאר. עד כה הוא ישב מתחת לזמן
-            המנוחה ולצליל, בתחתית המסך, ודווח ב-9% מהתרגילים — באימון B כולו
-            שני דיווחים, שניהם על מקבילים, ובדיוק שם המשקל ירד מ-21 ל-15.
-            עכשיו הוא מיד מתחת לסטים, שם העין נמצאת כשהם נגמרים, ומודגש
-            כשכולם סומנו והוא עדיין ריק. הוא לא חוסם — אבי יכול להתעלם. */}
-        <div className={'card mt12' + (rpeMissing ? ' rpe-need' : '')}
-          style={{ borderColor: rpeMissing ? 'var(--acc2)' : undefined }}>
-          <div className="spread" style={{ alignItems: 'center' }}>
-            <span style={{ fontSize: rpeMissing ? 14 : 12, fontWeight: 800, color: rpeMissing ? 'var(--acc2)' : 'var(--dim)' }}>
-              {rpeMissing ? 'כמה זה היה קשה?' : 'מאמץ'}
-            </span>
-            {exLog.rpe != null && (
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: RPE_COLOR[exLog.rpe] }}>{RPE_LABEL[exLog.rpe]}</span>
+        {/* המקרא והסיכום. הקלט עצמו עבר לרצועה שמתחת לכל סט. */}
+        {doneSets.length > 0 && (
+          <div className="card mt12" style={{ borderColor: rpeMissing ? 'var(--acc2)' : undefined }}>
+            <div className="spread" style={{ alignItems: 'center' }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: rpeMissing ? 'var(--acc2)' : 'var(--dim)' }}>
+                {rpeMissing ? 'חסר מאמץ בסט' : 'מאמץ'}
+              </span>
+              {rpeGiven.length > 0 && (
+                <span style={{ fontSize: 13, fontWeight: 800, display: 'flex', gap: 6 }}>
+                  {doneSets.map((s, i) => (
+                    <span key={i} style={{ color: s.rpe != null ? RPE_COLOR[s.rpe] : 'var(--line2)' }}>{s.rpe ?? '–'}</span>
+                  ))}
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize: 10.5, color: 'var(--dim)', marginTop: 6, textAlign: 'center', letterSpacing: '.02em' }}>
+              6 קל · 7 בינוני · 8 קשה · 9 כמעט כשל · 10 כשל
+            </div>
+            {rpeMissing && (
+              <div style={{ fontSize: 11.5, color: 'var(--dim)', marginTop: 8, lineHeight: 1.5 }}>
+                עמית: מספר לכל סט. סט שהגיע לכשל הוא מידע אחר לגמרי מסט שלישי קל, וזה מה שקובע אם מעלים.
+              </div>
+            )}
+            {rpeGiven.some(r => r === 10) && (
+              <div style={{ fontSize: 11.5, color: 'var(--danger)', marginTop: 8, lineHeight: 1.5 }}>
+                10 = כשל. אם זה היה כאב מפרק ולא שריר — דווח ב"משהו כואב".
+              </div>
             )}
           </div>
-          <div className="rpe" style={{ marginTop: 8 }}>
-            {[6, 7, 8, 9, 10].map(n => {
-              const c = RPE_COLOR[n];
-              const on = exLog.rpe === n;
-              return (
-                <b key={n} className={on ? 'on' : ''} onClick={() => setLogAt(e => { e.rpe = n; })}
-                  style={{ borderColor: c, color: on ? '#fff' : c, background: on ? c : 'transparent' }}>{n}</b>
-              );
-            })}
-          </div>
-          <div style={{ fontSize: 10.5, color: 'var(--dim)', marginTop: 6, textAlign: 'center', letterSpacing: '.02em' }}>
-            6 קל · 7 בינוני · 8 קשה · 9 כמעט כשל · 10 כשל
-          </div>
-          {rpeMissing && (
-            <div style={{ fontSize: 11.5, color: 'var(--dim)', marginTop: 8, lineHeight: 1.5 }}>
-              עמית: בלי המספר הזה אין איך לדעת מתי להעלות ומתי לעצור. שנייה אחת.
-            </div>
-          )}
-          {exLog.rpe === 10 && (
-            <div style={{ fontSize: 11.5, color: 'var(--danger)', marginTop: 8, lineHeight: 1.5 }}>
-              10 = כואב מאוד. אם זה כאב מפרק ולא שריר — עצור ודווח ב"משהו כואב".
-            </div>
-          )}
-        </div>
+        )}
 
         <div className="field" style={{ marginTop: 12 }}>
           <label>זמן מנוחה בין סטים · לתרגיל הזה</label>
@@ -674,7 +684,7 @@ export default function Workout() {
 
         {rpeMissing && (
           <div className="alert mt12" style={{ borderColor: 'var(--acc2)', background: 'rgba(217,119,6,.10)' }}>
-            🎯 <span>סיימת את הסטים ולא דיווחת מאמץ. <b>זה מה שקובע את האימון הבא.</b></span>
+            🎯 <span>יש סט בלי דיווח מאמץ. <b>זה מה שקובע את האימון הבא.</b></span>
           </div>
         )}
         <div className="mt16" style={{ display: 'flex', gap: 10 }}>

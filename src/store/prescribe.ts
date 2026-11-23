@@ -18,6 +18,7 @@
 import { DB, WorkoutLog } from './store';
 import { RoutineKey, ExerciseDef, routineByKey, exStage, exStruct, exName, Loc } from '../data/program';
 import { progressReport, ExProgress } from './progress';
+import { exEffort, ExEffort, fades } from './rpe';
 
 export type Action = 'base' | 'gate' | 'up' | 'hold' | 'rebuild' | 'ceiling';
 
@@ -58,13 +59,14 @@ function freshPain(db: DB, ex: ExerciseDef, name: string, today: string): string
   return `מאיה: דווח כאב ${hit.level}/10 ב${hit.area} (${hit.date.slice(5).split('-').reverse().join('.')}). לא מעלים כלום עד שזה שקט.`;
 }
 
-/** ה-RPE האחרון שדווח בתרגיל, אם דווח בכלל. */
-function lastRpe(db: DB, exId: string): number | undefined {
+/** המאמץ האחרון שדווח בתרגיל. פר-סט כשיש, ואחרת ה-rpe הישן שברמת התרגיל. */
+function lastEffort(db: DB, exId: string): ExEffort | null {
   for (const w of [...(db.workouts || [])].sort((a, b) => b.date.localeCompare(a.date))) {
     const e = w.exercises.find(x => x.id === exId && !x.skipped);
-    if (e?.rpe != null) return e.rpe;
+    const f = e && exEffort(e);
+    if (f) return f;
   }
-  return undefined;
+  return null;
 }
 
 /** כמה פעמים רצופות לאחרונה הצורה הייתה זהה — "תקוע" נמדד מהסוף, לא מהקצוות. */
@@ -89,11 +91,17 @@ export function prescribeOne(db: DB, ex: ExerciseDef, loc: Loc, pr: ExProgress |
   const st = exStruct(ex, loc, stage);
   const base = { id: ex.id, name };
   const pain = freshPain(db, ex, name, today);
-  const rpe = lastRpe(db, ex.id);
+  const eff = lastEffort(db, ex.id);
   // RPE בולם בלבד. חסר אינו עוצר — אחרת ענף ההעלאה לא היה רץ לעולם.
+  // הבלימה היא לפי הסט הקשה ביותר ולא לפי ממוצע: סט אחד שהגיע לכשל הוא
+  // הסיבה לא להעלות, גם אם השניים שלפניו היו קלים.
+  // דעיכה (פתיחה קלה, סיום קשה) אינה עומס גבוה אלא עייפות מצטברת, ולכן
+  // היא מנוסחת אחרת — מנוחה ארוכה יותר, לא פחות משקל.
   const hardVeto = pain
-    ?? (rpe != null && rpe >= 9
-      ? `מאיה: המאמץ האחרון שדיווחת היה ${rpe}. מתייצבים לפני שמעלים.`
+    ?? (eff && eff.peak >= 9
+      ? (fades(eff)
+        ? `מאיה: פתחת ב-${eff.opener} וסיימת ב-${eff.peak}. זו עייפות מצטברת ולא עומס גבוה מדי — האריך מנוחה לפני שמעלים.`
+        : `מאיה: המאמץ בסט הקשה היה ${eff.peak}. מתייצבים לפני שמעלים.`)
       : undefined);
 
   if (!pr || pr.times < 2) {

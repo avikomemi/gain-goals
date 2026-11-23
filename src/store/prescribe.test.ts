@@ -195,3 +195,40 @@ describe('פרמטר שאינו משתנה התקדמות', () => {
     expect(one(db, 'c-pistol').text).toContain('45 → 40');
   });
 });
+
+describe('הווטו קורא מאמץ פר-סט', () => {
+  const wkR = (date: string, id: string, reps: number[], rpes: (number|undefined)[], routine = 'B'): WorkoutLog => ({
+    id: date + id, date, routine: routine as WorkoutLog['routine'], loc: 'gym',
+    exercises: [{ id, name: ex(id).name, sets: reps.map((r, i) => ({ reps: r, done: true, rpe: rpes[i] })) }],
+  });
+  const four = (id: string, reps: number[], rpes: (number|undefined)[]) =>
+    mk(['2026-09-02', '2026-09-20', '2026-10-10', '2026-11-01'].map(d => wkR(d, id, reps, rpes)));
+
+  it('סט אחד שהגיע לכשל בולם, גם כששניים לפניו היו קלים', () => {
+    // זה בדיוק המקרה שאבי תיאר. מספר אחד לתרגיל היה מסתיר אותו.
+    const p = one(four('b-tri', [10, 10, 10], [6, 7, 10]), 'b-tri');
+    expect(p.veto).toBeTruthy();
+    expect(p.veto).toContain('10');
+  });
+
+  it('דעיכה מנוסחת כמנוחה, לא כעומס', () => {
+    const p = one(four('b-tri', [10, 10, 10], [7, 8, 10]), 'b-tri');
+    expect(p.veto).toContain('מנוחה');
+    expect(p.veto).toContain('עייפות מצטברת');
+  });
+
+  it('כבד מההתחלה מנוסח אחרת — זה כן עומס', () => {
+    const p = one(four('b-tri', [10, 10, 10], [9, 9, 9]), 'b-tri');
+    expect(p.veto).toContain('בסט הקשה');
+    expect(p.veto).not.toContain('עייפות מצטברת');
+  });
+
+  it('שלושה סטים קלים אינם בולמים', () => {
+    expect(one(four('b-tri', [10, 10, 10], [6, 7, 8]), 'b-tri').veto).toBeUndefined();
+  });
+
+  it('דיווח חלקי: מה שדווח נספר, מה שחסר לא עוצר', () => {
+    expect(one(four('b-tri', [10, 10, 10], [undefined, undefined, 10]), 'b-tri').veto).toBeTruthy();
+    expect(one(four('b-tri', [10, 10, 10], [undefined, undefined, undefined]), 'b-tri').veto).toBeUndefined();
+  });
+});

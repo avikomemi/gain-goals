@@ -5,8 +5,15 @@ import { FoodItem, mergeFoods } from './foodDB';
 import { readFitbitCallback, exchangeFitbitCode, clearFitbitCallbackUrl, syncFitbit } from './fitbit';
 import type { Session } from '@supabase/supabase-js';
 
-export interface SetLog { reps: number; weight?: number; done: boolean; bw?: boolean }
-export interface ExLog { id: string; name: string; sets: SetLog[]; rpe?: number; skipped?: boolean; params?: Record<string, number> }
+export interface SetLog { reps: number; weight?: number; done: boolean; bw?: boolean;
+  /** מאמץ לסט הזה. אבי, 23.11: "יש סטים שבהם יש כשל" — סט ראשון ב-7 וסט
+   *  שלישי ב-10 הם מצב אחר לגמרי משלושה סטים של 8, ומספר אחד לתרגיל מחק
+   *  את ההבדל. ברשומות ישנות הוא חסר, ואז נופלים ל-ExLog.rpe. */
+  rpe?: number }
+export interface ExLog { id: string; name: string; sets: SetLog[];
+  /** מאמץ ברמת התרגיל. נשמר לתאימות עם רשומות שנכתבו לפני המאמץ פר-סט;
+   *  לקריאה השתמשו ב-exRpe, שמעדיף את הסטים ונופל לכאן. */
+  rpe?: number; skipped?: boolean; params?: Record<string, number> }
 export interface WorkoutLog {
   id: string; date: string; routine: RoutineKey; loc: Loc;   // 'P' = דף הפיזיו, אימון נפרד מסבב ABC
   exercises: ExLog[]; stoppedEarly?: boolean; flexDone?: boolean; finisherDone?: boolean;

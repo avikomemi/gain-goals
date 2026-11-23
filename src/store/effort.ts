@@ -6,6 +6,7 @@
 // המודל: זמן מוערך מהסטים (עבודה + מנוחה) → MET לפי מאמץ מדווח → קלוריות לפי משקל.
 // זה אומדן, לא מדידה. אין מד דופק ואין מד זמן באימון — לכן המספר מוצג כ"בערך".
 import { DB, WorkoutLog, KravLog } from './store';
+import { exRpe } from './rpe';
 import { routineByKey } from '../data/program';
 import { getGoals } from './goals';
 
@@ -38,7 +39,8 @@ export function workoutMinutes(db: DB, w: WorkoutLog): number {
 
 /** המאמץ הממוצע שדווח (RPE). null כשלא דווח כלום. */
 export function workoutRpe(w: WorkoutLog): number | null {
-  const rs = w.exercises.filter(e => !e.skipped && typeof e.rpe === 'number').map(e => e.rpe as number);
+  // השיא של כל תרגיל, מהסטים. ברשומות ישנות זה ה-rpe שברמת התרגיל.
+  const rs = w.exercises.filter(e => !e.skipped).map(exRpe).filter((r): r is number => typeof r === 'number');
   if (!rs.length) return null;
   return +(rs.reduce((a, b) => a + b, 0) / rs.length).toFixed(1);
 }
