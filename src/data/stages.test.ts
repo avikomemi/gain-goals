@@ -222,11 +222,15 @@ describe('שדרוג גרסה בתרגילים שהיו בתקרת היעד', ()
     expect(e.harder).toBeTruthy();
   });
 
-  it('אצבעות לבר: ירידה איטית ופחות חזרות', () => {
+  it('אצבעות לבר: סולם לפי זווית הברך, לא לפי שניות', () => {
+    // אבי, 23.11: "אני פשוט מניף את הרגליים". ירידה איטית ברגל ישרה היא
+    // עומס כפיפה גדול על הגב התחתון, ולכן ההוראה הקודמת הייתה שגויה
+    // בדיוק באזור הרגיש. הווסת הוא המנוף: ברך כפופה מקצרת אותו בחצי.
     const e = ex('b-t2b');
-    expect(e.name).toBe('Slow-Negative Toes to Bar');
-    expect(e.target).toContain('3 שניות');
-    expect(exStruct(e, 'gym').repsDefault).toBe(6);       // הוא עשה 8 בתקרת היעד
+    expect(e.stages).toHaveLength(4);
+    expect(e.stages![0].name).toContain('ברכיים');
+    expect(e.stages![3].name).toBe('Toes to Bar');
+    expect(exStruct(e, 'gym', 0).repsDefault).toBe(8);
   });
 
   it('שתיהן ללא משקל וללא ציוד חדש', () => {
@@ -249,5 +253,34 @@ describe('שדרוג גרסה בתרגילים שהיו בתקרת היעד', ()
     const r = progressReport(db, 3);
     expect(r[0].dir).toBe('variant');
     expect(r[0].dir).not.toBe('down');
+  });
+});
+
+describe('אצבעות לבר — המנוף הוא הווסת', () => {
+  const t2b = () => PROGRAM.find(r => r.key === 'B')!.exercises.find(e => e.id === 'b-t2b')!;
+
+  it('הסולם מתחיל בברך כפופה ונגמר ברגל ישרה', () => {
+    const st = t2b().stages!;
+    expect(st[0].note).toMatch(/ברכיים כפופות|ברכיים לחזה/);
+    expect(st[st.length - 1].note).toMatch(/רגליים ישרות/);
+  });
+
+  it('השלב האחרון הוא היעד של המקור כלשונו', () => {
+    // '3-4x3-8' — מה שהמאמן כתב. הסולם מוביל אליו, לא מחליף אותו.
+    expect(t2b().stages!.at(-1)!.target).toBe('3-4×3-8');
+    expect(t2b().source).toBe('Toes to Bar');
+  });
+
+  it('הנדנוד הוא שער בכל שלב, לא טיפ', () => {
+    // הטיפ של התרגיל אמר תמיד שנדנוד מעמיס את הגב. עכשיו זה תנאי מעבר.
+    const st = t2b().stages!;
+    expect(st[0].gate).toMatch(/נדנוד/);
+    expect(st[1].gate).toMatch(/נדנוד/);
+  });
+
+  it('אין בשום שלב הוראה לירידה איטית ברגל ישרה לפני הסוף', () => {
+    // זו הייתה ההוראה השגויה: עומס כפיפה על גב רגיש במנוף הארוך ביותר.
+    const st = t2b().stages!;
+    for (const x of st.slice(0, -1)) expect(x.note).not.toMatch(/רגליים ישרות/);
   });
 });

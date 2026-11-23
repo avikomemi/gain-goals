@@ -84,7 +84,9 @@ describe('תקוע — איזה משתנה זז, ובאיזה סדר', () => {
   it('בתקרת היעד — זו תקרת ההוראה, לא תקרת אבי', () => {
     // אצבעות לבר עמד על 3×8 מול יעד 3-8 עשרה שבועות. אין לאן להעלות בתוך
     // היעד, ולכן ההוראה היא גרסה אחרת ולא עוד חזרה.
-    const t2b = { ...ex('b-t2b'), target: '3-4×3-8', harder: 'גרסה קשה יותר' };
+    // (התרגיל עצמו קיבל מאז סולם שלבים; כאן בודקים את ענף התקרה בלבד,
+    //  ולכן השלבים מנוטרלים.)
+    const t2b = { ...ex('b-t2b'), stages: undefined, target: '3-4×3-8', harder: 'גרסה קשה יותר' };
     const db = stuck('b-t2b', { reps: [8, 8, 8] });
     const p = prescribeOne(db, t2b, 'gym', progressReport(db, 1).find(x => x.id === 'b-t2b'), TODAY);
     expect(p.action).toBe('ceiling');
