@@ -142,3 +142,15 @@ describe('Drop lands — הגובה חזר כמשתנה', () => {
     expect(land.name).toContain('Single-Leg');
   });
 });
+
+describe('הגנת הגב בחימום', () => {
+  it('הכלל על השכבה היבשה מופיע, ומוצהר כתוספת', () => {
+    // אבי מזיע הרבה בכוונה (סוויטשירט), כי בלעדיו הגב נתפס. הטריגר הוא
+    // שכבה רטובה שמתקררת, לא היעדר שכבה — וזה מה שהשורה אומרת.
+    const line = WARMUP_COMMON.find(w => w.includes('שכבה יבשה'));
+    expect(line).toBeTruthy();
+    expect(line).toMatch(/כותנה/);
+    const d = DEVIATIONS.filter(x => x.kind === 'addition' && x.routine === 'warmup' && line!.startsWith(x.app!));
+    expect(d.length, 'פריט חימום שאינו במקור חייב להיות מוצהר').toBe(1);
+  });
+});
