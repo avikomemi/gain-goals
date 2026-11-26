@@ -288,3 +288,35 @@ describe('אצבעות לבר — המנוף הוא הווסת', () => {
     for (const x of st.slice(0, 2)) expect(x.note).not.toMatch(/רגליים ישרות/);
   });
 });
+
+describe('בלוק הגמישות — שלושת הקבועים', () => {
+  const flex = (k: 'A' | 'B' | 'C') => PROGRAM.find(r => r.key === k)!.flexibility;
+
+  it('B ו-C מחזיקים את אותם שלושה, באותו סדר', () => {
+    // אבי, 26.11: הרשימה מנתה שישה והוא עשה שלושה. רשימה שלא מבוצעת היא
+    // רעש שמסתיר את מה שכן קורה.
+    for (const k of ['B', 'C'] as const) {
+      const f = flex(k);
+      expect(f, k).toHaveLength(3);
+      expect(f[0].name, k).toContain('פלג גוף עליון');
+      expect(f[1].name, k).toContain('ראש לברכיים');
+      expect(f[2].name, k).toContain('רגל ישרה באוויר');
+    }
+  });
+
+  it('המינון שונה בין B ל-C — אותם תרגילים, דגש אחר', () => {
+    expect(flex('B')[0].dose).not.toBe(flex('C')[0].dose);
+    expect(flex('C')[1].dose).toMatch(/המסטרינג עבד/);   // יום רגליים
+    expect(flex('B')[0].dose).toMatch(/שמאל/);           // יום כתפיים
+  });
+
+  it('A לא נגעו בו — הוא בלוק הגב העליון של המקור', () => {
+    const n = flex('A').map(f => f.name);
+    expect(n).toContain('Bended Half Kneeling Archers');
+    expect(n).toContain('Prayer → Upward Dog');
+  });
+
+  it('הפריט האחרון הוא הסיום, בשניהם', () => {
+    for (const k of ['B', 'C'] as const) expect(flex(k)[2].dose).toContain('מסיימים בזה');
+  });
+});

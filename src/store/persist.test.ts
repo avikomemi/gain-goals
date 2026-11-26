@@ -120,10 +120,15 @@ describe('נאמנות למקור', () => {
     expect(lv.note).toMatch(/שניות/);
   });
 
-  it('תרגילי הכתף החדשים נכנסו, וכלל האסימטריה איתם', () => {
-    expect(names(B)).toContain('Wall Slides');
-    expect(names(B)).toContain('Sleeper Stretch');
-    expect(names(B).some(n => n.includes('שמאל'))).toBe(true);
+  it('עבודת הכתף שנשענת על המדידה נשארה, וכלל האסימטריה איתה', () => {
+    // ב-26.11 בלוק הגמישות של B צומצם לשלושת הקבועים שאבי באמת מבצע,
+    // ועבודת הכתף נכנסה לתוך הפריט הראשון במקום לצידו. Wall Slides ירד:
+    // הוא טווח מעל הראש, והמדידה של אבי היא הושטה מאחורי הגב. לכן
+    // הבדיקה על התוכן ולא על שמות הפריטים.
+    const all = [...names(B), ...B.flexibility.map(f => f.dose)].join(' ');
+    expect(all).toContain('Sleeper');
+    expect(all).toMatch(/מזוזה|Doorway/);
+    expect(all, 'כלל הסט הנוסף על שמאל הוא היחיד שנשען על מספר').toContain('שמאל');
   });
 });
 
