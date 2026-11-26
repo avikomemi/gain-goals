@@ -168,7 +168,7 @@ export const SEED_FOODS: FoodItem[] = [
   // כנפיים מזוגגות במסעדה — טריאקי, צ'ילי מתוק או ברביקיו. כנף קטנה היא 28 גר'
   // כולל עצם. הזיגוג הוא סירופ סוכר: 8 גר' ל-100, כולו חופשי, וזה מה שמבדיל
   // אותן מכל עוף אחר במסד. 'כנפי עוף' ארוך מ'עוף' ולכן גובר.
-  { id: 'wings', names: ['כנפיים', 'כנפי עוף', 'כנפיים בטריאקי', 'כנפי עוף בטריאקי', 'כנף עוף'], per100: [300, 24, 8, 19], sugar: 8, freeSugar: 8, fluid: 0, fiber: 0, unit: 'unit', unitGrams: 28, unitLabel: 'יח', def: 6, gout: 'ok', src: 'הערכה' },
+  { id: 'wings', names: ['כנפיים', 'כנפי עוף', 'כנפיים בטריאקי', 'כנפי עוף בטריאקי', 'כנף עוף'], per100: [300, 24, 8, 19], sugar: 8, freeSugar: 8, fluid: 0, fiber: 0, unit: 'unit', unitGrams: 28, unitLabel: 'יח', def: 6, gout: 'ok', src: 'הערכה', includes: ['bbqsauce'] },
   { id: 'kebab', names: ['קבבונים', 'קבבון', 'קבב'], per100: [265, 17, 3, 21], sugar: 1, freeSugar: 0.5, fluid: 0, fiber: 0.2, unit: 'unit', unitGrams: 50, unitLabel: 'יח', def: 2, gout: 'high', src: 'USDA' },
   // גרסת עוף/הודו — בלי דגל גאוט, ורזה בהרבה. נפרד כי ההבדל מהותי לאבי.
   { id: 'kebab_poultry', names: ['קבבוני הודו', 'קבבוני עוף', 'קבב הודו', 'קבב עוף'], per100: [170, 20, 3, 9], sugar: 1, freeSugar: 0.5, fluid: 0, fiber: 0.2, unit: 'unit', unitGrams: 50, unitLabel: 'יח', def: 2, gout: 'ok', src: 'USDA' },
@@ -369,6 +369,9 @@ export const SEED_FOODS: FoodItem[] = [
 
   // ---- מנות אתניות / מוכנות ----
   { id: 'laffa', names: ['פיתת לאפה', 'לאפה'], per100: [270, 8, 53, 2.5], sugar: 4, freeSugar: 2, fluid: 0, fiber: 2.5, unit: 'unit', unitGrams: 100, unitLabel: 'לאפה', def: 1, src: 'הערכה' },
+  // "קערית ציפס" נספרה כ-10 יחידות = 70 גר'. קערה במסעדה היא מנה, לא חופן.
+  // מחלקת השגיאה השלישית שוב: המאכל נכון, הכמות שקרה, ואף תור לא רואה.
+  { id: 'friesbowl', names: ['קערית ציפס', "קערית צ'יפס", 'מנת ציפס', "מנת צ'יפס", 'קערת ציפס'], per100: [312, 3.4, 41, 15], sugar: 0.3, freeSugar: 0, fluid: 0, fiber: 3.8, unit: 'unit', unitGrams: 150, unitLabel: 'מנה', def: 1, gout: 'ok', src: 'הערכה' },
   { id: 'fries', names: ["צ'יפס", 'צ׳יפס', 'ציפס'], per100: [312, 3.4, 41, 15], sugar: 0.3, freeSugar: 0, fluid: 0, fiber: 3.8, unit: 'unit', unitGrams: 7, unitLabel: 'יח', def: 10, src: 'USDA' },
   { id: 'plov', names: ['פלאוו', 'פלאו', 'פלוב', 'פילאף'], per100: [200, 6, 26, 8], sugar: 3, freeSugar: 1, fluid: 0, fiber: 2, unit: 'g', def: 200, gout: 'high', src: 'הערכה' },
   { id: 'dushpara', names: ['דושפרה', 'דושפרא', 'דושברה', 'דושפארה'], per100: [250, 10, 22, 14], sugar: 2, freeSugar: 0, fluid: 0, fiber: 1.5, unit: 'unit', unitGrams: 60, unitLabel: 'יח', def: 1, gout: 'high', src: 'הערכה' },
